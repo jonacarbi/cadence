@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=mkdtempSync(join(tmpdir(),'cadence-plan-'));process.env.CADENCE_DIR=join(dir,'app');
+const {db,insert,all}=await import('../src/db.js');
+const {importDesignSystem,activateDesignSystem}=await import('../src/design-systems.js');
+const {createCampaign,planCampaign,localSchedule}=await import('../src/campaigns.js');
+const source=join(dir,'source');mkdirSync(source);writeFileSync(join(source,'DESIGN.md'),'# Client identity\nUse dusty plum and 8% margins.');
+const brand=insert('brands',{slug:'test',name:'Test',url:'https://example.com',dir});
+const system=importDesignSystem(brand,{source_path:source});activateDesignSystem(brand,system.id);
+test.after(()=>{db.close();rmSync(dir,{recursive:true,force:true});});
+test('month generation pins design version and produces unapproved drafts atomically',async()=> {
+ const {campaign}=createCampaign({brand_id:brand,month:'2026-10',count:2,platforms:['mastodon'],time_zone:'America/Paramaribo'});
+ let prompt='';const generate=async p=> {prompt=p;return {posts:[1,15].map(day=>({day,topic:`Topic ${day}`,copy:{mastodon:'A factual caption'},image_prompt:'Dusty plum composition',alt_text:'Simple illustration'}))};};
+ await planCampaign(campaign.id,()=>{},{generate});assert.match(prompt,/dusty plum/);
+ const posts=all('SELECT * FROM posts WHERE campaign_id=?',campaign.id);assert.equal(posts.length,2);assert.ok(posts.every(p=>p.status==='draft'&&!p.approved_by&&p.design_system_id===system.id));
+ assert.equal(posts[0].scheduled_at,'2026-10-01T13:00:00.000Z');
+ await assert.rejects(planCampaign(campaign.id,()=>{},{generate}),/already has drafts/);
+});
+test('invalid generated month leaves no partial drafts',async()=> {
+ const {campaign}=createCampaign({brand_id:brand,month:'2026-11',count:2,platforms:['mastodon']});
+ await assert.rejects(planCampaign(campaign.id,()=>{},{generate:async()=>({posts:[]})}),/incomplete/);
+ assert.equal(all('SELECT id FROM posts WHERE campaign_id=?',campaign.id).length,0);
+});
+test('timezone conversion follows daylight saving and rejects nonexistent local hour',()=> {
+ assert.equal(localSchedule('2026-01',10,10,'America/New_York'),'2026-01-10T15:00:00.000Z');
+ assert.equal(localSchedule('2026-07',10,10,'America/New_York'),'2026-07-10T14:00:00.000Z');
+ assert.throws(()=>localSchedule('2026-03',8,2,'America/New_York'),/does not exist/);
+});

@@ -1,0 +1,16 @@
+{
+  "name": "cadence-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cadence — autonomous social media manager (local-first, macOS)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --no-warnings src/index.js",
+    "mcp": "node --no-warnings src/mcp.js",
+    "test": "node --no-warnings --test tests/*.test.js"
+  },
+  "dependencies": {
+    "playwright": "1.61.1"
+  }
+}

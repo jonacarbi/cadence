@@ -1,0 +1,10 @@
+{
+  "_doc": "Caption lint rules (editable). Each rule: id, severity (block|warn), and one check. Platform limits are enforced separately.",
+  "maxHashtags": { "severity": "warn", "value": 5 },
+  "allCapsWordsMax": { "severity": "warn", "value": 2 },
+  "bannedPhrases": { "severity": "block", "value": ["As an AI", "language model", "In today's fast-paced world", "Unlock the power", "game-changer", "Elevate your", "delve"] },
+  "requireCta": { "severity": "warn", "value": false },
+  "maxEmoji": { "severity": "warn", "value": 4 },
+  "regex": { "severity": "block", "value": ["\\[(insert|placeholder|your)[^\\]]*\\]", "lorem ipsum"] },
+  "linkCheck": { "severity": "warn", "value": true }
+}

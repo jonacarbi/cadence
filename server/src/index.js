@@ -1,0 +1,12 @@
+import { createApiServer, listen } from './api.js';
+import { startScheduler } from './scheduler.js';
+import { startWorker } from './jobs.js';
+import './providers/registry.js';
+import './brands.js';
+import './visuals.js';
+const server=createApiServer();
+const address=await listen(server);
+const stop=startScheduler();
+const stopWorker=startWorker();
+console.log(`Cadence listening on http://${address.address}:${address.port}`);
+for(const signal of ['SIGINT','SIGTERM']) process.once(signal,()=> {stop();stopWorker();server.close(()=>process.exit(0));});
