@@ -4,43 +4,34 @@
 
 Local-first macOS social media agent: extract and reuse client design systems, plan a month, generate OpenAI imagery, collect human approval, schedule and publish with minimal intervention.
 
-## Current state
+## Current state (2026-09-18)
 
-Resumed exact source conversation `0cce881f-46a3-407f-b4f1-efaf564a77dc` from `/Users/jonacarbi/.handoff/20260918-194438-169ac3b6-to-codex.md`. Original scaffold had config, SQLite, LLM, images and lint only. No prior completed app.
-
-Implemented local authenticated REST API, brand/account records, draft/edit/approve/reject/schedule transitions, per-account delivery ledger, atomic scheduler claims, uncertain-outcome handling and crash recovery. Eight tests pass with isolated temporary databases. No live publishing performed. No real provider adapters registered yet. macOS app is still unwritten.
+Shipped as a bundled app (`scripts/build-macos.sh` → `build/Cadence.app`, installed at `~/Applications/Cadence.app`). Server: 21 tests green. Codex built the fail-closed core (auth, workflow, ledger, scheduler, providers); Claude layered URL-only brands, design loop, autonomy dial, webhooks, analytics, comments/regenerate, OAuth/manual account routes, MCP server, and the remaining mac views (PostDetail, Accounts, Settings, Agent log).
 
 ## Next steps / TODO
 
-- Implement safe website extraction and reusable Design DNA artifacts, using installed Design DNA / Design Loop instructions.
-- Implement durable monthly planning, image generation/refinement and resumable jobs.
-- Implement real provider adapters, account connection flows, reconciliation and analytics.
-- Build native macOS UI and packaged runtime/background launch agent.
-- Complete capability ledger in `docs/COMPETITOR-RESEARCH.md`; do not claim parity or shipping prematurely.
-- Validate full workflow, visual interface and packaged launch. Public signing/notarization requires available Apple credentials.
+- Verify a full month plan end-to-end on a real client site and publish to a live account (Bluesky/Mastodon are the cheapest to test).
+- Add Developer ID signing + notarization when credentials exist.
+- OAuth apps for Meta/LinkedIn/X need client IDs in `.env` before `/oauth/<platform>/start` returns a usable URL.
 
 ## Key decisions & gotchas
 
-- Node 24+ for `node:sqlite`; installed runtime is 24.4.1. `npm test --prefix server` runs eight tests.
-- `npm start --prefix server` starts the loopback API/scheduler on port 8796.
-- Configuration reads `.env` before exporting constants. Data defaults to `~/Library/Application Support/Cadence`; tests override `CADENCE_DIR` before imports.
-- Secrets live in local Application Support: encrypted account credentials in SQLite and mode-0600 encryption/token files. Never place values in documentation.
-- API requires bearer owner/agent tokens; only owner can approve or store account credentials. Browser origins and unexpected Host headers are rejected.
-- Editing invalidates approval and advances version. Old deliveries cannot execute. Ambiguous outbound outcomes require reconciliation, never blind retry.
-- Installed skills: `/Users/jonacarbi/.claude/skills/design-dna` and `design-loop`; Apple design skill in `~/.agents/skills/apple-design`. Read these once in resumed session. Design Loop needs real reference and extracted system before use; its independent critics are explicitly authorized by that skill.
-- Browser automation with playwright-skill must use headless `run.js` and finally cleanup.
-- Goal remains active: full requested app is unfinished.
+- Node 24+ (`node:sqlite`). `npm test --prefix server`; `npm start --prefix server` for dev on 8796.
+- Config loads `.env` from the repo root **and** `~/Library/Application Support/Cadence/.env` (bundled app has no repo). Never put values in docs.
+- Bundle must include `server/node_modules` (playwright) — build script runs `npm ci --omit=dev` in the staged bundle.
+- `llm.js claude()` is locked down (`--tools ""`) unless `agentic: true`; design-dna/design-loop runs pass `agentic`.
+- Images are OpenAI-only (user rule): direct key → else CatGPT gateway on :8000.
+- launchd `com.jonacarbi.cadence` runs `scripts/run.sh`; the app attaches if the port is already healthy.
+- MCP registered in `~/.mcp.json` as `cadence` (agent role; set `CADENCE_MCP_ROLE=owner` to allow approvals).
 
 ## Where things live
 
-- `server/src/api.js`, `auth.js`, `index.js`: HTTP entrypoint and connection roles.
-- `server/src/workflow.js`, `scheduler.js`: review transitions and delivery execution.
-- `server/src/db.js`: schema, SQLite helpers, encryption.
-- `server/src/providers/index.js`: capability declarations/adapter registry, currently no executable providers.
-- `server/src/{llm,images,lint,config}.js`: original modules with config initialization fixed.
-- `server/tests/`: workflow and authenticated HTTP tests.
-- `docs/COMPETITOR-RESEARCH.md`: inspected sources, feature ledger and remaining scope.
-- `/tmp/cadence-research`: fetched repository trees and selected source files, disposable research only.
+- `server/src/api.js` + `routes-extra.js`: HTTP; `auth.js` roles.
+- `server/src/workflow.js`, `scheduler.js`, `autonomy.js`, `webhooks.js`, `analytics.js`.
+- `server/src/brands.js`, `designloop.js`, `campaigns.js`, `visuals.js`, `render.js`, `images.js`, `llm.js`.
+- `server/src/providers/`: adapters + registry; `mcp.js`: stdio MCP.
+- `mac/Sources/Cadence/`: `CadenceApp.swift` (sections), `Models.swift` (Store), `Views/`.
+- `docs/COMPETITOR-RESEARCH.md`: feature ledger.
 
 ---
 
@@ -53,8 +44,9 @@ Implemented local authenticated REST API, brand/account records, draft/edit/appr
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-18 21:29:11 -03
-- **Built on commit:** (no commits yet)
+- **Last updated:** 2026-09-18 21:40:59 -03
+- **Built on commit:** 9b89de9 — feat: cadence server core — fail-closed workflow, brand extraction, visuals, autonomy dial, REST API (Jonathan Carbiere, 2026-09-18)
+- **README says:** Local-first macOS social media agent. Paste a client's website, get a codified design system, a month of on-brand posts with OpenAI imagery, an approval inbox, and hands-off publishing at the right time.
 
 ## How to build / run / test
 
@@ -62,90 +54,52 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Project layout (top level)
 
+- .env.example
 - .gitignore
 - .ignore
 - docs/
 - HANDOFF.md
 - mac/
+- README.md
 - scripts/
 - server/
 
 ## Languages
 
-- .js — 44 file(s)
-- .swift — 8 file(s)
+- .js — 46 file(s)
+- .swift — 11 file(s)
+- .md — 3 file(s)
 - .json — 3 file(s)
-- .md — 2 file(s)
-- .sh — 1 file(s)
+- .sh — 2 file(s)
 - .ignore — 1 file(s)
 - .html — 1 file(s)
+- .example — 1 file(s)
 
 ## Changes in this commit
 
-- A	.gitignore
-- A	.ignore
-- A	HANDOFF.md
-- A	docs/COMPETITOR-RESEARCH.md
-- A	mac/Package.swift
-- A	mac/Sources/Cadence/CadenceApp.swift
-- A	mac/Sources/Cadence/LocalService.swift
-- A	mac/Sources/Cadence/Models.swift
-- A	mac/Sources/Cadence/Views/CalendarView.swift
-- A	mac/Sources/Cadence/Views/DesignSystemsView.swift
-- A	mac/Sources/Cadence/Views/Forms.swift
-- A	mac/Sources/Cadence/Views/PlannerView.swift
-- A	scripts/build-macos.sh
-- A	server/package-lock.json
-- A	server/package.json
-- A	server/rules.json
-- A	server/src/analytics.js
-- A	server/src/api.js
-- A	server/src/auth.js
-- A	server/src/autonomy.js
-- A	server/src/brands.js
-- A	server/src/campaigns.js
-- A	server/src/config.js
-- A	server/src/db.js
-- A	server/src/design-systems.js
-- A	server/src/images.js
-- A	server/src/index.js
-- A	server/src/jobs.js
-- A	server/src/lint.js
-- A	server/src/llm.js
-- A	server/src/media.js
-- A	server/src/network.js
-- A	server/src/oauth.js
-- A	server/src/providers/bluesky.js
-- A	server/src/providers/discord.js
-- A	server/src/providers/facebook.js
-- A	server/src/providers/http.js
-- A	server/src/providers/index.js
-- A	server/src/providers/instagram.js
-- A	server/src/providers/linkedin.js
-- A	server/src/providers/mastodon.js
-- A	server/src/providers/mock.js
-- A	server/src/providers/pinterest.js
-- A	server/src/providers/reddit.js
-- A	server/src/providers/registry.js
-- A	server/src/providers/telegram.js
-- A	server/src/providers/threads.js
-- A	server/src/providers/x.js
-- A	server/src/render.js
-- A	server/src/routes-extra.js
-- A	server/src/scheduler.js
-- A	server/src/visuals.js
-- A	server/src/webhooks.js
-- A	server/src/workflow.js
-- A	server/templates/post.html
-- A	server/tests/api.test.js
-- A	server/tests/campaigns.test.js
-- A	server/tests/design-systems.test.js
-- A	server/tests/extra.test.js
-- A	server/tests/network.test.js
-- A	server/tests/workflow.test.js
+- A	.env.example
+- M	HANDOFF.md
+- A	README.md
+- M	mac/Sources/Cadence/CadenceApp.swift
+- M	mac/Sources/Cadence/Models.swift
+- A	mac/Sources/Cadence/Views/AccountsView.swift
+- M	mac/Sources/Cadence/Views/Forms.swift
+- A	mac/Sources/Cadence/Views/PostDetail.swift
+- A	mac/Sources/Cadence/Views/SettingsView.swift
+- M	scripts/build-macos.sh
+- A	scripts/run.sh
+- M	server/src/brands.js
+- M	server/src/config.js
+- A	server/src/designloop.js
+- M	server/src/index.js
+- M	server/src/llm.js
+- A	server/src/mcp.js
+- M	server/src/providers/index.js
+- M	server/src/providers/registry.js
+- M	server/src/routes-extra.js
 
 ## Recent history
 
-- (no commits yet)
+- 9b89de9 feat: cadence server core — fail-closed workflow, brand extraction, visuals, autonomy dial, REST API _(Jonathan Carbiere, 2026-09-18)_
 
 <!-- HANDOFF:AUTO:END -->

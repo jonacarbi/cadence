@@ -17,7 +17,7 @@ struct CadenceApp: App {
 }
 
 enum WorkspaceSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", designs = "Design systems", planner = "Monthly planner", calendar = "Calendar", approvals = "Approvals", library = "All posts", accounts = "Accounts", activity = "Delivery activity"
+    case overview = "Overview", designs = "Design systems", planner = "Monthly planner", calendar = "Calendar", approvals = "Approvals", library = "All posts", accounts = "Accounts", activity = "Delivery activity", log = "Agent log", settings = "Settings"
     var id: String { rawValue }
     var icon: String {
         switch self {
@@ -29,6 +29,8 @@ enum WorkspaceSection: String, CaseIterable, Identifiable {
         case .library: "square.stack"
         case .accounts: "person.crop.circle.badge.checkmark"
         case .activity: "clock.arrow.circlepath"
+        case .log: "list.bullet.rectangle"
+        case .settings: "slider.horizontal.3"
         }
     }
 }
@@ -76,8 +78,10 @@ struct WorkspaceView: View {
                         case .calendar: CalendarView(posts: store.posts, select: { selectedPost = $0 })
                         case .approvals: postList(store.posts.filter { ["draft", "rejected"].contains($0.status) })
                         case .library: postList(store.posts)
-                        case .accounts: accountList
+                        case .accounts: AccountsView()
                         case .activity: deliveryList
+                        case .log: ActivityView()
+                        case .settings: SettingsView()
                         }
                     }
                 }.padding(32).frame(maxWidth: 1300, alignment: .leading).frame(maxWidth: .infinity)
@@ -141,15 +145,6 @@ struct WorkspaceView: View {
                 if post.id != posts.last?.id { Divider().padding(.leading, 82) }
             }
         }.background(.background, in: RoundedRectangle(cornerRadius: 14))
-    }
-    private var accountList: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Connected destinations").font(.headline)
-            Text("Publishing integrations are being built. Accounts saved through the local API appear here; unavailable adapters will report an error rather than simulate a publication.").foregroundStyle(.secondary)
-            ForEach(store.accounts.filter { $0.brand_id == store.selectedBrand }) { account in
-                HStack { Label(account.label, systemImage: "person.crop.circle"); Spacer(); Text(account.platform.capitalized); StatusBadge(status: account.paused == 1 ? "paused" : "connected") }.padding().background(.background, in: RoundedRectangle(cornerRadius: 10))
-            }
-        }
     }
     private var deliveryList: some View {
         VStack(alignment: .leading, spacing: 16) {

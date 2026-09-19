@@ -19,6 +19,7 @@ if [[ -f "$(dirname "$CADENCE_NODE")/../LICENSE" ]]; then
   cp "$(dirname "$CADENCE_NODE")/../LICENSE" "$CADENCE_APP/Contents/Resources/runtime/NODE-LICENSE.txt"
 fi
 rsync -a --delete --exclude node_modules --exclude tests "$CADENCE_ROOT/server/" "$CADENCE_APP/Contents/Resources/server/"
+(cd "$CADENCE_APP/Contents/Resources/server" && PATH="$(dirname "$CADENCE_NODE"):$PATH" npm ci --omit=dev --ignore-scripts --no-audit --no-fund --silent)
 cat > "$CADENCE_APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

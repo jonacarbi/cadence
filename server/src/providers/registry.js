@@ -59,6 +59,7 @@ function adapter(platform) {
       } catch (err) { throw classify(platform, err); }
     },
     metrics: m.mod.metrics ? (auth, published) => m.mod.metrics(auth, published) : undefined,
+    auth: m.auth, fields: m.fields || [],
   };
 }
 

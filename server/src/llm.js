@@ -6,9 +6,10 @@ import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTE
 const exec = promisify(execFile);
 
 /** Run a prompt through `claude -p`. Extra args let callers enable tools/skills for agentic jobs. */
-export async function claude(prompt, { system = "", model = LLM_MODEL, args = [], cwd, timeout = 600_000 } = {}) {
-  const argv = ["-p", prompt, "--model", model, "--output-format", "text", ...args,
-    "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--disable-slash-commands", "--no-session-persistence"];
+export async function claude(prompt, { system = "", model = LLM_MODEL, args = [], cwd, timeout = 600_000, agentic = false } = {}) {
+  // Plain completions run locked down (no tools, no skills). Agentic jobs (design-dna, critics) keep user skills + the tools they pass.
+  const lockdown = agentic ? ["--setting-sources", "user"] : ["--tools", "", "--setting-sources", "", "--disable-slash-commands"];
+  const argv = ["-p", prompt, "--model", model, "--output-format", "text", ...args, ...lockdown, "--strict-mcp-config", "--no-session-persistence"];
   if (system) argv.push("--system-prompt", system);
   const { stdout } = await exec(CLAUDE_BIN, argv, { cwd, timeout, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, CLAUDECODE: "" } });
   return stdout.trim();

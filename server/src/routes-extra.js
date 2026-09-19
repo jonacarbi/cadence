@@ -17,7 +17,7 @@ import { getBrand, slugify } from './brands.js';
 
 const RULES_PATH = join(REPO_DIR, 'server/rules.json');
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.md': 'text/markdown', '.json': 'application/json' };
-const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone'];
+const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds'];
 
 function parseSite(url) {
   let site; try { site = new URL(url); } catch { throw new WorkflowError('A valid website URL is required'); }

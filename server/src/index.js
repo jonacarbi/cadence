@@ -4,6 +4,7 @@ import { startWorker } from './jobs.js';
 import './providers/registry.js';
 import './brands.js';
 import './visuals.js';
+import './designloop.js';
 const server=createApiServer();
 const address=await listen(server);
 const stop=startScheduler();

@@ -54,12 +54,15 @@ export function secretKey() {
   return Buffer.from(readFileSync(KEY_FILE, "utf8").trim(), "hex");
 }
 
-// Optional .env in the repo root (never committed) — loaded before anything else reads process.env.
+// Optional .env files (never committed): repo root for dev, Application Support for the bundled app.
 export function loadDotEnv() {
-  const p = join(REPO_DIR, ".env");
-  if (!existsSync(p)) return;
-  for (const line of readFileSync(p, "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
-    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  const home = process.env.HOME;
+  const dir = process.env.CADENCE_DIR || join(home, "Library/Application Support/Cadence");
+  for (const p of [join(REPO_DIR, ".env"), join(dir, ".env")]) {
+    if (!existsSync(p)) continue;
+    for (const line of readFileSync(p, "utf8").split("\n")) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
   }
 }

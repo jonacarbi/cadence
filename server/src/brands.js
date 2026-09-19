@@ -4,7 +4,7 @@ import { chromium } from "playwright";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { BRANDS_DIR, SKILLS_DIR } from "./config.js";
-import { insert, update, one, all, hydrate, logEvent } from "./db.js";
+import { insert, update, one, all, hydrate, logEvent, getSetting } from "./db.js";
 import { claude, completeJson } from "./llm.js";
 import { importDesignSystem, activateDesignSystem } from "./design-systems.js";
 import { registerJob } from "./jobs.js";
@@ -187,7 +187,14 @@ export async function extractBrand(brandId, report = () => {}) {
   activateDesignSystem(brandId, system.id);
   logEvent("info", "brand.extracted", `${name} (${u.hostname})${memory ? ` · reused design skill ${memory.slug}` : ""}`, { id: brandId });
 
-  if (!memory) { report(0.8, "Codifying the look with design-dna (this takes a few minutes)…"); await codifyBrand(brandId); }
+  if (!memory) {
+    if (getSetting("design_loop", "on") === "on") {
+      report(0.75, "Running the design gauntlet (critics iterate on the hero frame)…");
+      try { const { runDesignLoop } = await import("./designloop.js"); await runDesignLoop(brandId, (m) => report(0.75, m)); }
+      catch (e) { logEvent("warn", "design.loop", `skipped: ${e.message}`, { id: brandId }); }
+    }
+    report(0.85, "Codifying the look with design-dna (this takes a few minutes)…"); await codifyBrand(brandId);
+  }
   // Snapshot again so the PROMPT.md-backed version is pinned for campaigns.
   const b2 = one("SELECT * FROM brands WHERE id = ?", brandId);
   if (b2.skill_slug) { const skillDir = join(SKILLS_DIR, b2.skill_slug); for (const f of ["PROMPT.md", "dna.json"]) if (existsSync(join(skillDir, f))) writeFileSync(join(dir, f), readFileSync(join(skillDir, f))); const s2 = importDesignSystem(brandId, { source_path: dir }); activateDesignSystem(brandId, s2.id); }
@@ -203,7 +210,7 @@ export async function codifyBrand(id) {
 Reference image: ${join(b.dir, "reference.png")} (full page: ${join(b.dir, "reference-full.png")}).
 Measured tokens: ${join(b.dir, "tokens.json")}. Design system draft: ${join(b.dir, "design-system.md")}.
 Add to dna.json meta: {"source":"${b.url}"}. The skill is for 1080x1350 and 1080x1080 social posts that must look like they came from this site. Write to ~/.claude/skills/${skillSlug}/ and finish with the check script passing.`;
-  await claude(prompt, { cwd: b.dir, args: ["--allowedTools", "Read,Write,Edit,Bash,Glob,Grep", "--permission-mode", "acceptEdits"], timeout: 30 * 60_000 });
+  await claude(prompt, { cwd: b.dir, agentic: true, args: ["--allowedTools", "Read,Write,Edit,Bash,Glob,Grep", "--permission-mode", "acceptEdits"], timeout: 30 * 60_000 });
   const ok = existsSync(join(SKILLS_DIR, skillSlug, "PROMPT.md"));
   update("brands", id, { status: ok ? "ready" : "ready-no-skill", skill_slug: ok ? skillSlug : null });
   logEvent(ok ? "info" : "warn", "brand.codify", ok ? `design skill ${skillSlug} ready` : "design-dna produced no skill; using local design-system.md", { id });

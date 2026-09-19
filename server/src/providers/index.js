@@ -15,6 +15,7 @@ export const PLATFORMS = Object.freeze({
   mock: { name: 'Mock (dry run)', maxChars: 2000 },
 });
 const adapters = new Map();
+/** adapter.publish is required; adapter.auth ('oauth'|'manual') and adapter.fields describe how to connect. */
 export function registerProvider(platform, adapter) {
   if (!PLATFORMS[platform] || typeof adapter.publish !== 'function') throw new Error('Invalid provider');
   adapters.set(platform, adapter);
@@ -25,5 +26,5 @@ export function providerFor(platform) {
   return adapter;
 }
 export function capabilities() {
-  return Object.entries(PLATFORMS).map(([id, spec]) => ({ id, ...spec, available: adapters.has(id) }));
+  return Object.entries(PLATFORMS).map(([id, spec]) => { const a = adapters.get(id); return { id, ...spec, available: Boolean(a), auth: a?.auth || null, fields: a?.fields || [] }; });
 }

@@ -9,12 +9,12 @@ struct BrandForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Make room for a new brand").font(.title2.weight(.semibold))
-            Text("Keep each client’s posts, identity, and accounts together.").foregroundStyle(.secondary)
+            Text("Paste the client’s website. Cadence extracts the design system, checks design memory, and codifies the look.").foregroundStyle(.secondary)
             Form {
-                TextField("Business name", text: $name)
+                TextField("Business name (optional — taken from the site)", text: $name)
                 TextField("Website", text: $url, prompt: Text("https://example.com"))
             }.formStyle(.grouped)
-            HStack { Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction); Spacer(); Button(saving ? "Adding…" : "Add brand") { saving = true; Task { if await store.addBrand(name: name, url: url) { dismiss() }; saving = false } }.buttonStyle(.borderedProminent).disabled(saving || name.isEmpty || url.isEmpty).keyboardShortcut(.defaultAction) }
+            HStack { Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction); Spacer(); Button(saving ? "Adding…" : "Add brand") { saving = true; Task { if await store.addBrand(name: name, url: url) { dismiss() }; saving = false } }.buttonStyle(.borderedProminent).disabled(saving || url.isEmpty).keyboardShortcut(.defaultAction) }
         }.padding(28).frame(width: 500)
     }
 }
@@ -51,46 +51,4 @@ struct ComposerView: View {
         }.padding(28).frame(width: 650)
         .onAppear { if let post { topic = post.topic ?? ""; platform = post.platforms.first ?? "mastodon"; caption = post.copy[platform] ?? ""; date = post.date ?? date } }
     }
-}
-struct PostDetail: View {
-    @EnvironmentObject private var store: Store
-    @Environment(\.dismiss) private var dismiss
-    let post: Post
-    @State private var editing = false
-    @State private var acting = false
-    private var current: Post { store.posts.first { $0.id == post.id } ?? post }
-    var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack { Text(current.topic?.isEmpty == false ? current.topic! : "Review post").font(.title2.weight(.semibold)); Spacer(); StatusBadge(status: current.status) }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    ForEach(current.platforms, id: \.self) { platform in
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(platform.capitalized).font(.headline)
-                            Text(current.copy[platform] ?? "").textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                        }.padding(20).background(.background, in: RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-            }.frame(minHeight: 240, maxHeight: 450)
-            if let date = current.date { Label(date.formatted(date: .abbreviated, time: .shortened), systemImage: "calendar").foregroundStyle(.secondary) }
-            if let error = current.error { Text(error).foregroundStyle(.orange) }
-            HStack {
-                Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
-                if ["draft", "approved", "scheduled", "rejected"].contains(current.status) {
-                    Button("Edit draft") { editing = true }.disabled(current.platforms.count != 1)
-                }
-                Spacer()
-                if ["draft", "approved", "scheduled"].contains(current.status) {
-                    Button("Reject") { perform { await store.review(current, action: "reject") } }
-                }
-                if ["draft", "rejected"].contains(current.status) {
-                    Button("Approve post") { perform { await store.review(current, action: "approve") } }.buttonStyle(.borderedProminent)
-                } else if current.status == "approved" {
-                    Button("Schedule post") { perform { await store.schedule(current) } }.buttonStyle(.borderedProminent)
-                }
-            }.disabled(acting)
-        }.padding(28).frame(width: 700)
-        .sheet(isPresented: $editing) { ComposerView(post: current).environmentObject(store) }
-    }
-    private func perform(_ action: @escaping @MainActor () async -> Void) { acting = true; Task { await action(); acting = false } }
 }
