@@ -56,7 +56,22 @@ export async function renderFrame(opts) {
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     // shrink headline until it fits its box (max 4 lines)
-    await page.evaluate(() => { const h1 = document.querySelector("h1"); let fs = parseFloat(getComputedStyle(h1).fontSize); const box = h1.parentElement; let guard = 40; while (guard-- && (h1.scrollHeight > fs * 4.2 || box.scrollHeight > box.clientHeight + 1) && fs > 24) { fs *= 0.92; h1.style.fontSize = fs + "px"; } });
+    await page.evaluate(() => { const h1 = document.querySelector("h1"); let fs = parseFloat(getComputedStyle(h1).fontSize); const box = h1.parentElement; let guard = 40; while (guard-- && (h1.scrollHeight > fs * 3.2 || box.scrollHeight > box.clientHeight + 1) && fs > 24) { fs *= 0.92; h1.style.fontSize = fs + "px"; } });
+    // The headline shrinks to fit, so the scale ratio and the gap rhythm are derived from its final size
+    // rather than from fixed vh values that drift once it shrinks.
+    await page.evaluate(() => {
+      const q = (s) => document.querySelector(s);
+      const h1 = q("h1"); if (!h1) return;
+      const fs = parseFloat(getComputedStyle(h1).fontSize), lh = fs * 1.06;
+      const sub = q("p.sub"), eyebrow = q(".eyebrow"), pill = q(".pill");
+      if (sub) sub.style.fontSize = fs / 4 + "px";
+      const small = fs / 4 / 1.2 + "px";
+      if (eyebrow) eyebrow.style.fontSize = small;
+      if (pill) pill.style.fontSize = small;
+      if (eyebrow) eyebrow.style.marginBottom = lh * 0.3 + "px";
+      h1.style.marginBottom = lh * 0.65 + "px";
+      if (sub) sub.style.marginBottom = lh * 1.5 + "px";
+    });
     const dir = join(ASSETS_DIR, brand.slug || "misc", "renders");
     mkdirSync(dir, { recursive: true });
     const out = join(dir, `${uuid()}.jpg`);
