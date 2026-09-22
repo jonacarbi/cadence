@@ -194,7 +194,7 @@ export async function extractBrand(brandId, report = () => {}, { codify = true }
   if (!memory && codify) {
     if (getSetting("design_loop", "on") === "on") {
       report(0.75, "Running the design gauntlet (critics iterate on the hero frame)…");
-      try { const { runDesignLoop } = await import("./designloop.js"); await runDesignLoop(brandId, (m) => report(0.75, m)); }
+      try { const { runDesignLoop } = await import("./designloop.js"); await runDesignLoop(brandId, (_p, m) => report(0.75, m)); }
       catch (e) { logEvent("warn", "design.loop", `skipped: ${e.message}`, { id: brandId }); }
     }
     report(0.85, "Codifying the look with design-dna (this takes a few minutes)…"); await codifyBrand(brandId);
@@ -207,6 +207,17 @@ export async function extractBrand(brandId, report = () => {}, { codify = true }
 }
 registerJob("brand-extract", extractBrand);
 
+/** design-system.md is the System critic's rulebook, so it must always describe the tokens the renderer actually uses.
+ * The loop mutates tokens and design-dna may rewrite the doc, so regenerate it from the row after either runs. */
+export function syncDesignSystemMd(id) {
+  const b = getBrand(id);
+  if (!b) return;
+  const md = designSystemMd(b.name, b.url, b.tokens, b.voice);
+  writeFileSync(join(b.dir, "design-system.md"), md);
+  update("brands", id, { design_system_md: md });
+  return md;
+}
+
 /** Run the design-dna skill on the site reference so the look becomes a permanent, reusable skill. */
 export async function codifyBrand(id) {
   const b = one("SELECT * FROM brands WHERE id = ?", id);
@@ -218,6 +229,7 @@ Add to dna.json meta: {"source":"${b.url}"}. The skill is for 1080x1350 and 1080
   await claude(prompt, { cwd: b.dir, agentic: true, args: ["--allowedTools", "Read,Write,Edit,Bash,Glob,Grep", "--permission-mode", "acceptEdits"], timeout: 30 * 60_000 });
   const ok = existsSync(join(SKILLS_DIR, skillSlug, "PROMPT.md"));
   update("brands", id, { status: ok ? "ready" : "ready-no-skill", skill_slug: ok ? skillSlug : null });
+  syncDesignSystemMd(id);
   logEvent(ok ? "info" : "warn", "brand.codify", ok ? `design skill ${skillSlug} ready` : "design-dna produced no skill; using local design-system.md", { id });
 }
 

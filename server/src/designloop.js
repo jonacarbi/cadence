@@ -8,7 +8,7 @@ import { registerJob } from './jobs.js';
 import { claude, completeJson } from './llm.js';
 import { renderFrame, LAYOUTS } from './render.js';
 import { generateImage } from './images.js';
-import { stylePrompt } from './brands.js';
+import { stylePrompt, syncDesignSystemMd } from './brands.js';
 import { getBrand } from './brands.js';
 
 const readOnly = { agentic: true, args: ['--allowedTools', 'Read'] };
@@ -64,6 +64,7 @@ Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tok
   tokens = { ...tokens, preferred_layout: layout };
   update('brands', brandId, { tokens_json: JSON.stringify(tokens) });
   writeFileSync(join(brand.dir, 'tokens.json'), JSON.stringify(tokens, null, 2));
+  syncDesignSystemMd(brandId);
   return { summary, tokens };
 }
 registerJob('design-loop', runDesignLoop);
