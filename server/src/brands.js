@@ -116,7 +116,7 @@ ${pal}
 
 ## Bans
 - No stock-photo gradients, no glossy 3D blobs, no default AI look.
-- No more than one accent element per frame. No text smaller than 3% of canvas height.
+- No more than one accent element per frame. No text smaller than 3% of canvas width (the narrow edge is what legibility scales with).
 - Never reproduce the logo by generation; composite the real logo file.
 `;
 }

@@ -13,7 +13,7 @@
   .eyebrow { font: 600 2.2vh var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
   h1 { font-family: var(--display); font-weight: 700; line-height: 1.06; letter-spacing: -0.02em; text-wrap: balance; }
   p.sub { font-size: 2.6vh; line-height: 1.48; color: var(--dim); max-width: 34ch; }
-  .pill { display: inline-block; padding: .9vh 2.4vh; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 600 2.2vh var(--body); }
+  .pill { display: inline-block; padding: 1.4vh 3.4vh; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 600 2.2vh var(--body); }
   .copy > .eyebrow { margin-bottom: 1.2vh; }
   .copy > h1 { margin-bottom: 2.4vh; }
   .copy > p.sub { margin-bottom: 4.8vh; }
@@ -21,35 +21,35 @@
 
   /* Layout A — editorial: photo top 58%, type block below on surface */
   .layout-editorial .photo { inset: 0 0 46% 0; }
-  .layout-editorial .copy { position: absolute; left: 8%; right: 8%; top: 58%; bottom: 8%; display: grid; align-content: end; }
+  .layout-editorial .copy { position: absolute; left: 8vw; right: 8vw; top: 58%; bottom: 8vw; display: grid; align-content: end; }
   .layout-editorial h1 { font-size: 6.6vh; }
-  .layout-editorial .logo { top: 6%; left: 8%; }
+  .layout-editorial .logo { top: 6vw; left: 8vw; }
 
   /* Layout B — full-bleed: photo everywhere, gradient scrim, type bottom-left */
   .layout-fullbleed .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 28%, color-mix(in oklab, var(--surface) 70%, transparent) 62%, color-mix(in oklab, var(--surface) 96%, transparent) 100%); }
-  .layout-fullbleed .copy { position: absolute; left: 8%; right: 8%; bottom: 8%; display: grid; }
+  .layout-fullbleed .copy { position: absolute; left: 8vw; right: 8vw; bottom: 8vw; display: grid; }
   .layout-fullbleed h1 { font-size: 8.4vh; }
-  .layout-fullbleed .logo { top: 6%; left: 8%; }
+  .layout-fullbleed .logo { top: 6vw; left: 8vw; }
 
   /* Layout C — split: type left on surface, photo right, framed with radius */
-  .layout-split .photo { inset: 8% 8% 8% 50%; border-radius: var(--radius); }
-  .layout-split .copy { position: absolute; left: 8%; width: 36%; top: 50%; transform: translateY(-50%); display: grid; }
+  .layout-split .photo { inset: 8vw 8vw 8vw 50%; border-radius: var(--radius); }
+  .layout-split .copy { position: absolute; left: 8vw; width: 36%; top: 50%; transform: translateY(-50%); display: grid; }
   .layout-split h1 { font-size: 6.2vh; }
-  .layout-split .logo { bottom: 8%; left: 8%; }
+  .layout-split .logo { bottom: 8vw; left: 8vw; }
 
   /* Layout D — typographic: no photo, giant headline, accent block */
   .layout-type .photo { display: none; }
-  .layout-type .copy { position: absolute; left: 8%; right: 8%; bottom: 8%; display: grid; align-content: end; }
+  .layout-type .copy { position: absolute; left: 8vw; right: 8vw; bottom: 8vw; display: grid; align-content: end; }
   .layout-type h1 { font-size: 9vh; }
   .layout-type .bar { width: 22%; height: 1.2vh; background: var(--accent); margin-top: 3vh; }
   .layout-type .pill { background: transparent; color: var(--text); box-shadow: inset 0 0 0 .3vh var(--dim); }
-  .layout-type .logo { bottom: 8%; right: 8%; }
+  .layout-type .logo { bottom: 8vw; right: 8vw; }
 
   /* Carousel slide (square): centered headline over secondary surface with small photo tile */
-  .layout-slide .photo { inset: 8% 8% 40% 8%; border-radius: var(--radius); }
-  .layout-slide .copy { position: absolute; left: 8%; right: 8%; bottom: 9%; display: grid; }
+  .layout-slide .photo { inset: 8vw 8vw 40% 8vw; border-radius: var(--radius); }
+  .layout-slide .copy { position: absolute; left: 8vw; right: 8vw; bottom: 8vw; display: grid; }
   .layout-slide h1 { font-size: 6.4vh; }
-  .layout-slide .counter { position: absolute; top: 4%; right: 8%; font: 600 2.2vh var(--body); opacity: .6; }
+  .layout-slide .counter { position: absolute; top: 4vw; right: 8vw; font: 600 2.2vh var(--body); opacity: .6; }
 </style></head>
 <body><div class="frame layout-{{layout}}">
   <div class="photo"></div>

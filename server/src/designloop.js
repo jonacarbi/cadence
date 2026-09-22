@@ -34,8 +34,8 @@ async function heroCopy(brand, root) {
   const v = brand.voice || {};
   const fallback = { headline: `This is ${brand.name}`, sub: v.tone || `What ${brand.name} is for.` };
   const copy = await completeJson(`Brand: ${brand.name}. Offer: ${v.offer || ''}. Audience: ${v.audience || ''}. Tone: ${v.tone || ''}.
-Write the copy for one Instagram post that states what this brand does. Return JSON {"headline":"max 45 characters, no trailing punctuation","sub":"max 65 characters, one complete sentence"}.`).catch(() => null);
-  const out = copy?.headline && copy?.sub ? { headline: String(copy.headline).slice(0, 60), sub: String(copy.sub).slice(0, 90) } : fallback;
+Write the copy for one Instagram post that states what this brand does. Return JSON {"headline":"max 22 characters, no trailing punctuation","sub":"max 55 characters, one complete sentence"}.`).catch(() => null);
+  const out = copy?.headline && copy?.sub ? { headline: String(copy.headline).slice(0, 30), sub: String(copy.sub).slice(0, 70) } : fallback;
   writeFileSync(file, JSON.stringify(out, null, 2));
   return out;
 }
