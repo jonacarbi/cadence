@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="{{lang}}"><head><meta charset="utf-8">
 <style>
-  :root { --surface: {{surface}}; --text: {{text}}; --accent: {{accent}}; --secondary: {{secondary}}; --radius: {{radius}};
+  :root { --surface: {{surface}}; --text: {{text}}; --accent: {{accent}}; --secondary: {{secondary}}; --accent-ink: {{accentInk}}; --radius: {{radius}};
           --display: "{{displayFont}}", "Inter", -apple-system, sans-serif; --body: "{{bodyFont}}", "Inter", -apple-system, sans-serif; }
   * { box-sizing: border-box; margin: 0; }
   html, body { width: {{w}}px; height: {{h}}px; overflow: hidden; background: var(--surface); color: var(--text); font-family: var(--body); }
@@ -11,7 +11,7 @@
   .eyebrow { font: 600 2.2vh var(--body); letter-spacing: 0.18em; text-transform: uppercase; color: color-mix(in oklab, var(--text) 62%, var(--surface)); }
   h1 { font-family: var(--display); font-weight: 700; line-height: 0.98; letter-spacing: -0.03em; text-wrap: balance; }
   p.sub { font-size: 2.6vh; line-height: 1.35; opacity: .82; max-width: 34ch; }
-  .pill { display: inline-block; padding: .9vh 2.4vh; border-radius: 999px; background: var(--accent); color: var(--surface); font: 600 2.2vh var(--body); }
+  .pill { display: inline-block; padding: .9vh 2.4vh; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 600 2.2vh var(--body); }
   .copy > .eyebrow { margin-bottom: 1.2vh; }
   .copy > h1 { margin-bottom: 2.4vh; }
   .copy > p.sub { margin-bottom: 4.8vh; }

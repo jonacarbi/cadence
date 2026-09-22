@@ -21,6 +21,15 @@ export async function closeBrowser() { /* Each render closes its own browser. */
 
 const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", svg: "image/svg+xml", webp: "image/webp", gif: "image/gif" };
 // setContent pages have an opaque origin, so local files go in as data URIs.
+// The pill label sits on the accent fill, so its ink follows the accent's luminance instead of the surface token,
+// which can land at 4:1 on a mid accent.
+const ink = (hex) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
+  if (!m) return "#ffffff";
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.55 ? "#0b0b0f" : "#ffffff";
+};
+
 const dataUrl = (p) => (p && existsSync(p) ? `data:${MIME[p.split(".").pop().toLowerCase()] || "image/png"};base64,${readFileSync(p).toString("base64")}` : "");
 
 /**
@@ -34,7 +43,7 @@ export async function renderFrame(opts) {
   const tpl = readFileSync(join(TEMPLATES_DIR, "post.html"), "utf8");
   const html = fill(tpl, {
     w, h, lang: brand.voice?.language || "en", layout,
-    surface: t.colors?.surface || "#fff", text: t.colors?.text || "#111", accent: t.colors?.accent || "#2563eb", secondary: t.colors?.secondary || "#f2f2f2",
+    surface: t.colors?.surface || "#fff", text: t.colors?.text || "#111", accent: t.colors?.accent || "#2563eb", accentInk: ink(t.colors?.accent || "#2563eb"), secondary: t.colors?.secondary || "#f2f2f2",
     radius: t.radius || "8px", displayFont: t.fonts?.display || "Inter", bodyFont: t.fonts?.body || "Inter",
     image: dataUrl(opts.image), logo: dataUrl(brand.logo_path),
     headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
