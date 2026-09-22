@@ -11,7 +11,8 @@ import { generateImage } from './images.js';
 import { stylePrompt, syncDesignSystemMd } from './brands.js';
 import { getBrand } from './brands.js';
 
-const readOnly = { agentic: true, args: ['--allowedTools', 'Read'] };
+const readOnly = { agentic: true, args: ['--allowedTools', 'Read'], timeout: 20 * 60_000 };
+const critic = (p, o) => claude(p, o).catch((e) => `VERDICT: FAIL\nCritic did not answer: ${e.message}`);
 const verdict = (text) => /VERDICT:\s*PASS/i.test(text);
 const clamp = (s, n) => (s.length <= n ? s : s.slice(0, s.lastIndexOf(' ', n)) + '…');
 const BRIEF = 'Make a scroll-stopping Instagram post for this brand that a follower recognizes as the brand within one second.';
@@ -28,9 +29,9 @@ So write every mechanism so it can be checked against that frame and fixed by th
 
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
-    claude(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
-    claude(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. Mechanically list every violation of the system with the rule it breaks. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
-    claude(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, { ...readOnly, model: 'opus' }),
+    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
+    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. Mechanically list every violation of the system with the rule it breaks. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
+    critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, { ...readOnly, model: 'opus' }),
   ]);
   writeFileSync(join(dir, 'critics.md'), `# Brief\n${brief}\n\n# System\n${system}\n\n# Craft\n${craft}\n`);
   return { pass: verdict(brief) && verdict(system) && verdict(craft), notes: [brief, system, craft].filter((t) => !verdict(t)).join('\n\n') };
