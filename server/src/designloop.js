@@ -13,6 +13,7 @@ import { getBrand } from './brands.js';
 
 const readOnly = { agentic: true, args: ['--allowedTools', 'Read'] };
 const verdict = (text) => /VERDICT:\s*PASS/i.test(text);
+const clamp = (s, n) => (s.length <= n ? s : s.slice(0, s.lastIndexOf(' ', n)) + '…');
 const BRIEF = 'Make a scroll-stopping Instagram post for this brand that a follower recognizes as the brand within one second.';
 
 async function tearDown(brand, dir) {
@@ -46,11 +47,11 @@ export async function runDesignLoop(brandId, report = () => {}) {
   let image = null;
   try {
     report(0.05, 'Generating the hero image');
-    image = await generateImage(`Hero image for ${brand.name}: ${brand.voice?.summary || brand.voice?.tagline || 'the brand'}.\n\nStyle notes: ${stylePrompt(brand).slice(0, 1200)}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect: 'portrait', brandSlug: brand.slug });
+    image = await generateImage(`Hero image for ${brand.name}: ${brand.voice?.offer || brand.name}.\n\nStyle notes: ${stylePrompt(brand).slice(0, 1200)}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect: 'portrait', brandSlug: brand.slug });
   } catch (e) { logEvent('warn', 'design.loop', `${brand.name}: no hero image (${e.message}); judging type-only layout`, { id: brandId }); layout = 'type'; }
   for (let r = 1; r <= rounds; r++) {
     const dir = join(root, `round-${r}`); mkdirSync(dir, { recursive: true });
-    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: brand.voice?.tagline || `This is ${brand.name}`, sub: brand.voice?.summary || brand.voice?.tagline || `What ${brand.name} is for, in one line.`, cta: 'Learn more', image });
+    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: clamp((brand.voice?.offer || `This is ${brand.name}`).split(/(?<=\.)\s/)[0], 70), sub: clamp(brand.voice?.audience || brand.voice?.tone || `What ${brand.name} is for, in one line.`, 80), cta: 'Learn more', image });
     copyFileSync(frame, join(dir, 'hero.png'));
     const { pass, notes } = await judge(join(dir, 'hero.png'), brand, bar, dir);
     summary = `R${r} · ${pass ? 'all PASS' : 'FAIL'}`; report(0.05 + 0.9 * r / rounds, summary); logEvent('info', 'design.loop', `${brand.name}: ${summary}`, { id: brandId });
