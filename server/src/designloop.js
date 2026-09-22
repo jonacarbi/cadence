@@ -9,6 +9,7 @@ import { claude, completeJson } from './llm.js';
 import { renderFrame, LAYOUTS } from './render.js';
 import { generateImage } from './images.js';
 import { stylePrompt, syncDesignSystemMd } from './brands.js';
+import { resolveFonts } from './fonts.js';
 import { getBrand } from './brands.js';
 
 const readOnly = { agentic: true, args: ['--allowedTools', 'Read'], timeout: 20 * 60_000 };
@@ -57,7 +58,14 @@ export async function runDesignLoop(brandId, report = () => {}) {
   const rounds = Number(getSetting('design_loop_rounds', '3'));
   const bar = await tearDown(brand, root);
   const copy = await heroCopy(brand, root);
-  let tokens = brand.tokens, layout = 'editorial', summary = '';
+  // The System critic reads design-system.md against the pixels, so the tokens must name the fonts that
+  // actually render. The brand's licensed originals stay on record under fonts.requested.
+  const resolved = await resolveFonts(brand.tokens);
+  let tokens = { ...brand.tokens, fonts: { display: resolved.display, body: resolved.body, requested: brand.tokens?.fonts } };
+  let layout = 'editorial', summary = '';
+  // The critics read design-system.md while the loop runs, so the doc has to match round 1's pixels, not the last run's.
+  update('brands', brandId, { tokens_json: JSON.stringify(tokens) });
+  syncDesignSystemMd(brandId);
   // Same pipeline as real posts: one OpenAI image in the brand's style. Without it, the type-only layout is judged.
   let image = null;
   try {
@@ -74,7 +82,11 @@ export async function runDesignLoop(brandId, report = () => {}) {
     // Builder: the template is fixed; tokens + layout choice are the design.
     const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}. Current layout: "${layout}" (options: ${LAYOUTS.join(', ')}; "type" has no photo).
 Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tokens with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode})>, "layout": "<one of the options>"}. Only change what the critics asked for; keep the brand's real colours and fonts.`, { model: 'opus' });
-    if (next?.tokens?.colors && next?.tokens?.fonts) { tokens = next.tokens; writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2)); }
+    if (next?.tokens?.colors && next?.tokens?.fonts) {
+      // The builder answers with the four colour knobs; the measured palette is evidence, not a knob, so it survives.
+      tokens = { ...next.tokens, colors: { palette: tokens.colors?.palette, ...next.tokens.colors }, fonts: { requested: tokens.fonts?.requested, ...next.tokens.fonts } };
+      writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2));
+    }
     if (LAYOUTS.includes(next?.layout) && (image || next.layout === 'type')) layout = next.layout;
   }
   tokens = { ...tokens, preferred_layout: layout };

@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 19:22:02 -03
-- **Built on commit:** 103cc41 — fix: type scale, rhythm and tracking derived from the headline's final size (Jonathan Carbiere, 2026-09-22)
+- **Last updated:** 2026-09-22 20:13:26 -03
+- **Built on commit:** 2e4270f — fix: size type from a legibility floor and lift the accent to 4.5:1 (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -73,7 +73,7 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Languages
 
-- .js — 53 file(s)
+- .js — 54 file(s)
 - .swift — 12 file(s)
 - .md — 4 file(s)
 - .json — 3 file(s)
@@ -86,13 +86,14 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 ## Changes in this commit
 
 - M	server/src/brands.js
-- M	server/src/campaigns.js
 - M	server/src/designloop.js
+- A	server/src/fonts.js
 - M	server/src/render.js
 - M	server/templates/post.html
 
 ## Recent history
 
+- 2e4270f fix: size type from a legibility floor and lift the accent to 4.5:1 _(Jonathan Carbiere, 2026-09-22)_
 - 103cc41 fix: type scale, rhythm and tracking derived from the headline's final size _(Jonathan Carbiere, 2026-09-22)_
 - f38cb11 fix: hero frame carries a written post line, not a truncated offer paragraph _(Jonathan Carbiere, 2026-09-22)_
 - 8c45f79 fix: a slow vision critic no longer kills the design loop _(Jonathan Carbiere, 2026-09-22)_
@@ -102,6 +103,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - fcc4776 fix: teardown bar now only asks for mechanisms the frame and token knobs can satisfy _(Jonathan Carbiere, 2026-09-22)_
 - 410cc77 fix: design loop reported its round summary as job progress, failing the job at the SQLite bind _(Jonathan Carbiere, 2026-09-22)_
 - 307b5bb fix: run claude from a stable cwd so an app update doesn't break every agentic job _(Jonathan Carbiere, 2026-09-22)_
-- 22b4de8 fix: log account.connected when an account is created with direct credentials _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->

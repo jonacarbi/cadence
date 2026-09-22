@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { TEMPLATES_DIR, ASSETS_DIR } from "./config.js";
 import { uuid } from "./db.js";
 import { routePublic } from './network.js';
+import { resolveFonts } from './fonts.js';
 
 export const CANVAS = { portrait: [1080, 1350], square: [1080, 1080], landscape: [1200, 630] };
 export const LAYOUTS = ["editorial", "fullbleed", "split", "type"];
@@ -14,7 +15,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 function fill(tpl, vars) {
   return tpl
     .replace(/{{#(\w+)}}([\s\S]*?){{\/\1}}/g, (_, k, inner) => (vars[k] ? inner : ""))
-    .replace(/{{(\w+)}}/g, (_, k) => (k === "image" || k === "logo" ? String(vars[k] ?? "") : esc(vars[k])));
+    .replace(/{{(\w+)}}/g, (_, k) => (["image", "logo", "fontCss"].includes(k) ? String(vars[k] ?? "") : esc(vars[k])));
 }
 
 export async function closeBrowser() { /* Each render closes its own browser. */ }
@@ -64,11 +65,12 @@ export async function renderFrame(opts) {
   const t = brand.tokens || {};
   const surface = t.colors?.surface || "#fff";
   const accent = contrastFix(t.colors?.accent || "#2563eb", surface);
+  const fonts = await resolveFonts(t);
   const tpl = readFileSync(join(TEMPLATES_DIR, "post.html"), "utf8");
   const html = fill(tpl, {
     w, h, lang: brand.voice?.language || "en", layout,
     surface, text: t.colors?.text || "#111", accent, accentInk: ink(accent), secondary: t.colors?.secondary || "#f2f2f2",
-    radius: t.radius || "8px", displayFont: t.fonts?.display || "Inter", bodyFont: t.fonts?.body || "Inter",
+    radius: t.radius || "8px", displayFont: fonts.display, bodyFont: fonts.body, fontCss: fonts.css,
     image: dataUrl(opts.image), logo: dataUrl(brand.logo_path),
     headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
   });

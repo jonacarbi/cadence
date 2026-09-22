@@ -86,7 +86,8 @@ export function deriveTokens(raw) {
 }
 
 export function designSystemMd(name, url, t, voice) {
-  const pal = t.colors.palette.map((p) => `- ${p.hex} — ${p.coverage}% coverage`).join("\n");
+  // The design loop's builder returns tokens without the measured palette, so treat it as optional.
+  const pal = (t.colors.palette || []).map((p) => `- ${p.hex} — ${p.coverage}% coverage`).join("\n");
   return `# ${name} — Design System
 Source: ${url}  ·  Mode: ${t.mode}
 
