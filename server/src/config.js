@@ -14,7 +14,7 @@ const HOME = process.env.HOME;
 // are invisible or resolve to a different install than their shell uses. Adopt the login shell's PATH once.
 if (!process.env.CADENCE_PATH_FIXED) {
   try {
-    const shellPath = execFileSync(process.env.SHELL || "/bin/zsh", ["-lic", "printf %s \"$PATH\""], { encoding: "utf8", timeout: 10_000, stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const shellPath = execFileSync(process.env.SHELL || "/bin/zsh", ["-lic", "printf %s \"$PATH\""], { encoding: "utf8", timeout: 10_000, stdio: ["ignore", "pipe", "ignore"], cwd: HOME }).trim();
     if (shellPath.includes("/")) process.env.PATH = shellPath;
   } catch { /* keep the inherited PATH */ }
   process.env.CADENCE_PATH_FIXED = "1";

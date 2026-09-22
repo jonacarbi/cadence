@@ -1,12 +1,14 @@
 // LLM access: Claude Code CLI (`claude -p`, Pro subscription) first, 9Router chat completions as fallback.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTER_MODEL, TEXT_PROVIDER } from "./config.js";
+import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTER_MODEL, TEXT_PROVIDER, APP_DIR } from "./config.js";
 
 const exec = promisify(execFile);
 
 /** Run a prompt through `claude -p`. Extra args let callers enable tools/skills for agentic jobs. */
-export async function claude(prompt, { system = "", model = LLM_MODEL, args = [], cwd, timeout = 600_000, agentic = false } = {}) {
+// cwd defaults to APP_DIR: an app update replaces the bundle the server was launched from, and `claude`
+// refuses to run ("current working directory was deleted") when it inherits that stale inode.
+export async function claude(prompt, { system = "", model = LLM_MODEL, args = [], cwd = APP_DIR, timeout = 600_000, agentic = false } = {}) {
   // Plain completions run locked down (no tools, no skills). Agentic jobs (design-dna, critics) keep user skills + the tools they pass.
   const lockdown = agentic ? ["--setting-sources", "user"] : ["--tools", "", "--setting-sources", "", "--disable-slash-commands"];
   const argv = ["-p", prompt, "--model", model, "--output-format", "text", ...args, ...lockdown, "--strict-mcp-config", "--no-session-persistence"];
