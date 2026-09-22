@@ -9,7 +9,7 @@ struct Readiness: Decodable {
 /// Autonomy dial, webhooks, design loop, and where the local service keeps its state.
 struct SettingsView: View {
     @EnvironmentObject private var store: Store
-    @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "")
+    @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "", auto_plan: "off")
     @State private var saved = false
     @State private var readiness: Readiness?
     private let levels = [("review_all", "Review everything", "Every post waits for your approval."),
@@ -45,6 +45,10 @@ struct SettingsView: View {
                 HStack { Text("Rounds"); Stepper(value: Binding(get: { Int(settings.design_loop_rounds) ?? 3 }, set: { settings.design_loop_rounds = String($0) }), in: 1...6) { Text(settings.design_loop_rounds.isEmpty ? "3" : settings.design_loop_rounds) } }
                 Text("Three fresh critics (brief · system · craft) judge the rendered hero until it passes the bar torn down from the client’s own site.").font(.caption).foregroundStyle(.secondary)
             }
+            section("Monthly cadence") {
+                Toggle("Plan the next month automatically, reusing the last month's brief and settings", isOn: Binding(get: { settings.auto_plan == "on" }, set: { settings.auto_plan = $0 ? "on" : "off" }))
+                Text("Drafts still land in the approval inbox; autonomy decides what happens after that.").font(.caption).foregroundStyle(.secondary)
+            }
             section("Webhooks") {
                 TextField("https://… (called on publish, failure, approval needed)", text: $settings.webhook_url)
                 SecureField("Signing secret (optional, sent as x-cadence-signature)", text: $settings.webhook_secret)
@@ -69,7 +73,7 @@ struct SettingsView: View {
     private func save() {
         Task {
             await store.act {
-                let body: [String: Any] = ["autonomy": settings.autonomy, "webhook_url": settings.webhook_url, "webhook_secret": settings.webhook_secret, "design_loop": settings.design_loop, "design_loop_rounds": settings.design_loop_rounds, "cap_per_account_per_day": settings.cap_per_account_per_day]
+                let body: [String: Any] = ["autonomy": settings.autonomy, "webhook_url": settings.webhook_url, "webhook_secret": settings.webhook_secret, "design_loop": settings.design_loop, "design_loop_rounds": settings.design_loop_rounds, "cap_per_account_per_day": settings.cap_per_account_per_day, "timezone": settings.timezone, "auto_plan": settings.auto_plan]
                 let _: MutationResult = try await store.request("/api/settings", method: "PUT", body: body)
                 settings = try await store.request("/api/settings"); saved = true
             }

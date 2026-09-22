@@ -4,9 +4,9 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 const dir=mkdtempSync(join(tmpdir(),'cadence-plan-'));process.env.CADENCE_DIR=join(dir,'app');
-const {db,insert,all}=await import('../src/db.js');
+const {db,insert,all,one,run,setSetting}=await import('../src/db.js');
 const {importDesignSystem,activateDesignSystem}=await import('../src/design-systems.js');
-const {createCampaign,planCampaign,localSchedule}=await import('../src/campaigns.js');
+const {createCampaign,planCampaign,localSchedule,rollMonthlyCampaigns}=await import('../src/campaigns.js');
 const source=join(dir,'source');mkdirSync(source);writeFileSync(join(source,'DESIGN.md'),'# Client identity\nUse dusty plum and 8% margins.');
 const brand=insert('brands',{slug:'test',name:'Test',url:'https://example.com',dir});
 const system=importDesignSystem(brand,{source_path:source});activateDesignSystem(brand,system.id);
@@ -28,4 +28,21 @@ test('timezone conversion follows daylight saving and rejects nonexistent local 
  assert.equal(localSchedule('2026-01',10,10,'America/New_York'),'2026-01-10T15:00:00.000Z');
  assert.equal(localSchedule('2026-07',10,10,'America/New_York'),'2026-07-10T14:00:00.000Z');
  assert.throws(()=>localSchedule('2026-03',8,2,'America/New_York'),/does not exist/);
+});
+
+test('recurring planning repeats last month\'s settings once the owner enables it',()=> {
+ const b2=insert('brands',{slug:'roll',name:'Roll',url:'https://rolling.example',dir});
+ const s2=importDesignSystem(b2,{source_path:source});activateDesignSystem(b2,s2.id);
+ const {campaign}=createCampaign({brand_id:b2,month:'2026-11',count:2,platforms:['mastodon'],hour:9,time_zone:'UTC',brief:'Keep it steady'},{queue:false});
+ const january=new Date('2027-01-05T12:00:00Z');
+ const mine=list=>list.filter(c=>c.brand_id===b2);
+ assert.deepEqual(mine(rollMonthlyCampaigns({now:january})),[],'off by default');
+ setSetting('auto_plan','on');
+ assert.deepEqual(mine(rollMonthlyCampaigns({now:january})),[],'a campaign that never finished planning is not repeated');
+ run("UPDATE campaigns SET status='visuals' WHERE id=?",campaign.id);
+ const [next]=mine(rollMonthlyCampaigns({now:january}));
+ assert.equal(next.month,'2027-01');assert.equal(next.brief,'Keep it steady');
+ assert.deepEqual(JSON.parse(one('SELECT plan_json FROM campaigns WHERE id=?',next.id).plan_json).platforms,['mastodon']);
+ assert.deepEqual(mine(rollMonthlyCampaigns({now:january})),[],'the same month is never planned twice');
+ setSetting('auto_plan','off');
 });

@@ -17,7 +17,7 @@ import { getBrand, slugify } from './brands.js';
 import { loadRules, saveRules } from './lint.js';
 
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.md': 'text/markdown', '.json': 'application/json' };
-const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds'];
+const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan'];
 
 function parseSite(url) {
   let site; try { site = new URL(url); } catch { throw new WorkflowError('A valid website URL is required'); }
@@ -118,7 +118,7 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
       if(k==='autonomy'&&!LEVELS.includes(v))throw new WorkflowError('Invalid autonomy level');
       if(k==='cap_per_account_per_day'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>100))throw new WorkflowError('Daily cap must be 1–100 or empty');
       if(k==='design_loop_rounds'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>6))throw new WorkflowError('Design rounds must be 1–6');
-      if(k==='design_loop'&&!['','on','off'].includes(v))throw new WorkflowError('Design loop must be on or off');
+      if((k==='design_loop'||k==='auto_plan')&&!['','on','off'].includes(v))throw new WorkflowError(`${k==='auto_plan'?'Recurring planning':'Design loop'} must be on or off`);
       if(k==='timezone'&&v)try{new Intl.DateTimeFormat('en',{timeZone:v}).format();}catch{throw new WorkflowError('Unknown timezone');}
       if(k==='webhook_url'&&v)try{const u=new URL(v);if(u.protocol!=='https:'||u.username||u.password)throw 0;}catch{throw new WorkflowError('webhook_url must be https');}
     }

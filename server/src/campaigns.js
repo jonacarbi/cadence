@@ -1,4 +1,4 @@
-import { one, all, insert, update, hydrate } from './db.js';
+import { one, all, insert, update, hydrate, getSetting, logEvent } from './db.js';
 import { createPost, transaction, WorkflowError } from './workflow.js';
 import { designContext } from './design-systems.js';
 import { completeJson } from './llm.js';
@@ -80,3 +80,20 @@ Exactly ${count} posts on distinct days in the month. ${dates ? `Use these exact
 }
 registerJob('campaign-plan',planCampaign);
 export function listCampaigns(brandId) {return all('SELECT * FROM campaigns WHERE brand_id=? ORDER BY created_at DESC',brandId).map(hydrate);}
+
+/** Recurring campaigns: once a brand's last month was planned, plan the new month with the same settings. */
+export function rollMonthlyCampaigns({ now = new Date() } = {}) {
+ if(getSetting('auto_plan','off')!=='on')return [];
+ const started=[];
+ for(const brand of all('SELECT id FROM brands')) {
+  const last=one("SELECT * FROM campaigns WHERE brand_id=? AND status='visuals' ORDER BY month DESC LIMIT 1",brand.id);
+  if(!last)continue;
+  const settings=JSON.parse(last.plan_json);
+  const month=new Intl.DateTimeFormat('en-CA',{timeZone:settings.timeZone,year:'numeric',month:'2-digit'}).format(now).slice(0,7);
+  if(month<=last.month||one('SELECT id FROM campaigns WHERE brand_id=? AND month=?',brand.id,month))continue;
+  const {campaign}=createCampaign({brand_id:brand.id,month,brief:last.brief,count:settings.count,hour:settings.hour,time_zone:settings.timeZone,platforms:settings.platforms});
+  logEvent('info','campaign.recurring',`Planning ${month} for this brand from last month's settings`,{id:brand.id});
+  started.push(campaign);
+ }
+ return started;
+}

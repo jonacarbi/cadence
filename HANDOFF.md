@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 13:53:23 -03
-- **Built on commit:** 9a95fbc — feat: design loop, MCP server, full mac UI, bundled deps and launchd service (Jonathan Carbiere, 2026-09-18)
+- **Last updated:** 2026-09-22 14:00:42 -03
+- **Built on commit:** 2c2d936 — feat: ship the macOS workspace, OpenAI-hero design loop and content agent (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,68 +85,17 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	.env.example
-- M	HANDOFF.md
-- M	README.md
-- M	docs/COMPETITOR-RESEARCH.md
-- A	docs/RELEASE-0.2.0.md
-- M	mac/Sources/Cadence/CadenceApp.swift
 - M	mac/Sources/Cadence/Models.swift
-- A	mac/Sources/Cadence/Views/ContentAgentView.swift
-- M	mac/Sources/Cadence/Views/DesignSystemsView.swift
-- M	mac/Sources/Cadence/Views/Forms.swift
-- M	mac/Sources/Cadence/Views/PlannerView.swift
-- M	mac/Sources/Cadence/Views/PostDetail.swift
 - M	mac/Sources/Cadence/Views/SettingsView.swift
-- M	scripts/build-macos.sh
-- A	scripts/smoke-agent.mjs
-- M	server/package-lock.json
-- M	server/package.json
-- M	server/src/api.js
-- M	server/src/autonomy.js
-- M	server/src/brands.js
-- A	server/src/browser.js
 - M	server/src/campaigns.js
-- M	server/src/config.js
-- A	server/src/content-agent.js
-- M	server/src/db.js
-- M	server/src/designloop.js
-- M	server/src/images.js
-- M	server/src/lint.js
 - M	server/src/llm.js
-- M	server/src/mcp.js
-- M	server/src/media.js
-- M	server/src/network.js
-- M	server/src/oauth.js
-- A	server/src/oga-images.js
-- M	server/src/providers/bluesky.js
-- M	server/src/providers/discord.js
-- M	server/src/providers/facebook.js
-- M	server/src/providers/http.js
-- M	server/src/providers/index.js
-- M	server/src/providers/instagram.js
-- M	server/src/providers/linkedin.js
-- M	server/src/providers/mastodon.js
-- M	server/src/providers/pinterest.js
-- M	server/src/providers/registry.js
-- M	server/src/providers/telegram.js
-- M	server/src/providers/threads.js
-- M	server/src/providers/x.js
-- A	server/src/readiness.js
-- M	server/src/render.js
 - M	server/src/routes-extra.js
 - M	server/src/scheduler.js
-- M	server/src/visuals.js
-- M	server/src/webhooks.js
-- M	server/src/workflow.js
-- A	server/tests/content-agent.test.js
-- M	server/tests/extra.test.js
-- A	server/tests/oga-images.test.js
-- A	server/tests/providers.test.js
-- M	server/tests/workflow.test.js
+- M	server/tests/campaigns.test.js
 
 ## Recent history
 
+- 2c2d936 feat: ship the macOS workspace, OpenAI-hero design loop and content agent _(Jonathan Carbiere, 2026-09-22)_
 - 9a95fbc feat: design loop, MCP server, full mac UI, bundled deps and launchd service _(Jonathan Carbiere, 2026-09-18)_
 - 9b89de9 feat: cadence server core — fail-closed workflow, brand extraction, visuals, autonomy dial, REST API _(Jonathan Carbiere, 2026-09-18)_
 

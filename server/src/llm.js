@@ -18,7 +18,8 @@ export async function claude(prompt, { system = "", model = LLM_MODEL, args = []
     return stdout.trim();
   } catch(error) {
     if(/limit|quota/i.test(error.stdout||''))throw new Error('Claude usage limit reached. Configure CADENCE_FALLBACK_MODEL for 9Router or wait for your quota to reset.');
-    throw new Error(`Claude generation failed (${error.code||'timeout'}). Check Claude sign-in and local service logs.`);
+    const detail=(error.stderr||error.stdout||'').trim().slice(-300);
+    throw new Error(`Claude generation failed (${error.code||'timeout'})${detail?`: ${detail}`:'. Check Claude sign-in and local service logs.'}`);
   }
 }
 

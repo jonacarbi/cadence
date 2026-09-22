@@ -64,6 +64,7 @@ struct Settings: Codable {
     var design_loop_rounds: String
     var cap_per_account_per_day: String
     var timezone: String
+    var auto_plan: String
 }
 struct Event: Codable, Identifiable {
     let id: Int
