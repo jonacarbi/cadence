@@ -14,7 +14,6 @@ import { getBrand } from './brands.js';
 const readOnly = { agentic: true, args: ['--allowedTools', 'Read'], timeout: 20 * 60_000 };
 const critic = (p, o) => claude(p, o).catch((e) => `VERDICT: FAIL\nCritic did not answer: ${e.message}`);
 const verdict = (text) => /VERDICT:\s*PASS/i.test(text);
-const clamp = (s, n) => (s.length <= n ? s : s.slice(0, s.lastIndexOf(' ', n)) + '…');
 const BRIEF = 'Make a scroll-stopping Instagram post for this brand that a follower recognizes as the brand within one second.';
 
 async function tearDown(brand, dir) {
@@ -25,6 +24,20 @@ async function tearDown(brand, dir) {
 The frame being judged contains exactly these elements and nothing else: an eyebrow line, a headline of 1–4 lines, a sub line, a CTA pill, an optional full-width photo, and an optional accent rule. The only things adjustable are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used.
 So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, { ...readOnly, model: 'opus' });
   writeFileSync(bar, text); return bar;
+}
+
+// The offer sentence is a paragraph, and a truncated headline reads as broken copy to the Brief critic,
+// so the frame gets a real post line written once per brand and reused across rounds.
+async function heroCopy(brand, root) {
+  const file = join(root, 'hero-copy.json');
+  if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'));
+  const v = brand.voice || {};
+  const fallback = { headline: `This is ${brand.name}`, sub: v.tone || `What ${brand.name} is for.` };
+  const copy = await completeJson(`Brand: ${brand.name}. Offer: ${v.offer || ''}. Audience: ${v.audience || ''}. Tone: ${v.tone || ''}.
+Write the copy for one Instagram post that states what this brand does. Return JSON {"headline":"max 45 characters, no trailing punctuation","sub":"max 65 characters, one complete sentence"}.`).catch(() => null);
+  const out = copy?.headline && copy?.sub ? { headline: String(copy.headline).slice(0, 60), sub: String(copy.sub).slice(0, 90) } : fallback;
+  writeFileSync(file, JSON.stringify(out, null, 2));
+  return out;
 }
 
 async function judge(frame, brand, bar, dir) {
@@ -43,6 +56,7 @@ export async function runDesignLoop(brandId, report = () => {}) {
   const root = join(brand.dir, 'design-loop'); mkdirSync(root, { recursive: true });
   const rounds = Number(getSetting('design_loop_rounds', '3'));
   const bar = await tearDown(brand, root);
+  const copy = await heroCopy(brand, root);
   let tokens = brand.tokens, layout = 'editorial', summary = '';
   // Same pipeline as real posts: one OpenAI image in the brand's style. Without it, the type-only layout is judged.
   let image = null;
@@ -52,7 +66,7 @@ export async function runDesignLoop(brandId, report = () => {}) {
   } catch (e) { logEvent('warn', 'design.loop', `${brand.name}: no hero image (${e.message}); judging type-only layout`, { id: brandId }); layout = 'type'; }
   for (let r = 1; r <= rounds; r++) {
     const dir = join(root, `round-${r}`); mkdirSync(dir, { recursive: true });
-    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: clamp((brand.voice?.offer || `This is ${brand.name}`).split(/(?<=\.)\s/)[0], 70), sub: clamp(brand.voice?.audience || brand.voice?.tone || `What ${brand.name} is for, in one line.`, 80), cta: 'Learn more', image });
+    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: copy.headline, sub: copy.sub, cta: 'Learn more', image });
     copyFileSync(frame, join(dir, 'hero.png'));
     const { pass, notes } = await judge(join(dir, 'hero.png'), brand, bar, dir);
     summary = `R${r} · ${pass ? 'all PASS' : 'FAIL'}`; report(0.05 + 0.9 * r / rounds, summary); logEvent('info', 'design.loop', `${brand.name}: ${summary}`, { id: brandId });
