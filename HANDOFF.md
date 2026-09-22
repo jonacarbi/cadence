@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 14:21:28 -03
-- **Built on commit:** 22b4de8 — fix: log account.connected when an account is created with direct credentials (Jonathan Carbiere, 2026-09-22)
+- **Last updated:** 2026-09-22 14:28:02 -03
+- **Built on commit:** 307b5bb — fix: run claude from a stable cwd so an app update doesn't break every agentic job (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,11 +85,13 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	server/src/config.js
-- M	server/src/llm.js
+- M	server/src/designloop.js
+- M	server/src/jobs.js
+- M	server/tests/extra.test.js
 
 ## Recent history
 
+- 307b5bb fix: run claude from a stable cwd so an app update doesn't break every agentic job _(Jonathan Carbiere, 2026-09-22)_
 - 22b4de8 fix: log account.connected when an account is created with direct credentials _(Jonathan Carbiere, 2026-09-22)_
 - dca9c29 fix: use the login shell's PATH so the app finds the user's CLI tools _(Jonathan Carbiere, 2026-09-22)_
 - caf159d feat: recurring monthly planning and claude failure detail _(Jonathan Carbiere, 2026-09-22)_

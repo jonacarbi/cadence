@@ -23,7 +23,8 @@ export async function workOne() {
   update('jobs',job.id,{status:'running',message:'Starting'});return job;
  });
  if(!job)return false;
- const report=(progress,message)=>update('jobs',job.id,{progress,message});
+ // Coerce: a handler reporting a bad progress value must not kill the job at the SQLite bind.
+ const report=(progress,message)=>update('jobs',job.id,{progress:Number.isFinite(Number(progress))?Number(progress):0,message:String(message??'')});
  try {
   const handler=handlers.get(job.type);if(!handler)throw new Error(`No handler for ${job.type}`);
   await handler(job.ref_id,report);report(1,'Complete');update('jobs',job.id,{status:'complete'});

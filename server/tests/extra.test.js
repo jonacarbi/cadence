@@ -80,3 +80,14 @@ test('settings reject partial invalid changes and never reveal secrets to agent 
  assert.equal((await(await req('/api/settings')).json()).autonomy,before.autonomy);
  assert.equal((await req('/api/settings',{token:agentToken})).status,403);
 });
+
+test('a handler that reports a bad progress value still completes', async () => {
+  const { registerJob, enqueue, workOne } = await import('../src/jobs.js');
+  const { one } = await import('../src/db.js');
+  registerJob('progress-probe', async (_ref, report) => { report('R1 · FAIL'); });
+  const job = enqueue('progress-probe', 'probe-ref');
+  for (let i = 0; i < 20 && one('SELECT status FROM jobs WHERE id = ?', job.id).status === 'queued'; i++) await workOne();
+  const done = one('SELECT * FROM jobs WHERE id = ?', job.id);
+  assert.equal(done.status, 'complete');
+  assert.equal(done.message, 'Complete');
+});

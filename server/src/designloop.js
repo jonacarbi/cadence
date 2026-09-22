@@ -50,7 +50,7 @@ export async function runDesignLoop(brandId, report = () => {}) {
     const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: brand.voice?.tagline || `This is ${brand.name}`, sub: brand.voice?.summary || '', cta: 'Learn more', image });
     copyFileSync(frame, join(dir, 'hero.png'));
     const { pass, notes } = await judge(join(dir, 'hero.png'), brand, bar, dir);
-    summary = `R${r} · ${pass ? 'all PASS' : 'FAIL'}`; report(summary); logEvent('info', 'design.loop', `${brand.name}: ${summary}`, { id: brandId });
+    summary = `R${r} · ${pass ? 'all PASS' : 'FAIL'}`; report(0.05 + 0.9 * r / rounds, summary); logEvent('info', 'design.loop', `${brand.name}: ${summary}`, { id: brandId });
     if (pass) break;
     // Builder: the template is fixed; tokens + layout choice are the design.
     const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}. Current layout: "${layout}" (options: ${LAYOUTS.join(', ')}; "type" has no photo).
