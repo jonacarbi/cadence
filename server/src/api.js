@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { all, one, insert, update, hydrate, encrypt } from './db.js';
+import { all, one, insert, update, hydrate, encrypt, logEvent } from './db.js';
 import { authenticate } from './auth.js';
 import { HOST, PORT, BRANDS_DIR } from './config.js';
 import { join } from 'node:path';
@@ -81,6 +81,7 @@ export function createApiServer() {
     if(!one('SELECT id FROM brands WHERE id=?',body.brand_id)) throw new WorkflowError('Brand not found',404);
     if(!body.auth || typeof body.auth !== 'object' || Array.isArray(body.auth)) throw new WorkflowError('Account credentials are required');
     const id=insert('accounts',{brand_id:body.brand_id,platform:body.platform,label:requiredText(body.label,'Account label',150),external_id:String(body.external_id||''),auth_enc:encrypt(body.auth)});
+    logEvent('info','account.connected',`${PLATFORMS[body.platform].name} ${body.label}`,{id,brandId:body.brand_id});
     return send(201,hydrate(one('SELECT * FROM accounts WHERE id=?',id)));
    }
    const accountMatch=path.match(/^\/api\/accounts\/([^/]+)\/pause$/);

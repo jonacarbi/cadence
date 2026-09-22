@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 14:06:08 -03
-- **Built on commit:** caf159d — feat: recurring monthly planning and claude failure detail (Jonathan Carbiere, 2026-09-22)
+- **Last updated:** 2026-09-22 14:13:10 -03
+- **Built on commit:** dca9c29 — fix: use the login shell's PATH so the app finds the user's CLI tools (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,12 +85,11 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	README.md
-- M	docs/COMPETITOR-RESEARCH.md
-- M	server/src/config.js
+- M	server/src/api.js
 
 ## Recent history
 
+- dca9c29 fix: use the login shell's PATH so the app finds the user's CLI tools _(Jonathan Carbiere, 2026-09-22)_
 - caf159d feat: recurring monthly planning and claude failure detail _(Jonathan Carbiere, 2026-09-22)_
 - 2c2d936 feat: ship the macOS workspace, OpenAI-hero design loop and content agent _(Jonathan Carbiere, 2026-09-22)_
 - 9a95fbc feat: design loop, MCP server, full mac UI, bundled deps and launchd service _(Jonathan Carbiere, 2026-09-18)_
