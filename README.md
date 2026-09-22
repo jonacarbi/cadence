@@ -10,6 +10,7 @@ Open **Content agent** in the sidebar. Paste a website or write a brief. Choose 
 - **One post per channel** generates copy for every active account platform on that brand, with branded visuals.
 - **A whole month** creates one daily post per platform. Choose the month, local posting hour and timezone; past dates in the current month are skipped. A single post keeps its exact chosen timestamp.
 - Review the generated posts, edit individual platform captions, then **Approve and schedule all**. Existing autonomy settings can also approve and schedule ready content.
+- **Plan the next month automatically** (Settings) replans each new month from the last month's brief, platforms, count and hour. Drafts still land in the approval inbox.
 - If no accounts are connected, the brand is saved and the request waits. Connect accounts and press **Continue**. Failed/interrupted work can resume; completed planning batches and cached images are reused.
 
 Requests, brand context, campaign dates and jobs are saved in SQLite. Each campaign pins its design-system snapshot. Draft creation and batch scheduling are atomic; a missing destination cannot leave half a month approved or scheduled.

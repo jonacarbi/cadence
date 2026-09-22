@@ -3,12 +3,23 @@ import { join } from "node:path";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 
 export const REPO_DIR = fileURLToPath(new URL("../..", import.meta.url));
 // Evaluate before exporting configuration constants.
 loadDotEnv();
 
 const HOME = process.env.HOME;
+// A GUI-launched app inherits /usr/bin:/bin only, so CLI tools the user installed (claude, python3, browsers)
+// are invisible or resolve to a different install than their shell uses. Adopt the login shell's PATH once.
+if (!process.env.CADENCE_PATH_FIXED) {
+  try {
+    const shellPath = execFileSync(process.env.SHELL || "/bin/zsh", ["-lic", "printf %s \"$PATH\""], { encoding: "utf8", timeout: 10_000, stdio: ["ignore", "pipe", "ignore"] }).trim();
+    if (shellPath.includes("/")) process.env.PATH = shellPath;
+  } catch { /* keep the inherited PATH */ }
+  process.env.CADENCE_PATH_FIXED = "1";
+}
+const onPath = (bin) => (process.env.PATH || "").split(":").filter(Boolean).map((d) => join(d, bin)).find(existsSync);
 export const APP_DIR = process.env.CADENCE_DIR || join(HOME, "Library/Application Support/Cadence");
 export const DATA_DIR = join(APP_DIR, "data");
 export const BRANDS_DIR = join(APP_DIR, "brands");
@@ -24,7 +35,7 @@ export const SKILLS_DIR = join(HOME, ".claude/skills");
 export const TEMPLATES_DIR = join(REPO_DIR, "server/templates");
 
 // LLM (Claude Code CLI on the Pro subscription, 9Router as fallback)
-export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || [join(HOME,'.local/bin/claude'),'/opt/homebrew/bin/claude','/usr/local/bin/claude'].find(existsSync) || "claude";
+export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || onPath('claude') || [join(HOME,'.local/bin/claude'),'/opt/homebrew/bin/claude','/usr/local/bin/claude'].find(existsSync) || "claude";
 export const TEXT_PROVIDER = process.env.CADENCE_TEXT_PROVIDER || 'claude';
 export const LLM_MODEL = process.env.CADENCE_MODEL || "opus";
 export const NINE_ROUTER_URL = process.env.NINE_ROUTER_URL || "http://localhost:20128/v1";
