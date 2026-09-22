@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 const dir = mkdtempSync(join(tmpdir(), 'cadence-extra-')); process.env.CADENCE_DIR = dir;
@@ -55,4 +55,28 @@ test('autonomy auto_trusted only schedules to trusted accounts', async () => {
 test('asset route refuses paths outside the app dirs', async () => {
   assert.equal((await req('/api/assets?path=/etc/passwd')).status, 404);
   assert.equal((await req(`/api/assets?path=${encodeURIComponent(join(dir, 'brands/../../etc/passwd'))}`)).status, 404);
+  symlinkSync('/etc/passwd',join(dir,'brands/leaked.txt'));
+  assert.equal((await req(`/api/assets?path=${encodeURIComponent(join(dir,'brands/leaked.txt'))}`)).status,404);
+});
+test('manual account returns the complete native client model',async()=>{
+ const brand=await(await req('/api/brands',{method:'POST',body:{name:'Manual',url:'https://manual.example'}})).json();
+ const r=await req('/api/accounts/manual',{method:'POST',body:{brand_id:brand.id,platform:'mock',fields:{}}});
+ assert.equal(r.status,201);const account=await r.json();
+ assert.equal(account.brand_id,brand.id);assert.equal(account.paused,0);assert.equal(account.trusted,0);assert.equal(account.auth_enc,undefined);
+});
+test('publish now queues approved content and never references missing delivery columns',async()=>{
+ const brand=await(await req('/api/brands',{method:'POST',body:{name:'Publish',url:'https://publish.example'}})).json();
+ insert('accounts',{brand_id:brand.id,platform:'mock',label:'Dry run',auth_enc:encrypt({})});
+ const post=await(await req('/api/posts',{method:'POST',body:{brand_id:brand.id,platforms:['mock'],copy:{mock:'Ready'},scheduled_at:future(),format:'text'}})).json();
+ assert.equal((await req(`/api/posts/${post.id}/publish-now`,{method:'POST',body:{}})).status,409);
+ await req(`/api/posts/${post.id}/approve`,{method:'POST',body:{version:1}});
+ const response=await req(`/api/posts/${post.id}/publish-now`,{method:'POST',body:{}});
+ assert.equal(response.status,200);const ready=await response.json();assert.equal(ready.status,'scheduled');assert.ok(Date.parse(ready.scheduled_at)<=Date.now());
+ assert.equal(all('SELECT * FROM deliveries WHERE post_id=?',post.id).length,1);
+});
+test('settings reject partial invalid changes and never reveal secrets to agent role',async()=>{
+ const before=await(await req('/api/settings')).json();
+ assert.equal((await req('/api/settings',{method:'PUT',body:{autonomy:'hands_off',cap_per_account_per_day:'-1'}})).status,400);
+ assert.equal((await(await req('/api/settings')).json()).autonomy,before.autonomy);
+ assert.equal((await req('/api/settings',{token:agentToken})).status,403);
 });

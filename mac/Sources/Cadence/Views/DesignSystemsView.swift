@@ -42,6 +42,10 @@ struct DesignSystemsView: View {
     @State private var working = false
     @State private var importingFolder = false
     @State private var filter = ""
+    private func brandJob(_ kind: String) {
+        guard let id = store.selectedBrand else { return }
+        Task { await store.act { let _: CampaignCreated = try await store.request("/api/brands/\(id)/\(kind)", method: "POST", body: [:]) } }
+    }
     private var clientName: String { store.brands.first { $0.id == store.selectedBrand }?.name ?? "this client" }
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
@@ -52,7 +56,11 @@ struct DesignSystemsView: View {
                     palette(active.summary.colors)
                     Text("\(active.summary.font_count) font files · \(active.summary.image_count) images · \(active.summary.file_count) saved files").foregroundStyle(.secondary)
                     Text("New content uses this version. Refreshing imports changes as a new version for you to choose.").font(.callout).foregroundStyle(.secondary)
-                    Button("Check local export for changes") { refreshSource(active) }.disabled(working)
+                    HStack {
+                        Button("Check local export for changes") { refreshSource(active) }
+                        Button("Re-extract from site", systemImage: "globe") { brandJob("extract") }
+                        Button("Run design gauntlet", systemImage: "checkmark.shield") { brandJob("design-loop") }.help("Three fresh critics judge a rendered hero until it passes the bar torn down from the client’s site.")
+                    }.disabled(working)
                 }.padding(24).background(.teal.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
             } else {
                 VStack(alignment: .leading, spacing: 12) {

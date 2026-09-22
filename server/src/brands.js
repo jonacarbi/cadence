@@ -1,6 +1,6 @@
 // Brand = a client site turned into a design system + voice. Extraction via Playwright (computed styles),
 // memory check against ~/.claude/skills (design-dna output), then codification through the design-dna skill.
-import { chromium } from "playwright";
+import { launchBrowser } from './browser.js';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { BRANDS_DIR, SKILLS_DIR } from "./config.js";
@@ -8,7 +8,7 @@ import { insert, update, one, all, hydrate, logEvent, getSetting } from "./db.js
 import { claude, completeJson } from "./llm.js";
 import { importDesignSystem, activateDesignSystem } from "./design-systems.js";
 import { registerJob } from "./jobs.js";
-import { publicURL } from "./network.js";
+import { publicURL, fetchPublic, routePublic } from "./network.js";
 
 export const slugify = (s) => s.toLowerCase().replace(/^www\./, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -122,9 +122,11 @@ ${pal}
 }
 
 export async function extractSite(url) {
-  const browser = await chromium.launch();
+  const browser = await launchBrowser();
   try {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128 Safari/537.36" });
+    const page = await browser.newPage({ serviceWorkers: 'block', viewport: { width: 1440, height: 900 }, userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128 Safari/537.36" });
+    await page.context().route('**/*', routePublic);
+    await page.routeWebSocket('**/*', socket => socket.close());
     await page.goto(url, { waitUntil: "networkidle", timeout: 45_000 }).catch(() => page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 }));
     await page.waitForTimeout(1500);
     const raw = await page.evaluate(EXTRACT);
@@ -138,17 +140,19 @@ async function fetchLogo(logo, dir) {
   if (!logo) return null;
   try {
     if (logo.startsWith("svg:")) { const p = join(dir, "logo.svg"); writeFileSync(p, logo.slice(4)); return p; }
-    const res = await fetch(logo, { signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) return null;
-    const ext = (res.headers.get("content-type") || "").includes("svg") ? "svg" : logo.split("?")[0].split(".").pop().slice(0, 4) || "png";
+    const res = await fetchPublic(logo, { limit: 5*1024*1024 });
+    if (res.status !== 200) return null;
+    const mime = (res.headers['content-type'] || '').split(';')[0];
+    const ext = ({'image/svg+xml':'svg','image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[mime];
+    if (!ext) return null;
     const p = join(dir, `logo.${ext}`);
-    writeFileSync(p, Buffer.from(await res.arrayBuffer()));
+    writeFileSync(p, res.body);
     return p;
   } catch { return null; }
 }
 
 /** Extraction job for an existing brand row: memory check → site tokens → voice → design-system.md → design_systems snapshot → design-dna codify. */
-export async function extractBrand(brandId, report = () => {}) {
+export async function extractBrand(brandId, report = () => {}, { codify = true } = {}) {
   const b = one("SELECT * FROM brands WHERE id = ?", brandId);
   if (!b) throw new Error("brand not found");
   const u = new URL(b.url);
@@ -187,7 +191,7 @@ export async function extractBrand(brandId, report = () => {}) {
   activateDesignSystem(brandId, system.id);
   logEvent("info", "brand.extracted", `${name} (${u.hostname})${memory ? ` · reused design skill ${memory.slug}` : ""}`, { id: brandId });
 
-  if (!memory) {
+  if (!memory && codify) {
     if (getSetting("design_loop", "on") === "on") {
       report(0.75, "Running the design gauntlet (critics iterate on the hero frame)…");
       try { const { runDesignLoop } = await import("./designloop.js"); await runDesignLoop(brandId, (m) => report(0.75, m)); }
@@ -195,6 +199,7 @@ export async function extractBrand(brandId, report = () => {}) {
     }
     report(0.85, "Codifying the look with design-dna (this takes a few minutes)…"); await codifyBrand(brandId);
   }
+  if (!codify) update('brands', brandId, { status: 'ready' });
   // Snapshot again so the PROMPT.md-backed version is pinned for campaigns.
   const b2 = one("SELECT * FROM brands WHERE id = ?", brandId);
   if (b2.skill_slug) { const skillDir = join(SKILLS_DIR, b2.skill_slug); for (const f of ["PROMPT.md", "dna.json"]) if (existsSync(join(skillDir, f))) writeFileSync(join(dir, f), readFileSync(join(skillDir, f))); const s2 = importDesignSystem(brandId, { source_path: dir }); activateDesignSystem(brandId, s2.id); }

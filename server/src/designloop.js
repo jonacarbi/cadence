@@ -6,7 +6,9 @@ import { join } from 'node:path';
 import { update, logEvent, getSetting } from './db.js';
 import { registerJob } from './jobs.js';
 import { claude, completeJson } from './llm.js';
-import { renderFrame } from './render.js';
+import { renderFrame, LAYOUTS } from './render.js';
+import { generateImage } from './images.js';
+import { stylePrompt } from './brands.js';
 import { getBrand } from './brands.js';
 
 const readOnly = { agentic: true, args: ['--allowedTools', 'Read'] };
@@ -36,19 +38,27 @@ export async function runDesignLoop(brandId, report = () => {}) {
   const root = join(brand.dir, 'design-loop'); mkdirSync(root, { recursive: true });
   const rounds = Number(getSetting('design_loop_rounds', '3'));
   const bar = await tearDown(brand, root);
-  let tokens = brand.tokens, summary = '';
+  let tokens = brand.tokens, layout = 'editorial', summary = '';
+  // Same pipeline as real posts: one OpenAI image in the brand's style. Without it, the type-only layout is judged.
+  let image = null;
+  try {
+    report(0.05, 'Generating the hero image');
+    image = await generateImage(`Hero image for ${brand.name}: ${brand.voice?.summary || brand.voice?.tagline || 'the brand'}.\n\nStyle notes: ${stylePrompt(brand).slice(0, 1200)}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect: 'portrait', brandSlug: brand.slug });
+  } catch (e) { logEvent('warn', 'design.loop', `${brand.name}: no hero image (${e.message}); judging type-only layout`, { id: brandId }); layout = 'type'; }
   for (let r = 1; r <= rounds; r++) {
     const dir = join(root, `round-${r}`); mkdirSync(dir, { recursive: true });
-    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout: 'editorial', eyebrow: brand.name, headline: brand.voice?.tagline || `This is ${brand.name}`, sub: brand.voice?.summary || '', cta: 'Learn more', image: join(brand.dir, 'reference.png') });
+    const frame = await renderFrame({ brand: { ...brand, tokens }, aspect: 'portrait', layout, eyebrow: brand.name, headline: brand.voice?.tagline || `This is ${brand.name}`, sub: brand.voice?.summary || '', cta: 'Learn more', image });
     copyFileSync(frame, join(dir, 'hero.png'));
     const { pass, notes } = await judge(join(dir, 'hero.png'), brand, bar, dir);
     summary = `R${r} · ${pass ? 'all PASS' : 'FAIL'}`; report(summary); logEvent('info', 'design.loop', `${brand.name}: ${summary}`, { id: brandId });
     if (pass) break;
-    // Builder: apply critic notes as token changes only (the template is fixed; the tokens are the design).
-    const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}.
-Critic notes:\n${notes.slice(0, 6000)}\nReturn the full updated tokens JSON with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode}). Only change what the critics asked for; keep the brand's real colours and fonts.`, { model: 'opus' });
-    if (next?.colors && next?.fonts) { tokens = next; writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2)); }
+    // Builder: the template is fixed; tokens + layout choice are the design.
+    const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}. Current layout: "${layout}" (options: ${LAYOUTS.join(', ')}; "type" has no photo).
+Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tokens with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode})>, "layout": "<one of the options>"}. Only change what the critics asked for; keep the brand's real colours and fonts.`, { model: 'opus' });
+    if (next?.tokens?.colors && next?.tokens?.fonts) { tokens = next.tokens; writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2)); }
+    if (LAYOUTS.includes(next?.layout) && (image || next.layout === 'type')) layout = next.layout;
   }
+  tokens = { ...tokens, preferred_layout: layout };
   update('brands', brandId, { tokens_json: JSON.stringify(tokens) });
   writeFileSync(join(brand.dir, 'tokens.json'), JSON.stringify(tokens, null, 2));
   return { summary, tokens };

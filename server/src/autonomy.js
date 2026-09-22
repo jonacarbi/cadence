@@ -18,6 +18,7 @@ export function autoApproveDue() {
   if (level === 'review_all') return 0;
   let n = 0;
   for (const post of all("SELECT * FROM posts WHERE status = 'draft' AND (image_path IS NOT NULL OR format = 'text')").map(hydrate)) {
+    if(post.campaign_id && one("SELECT id FROM agent_requests WHERE campaign_id=? AND status NOT IN ('review','scheduled')",post.campaign_id))continue;
     const accounts = post.platforms.flatMap((p) => all('SELECT * FROM accounts WHERE brand_id = ? AND platform = ? AND paused = 0', post.brand_id, p));
     if (!accounts.length || post.platforms.some((p) => !accounts.some((a) => a.platform === p))) continue;
     if (level === 'auto_trusted' && !accounts.every((a) => a.trusted)) continue;

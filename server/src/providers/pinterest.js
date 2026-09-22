@@ -1,6 +1,6 @@
 // Pinterest — API v5, base64 image upload. Scopes: boards:read pins:write.
 import { readFileSync } from "node:fs";
-import { api, bearer, refreshIfNeeded } from "./http.js";
+import { api, bearer, refreshIfNeeded, mediaType } from "./http.js";
 const P = "https://api.pinterest.com/v5";
 
 export const oauth = {
@@ -21,7 +21,7 @@ export async function publish({ auth: a, text, media, altText, link }) {
   const [title, ...rest] = text.split("\n");
   const r = await api(`${P}/pins`, { method: "POST", headers: bearer(auth.access_token), json: {
     board_id: auth.board_id, title: title.slice(0, 100), description: rest.join("\n").slice(0, 800), alt_text: altText, link,
-    media_source: { source_type: "image_base64", content_type: "image/png", data: readFileSync(media[0]).toString("base64") },
+    media_source: { source_type: "image_base64", content_type: mediaType(media[0]), data: readFileSync(media[0]).toString("base64") },
   } });
   return { id: r.id, url: `https://www.pinterest.com/pin/${r.id}/`, auth };
 }

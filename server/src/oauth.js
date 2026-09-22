@@ -4,7 +4,8 @@ import { randomBytes, createHash } from "node:crypto";
 import { BASE_URL } from "./config.js";
 import { PLATFORMS } from "./providers/index.js";
 import { META } from "./providers/registry.js";
-import { insert, encrypt, logEvent } from "./db.js";
+import { insert, encrypt, logEvent, hydrate, one } from "./db.js";
+import { fetchPublic } from './network.js';
 
 const pending = new Map(); // state → {platform, verifier, brandId, createdAt}
 
@@ -15,6 +16,7 @@ export function creds(platform) {
 export const redirectUri = () => `${BASE_URL}/oauth/callback`;
 
 export function startUrl(platform, brandId) {
+  for(const [state,p] of pending)if(Date.now()-p.createdAt>600000)pending.delete(state);
   const def = META[platform]?.mod?.oauth;
   if (!def) throw new Error(`${platform} does not use OAuth`);
   const { client_id } = creds(platform);
@@ -34,9 +36,10 @@ export function startUrl(platform, brandId) {
 
 export async function finish(query) {
   const p = pending.get(query.state);
-  if (!p) throw new Error("unknown or expired OAuth state");
+  if (!p || Date.now()-p.createdAt>600000) {pending.delete(query.state);throw new Error("unknown or expired OAuth state");}
   pending.delete(query.state);
   if (query.error) throw new Error(`${p.platform}: ${query.error_description || query.error}`);
+  if(typeof query.code!=='string'||!query.code)throw new Error('OAuth authorization code is missing');
   const def = META[p.platform].mod.oauth;
   const { client_id, client_secret } = creds(p.platform);
   const params = new URLSearchParams({ grant_type: "authorization_code", code: query.code, redirect_uri: redirectUri(), client_id });
@@ -44,9 +47,9 @@ export async function finish(query) {
   if (client_secret) params.set("client_secret", client_secret);
   const headers = { "content-type": "application/x-www-form-urlencoded", "user-agent": "Cadence/1.0" };
   if (["x", "reddit"].includes(p.platform)) headers.authorization = "Basic " + Buffer.from(`${client_id}:${client_secret}`).toString("base64");
-  const res = await fetch(def.tokenUrl, { method: "POST", headers, body: params.toString() });
+  const res = await fetch(def.tokenUrl, { method: "POST", headers, body: params.toString(), signal:AbortSignal.timeout(20000) });
   const tok = await res.json();
-  if (!res.ok || !tok.access_token) throw new Error(`${p.platform} token exchange failed: ${JSON.stringify(tok).slice(0, 300)}`);
+  if (!res.ok || !tok.access_token) throw new Error(`${p.platform} token exchange failed (${res.status}); reconnect the account`);
   let auth = { access_token: tok.access_token, refresh_token: tok.refresh_token, expires_at: tok.expires_in ? Date.now() + tok.expires_in * 1000 : null, client_id, client_secret };
   if (["instagram", "facebook"].includes(p.platform)) auth = await longLivedMeta(auth);
   const who = await def.identity(auth);
@@ -59,7 +62,7 @@ export async function finish(query) {
 async function longLivedMeta(auth) {
   const u = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
   u.search = new URLSearchParams({ grant_type: "fb_exchange_token", client_id: auth.client_id, client_secret: auth.client_secret, fb_exchange_token: auth.access_token });
-  const r = await fetch(u).then((x) => x.json());
+  const r = await fetch(u,{signal:AbortSignal.timeout(20000)}).then((x) => x.json());
   return r.access_token ? { ...auth, access_token: r.access_token, expires_at: Date.now() + (r.expires_in || 5184000) * 1000 } : auth;
 }
 
@@ -69,10 +72,10 @@ export async function addManualAccount(brandId, platform, fields) {
   if (!P) throw new Error(`unknown platform ${platform}`);
   let label = fields.label || PLATFORMS[platform].name, external = null;
   if (platform === "bluesky") { const s = await P.mod.login(fields); label = `@${s.handle}`; external = s.did; }
-  if (platform === "mastodon") { const r = await fetch(`${fields.instance.replace(/\/$/, "")}/api/v1/accounts/verify_credentials`, { headers: { authorization: `Bearer ${fields.access_token}` } }); if (!r.ok) throw new Error("mastodon token rejected"); const me = await r.json(); label = `@${me.username}@${new URL(fields.instance).host}`; external = me.id; }
+  if (platform === "mastodon") { const r = await fetchPublic(`${fields.instance.replace(/\/$/, "")}/api/v1/accounts/verify_credentials`, { headers: { authorization: `Bearer ${fields.access_token}` } }); if (r.status!==200) throw new Error("mastodon token rejected"); const me = JSON.parse(r.body); label = `@${me.username}@${new URL(fields.instance).host}`; external = me.id; }
   if (platform === "telegram") { const r = await fetch(`https://api.telegram.org/bot${fields.bot_token}/getMe`).then((x) => x.json()); if (!r.ok) throw new Error("telegram bot token rejected"); label = `${r.result.username} → ${fields.chat_id}`; }
-  if (platform === "discord") { const r = await fetch(fields.webhook_url); if (!r.ok) throw new Error("discord webhook rejected"); const w = await r.json(); label = `#${w.name}`; }
+  if (platform === "discord") { const url=new URL(fields.webhook_url);if(url.protocol!=='https:'||!['discord.com','discordapp.com'].includes(url.hostname)||!url.pathname.startsWith('/api/webhooks/'))throw new Error('Use an HTTPS Discord webhook URL'); const r = await fetchPublic(url); if (r.status!==200) throw new Error("discord webhook rejected"); const w = JSON.parse(r.body); label = `#${w.name}`; }
   const id = insert("accounts", { brand_id: brandId, platform, label, external_id: external, auth_enc: encrypt(fields) });
   logEvent("info", "account.connected", `${PLATFORMS[platform].name} ${label}`, { id, brandId });
-  return { id, platform, label };
+  return hydrate(one('SELECT * FROM accounts WHERE id=?',id));
 }

@@ -1,7 +1,7 @@
 // Outbound notifications for n8n / Zapier / Make: one URL, JSON POST, HMAC signature when a secret is set.
 import { createHmac } from 'node:crypto';
 import { getSetting, logEvent } from './db.js';
-import { publicURL } from './network.js';
+import { fetchPublic } from './network.js';
 
 export async function notify(kind, data) {
   const url = getSetting('webhook_url', '');
@@ -11,8 +11,7 @@ export async function notify(kind, data) {
   const secret = getSetting('webhook_secret', '');
   if (secret) headers['x-cadence-signature'] = createHmac('sha256', secret).update(body).digest('hex');
   try {
-    await publicURL(url);
-    const res = await fetch(url, { method: 'POST', headers, body, signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetchPublic(url, { method: 'POST', headers, body, timeout:10_000 });
+    if (res.status<200||res.status>=300) throw new Error(`HTTP ${res.status}`);
   } catch (e) { logEvent('warn', 'webhook.failed', `${kind}: ${e.message}`); }
 }

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const dir = mkdtempSync(join(tmpdir(), 'cadence-test-'));
 process.env.CADENCE_DIR = dir;
-const { db, insert, encrypt, run, one } = await import('../src/db.js');
+const { db, insert, encrypt, run, one, setSetting } = await import('../src/db.js');
 const { createPost, editPost, approvePost, schedulePost, postById } = await import('../src/workflow.js');
 const { tick, recoverInterruptedDeliveries } = await import('../src/scheduler.js');
 test.after(() => { db.close(); rmSync(dir, { recursive: true, force: true }); });
@@ -43,4 +43,15 @@ test('destinations are isolated by brand', () => {
  const b = insert('brands', { slug:'other', name:'Other', url:'https://example.org', dir });
  const a = insert('accounts', { brand_id:b, platform:'mastodon', label:'Other', auth_enc:encrypt({}) });
  const p = draft(); approvePost(p.id,1,'owner'); assert.throws(() => schedulePost(p.id,1,[a]), /different brand/);
+});
+test('daily account cap is enforced across concurrent scheduler ticks',async()=>{
+ const fresh=insert('accounts',{brand_id:brand,platform:'mastodon',label:'Capped',auth_enc:encrypt({})});
+ const posts=[draft(),draft()];
+ for(const p of posts){approvePost(p.id,1,'owner');schedulePost(p.id,1,[fresh]);run('UPDATE posts SET scheduled_at=? WHERE id=?',new Date(Date.now()-1000).toISOString(),p.id);}
+ setSetting('cap_per_account_per_day','1');let sends=0;
+ try {
+  const options={getProvider:()=>({publish:async()=>{sends++;await new Promise(r=>setTimeout(r,10));return {id:'capped'};}})};
+  await Promise.all([tick(options),tick(options)]);assert.equal(sends,1);
+  assert.equal(posts.filter(p=>postById(p.id).status==='scheduled').length,1);
+ }finally{setSetting('cap_per_account_per_day','');}
 });

@@ -43,9 +43,9 @@ struct PostDetail: View {
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack {
-                Button("New visual", systemImage: "arrow.triangle.2.circlepath") { perform { await store.act { let _: [String: String] = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": true]) } } }
-                Button("Re-compose", systemImage: "rectangle.3.group") { perform { await store.act { let _: [String: String] = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": false]) } } }
-            }.controlSize(.small).disabled(acting || current.format == "text")
+                Button("New visual", systemImage: "arrow.triangle.2.circlepath") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": true]) } } }
+                Button("Re-compose", systemImage: "rectangle.3.group") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": false]) } } }
+            }.controlSize(.small).disabled(acting || current.format == "text" || !["draft","rejected","approved","scheduled"].contains(current.status))
         }.padding(20)
     }
     private var header: some View {
@@ -92,7 +92,7 @@ struct PostDetail: View {
         HStack {
             Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
             if ["draft", "approved", "scheduled", "rejected"].contains(current.status) {
-                Button("Edit") { editing = true }.disabled(current.platforms.count != 1)
+                Button("Edit") { editing = true }
                 Button("Reschedule") { newDate = current.date ?? Date(); rescheduling = true }
                     .popover(isPresented: $rescheduling) {
                         VStack(spacing: 12) {

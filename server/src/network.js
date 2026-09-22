@@ -45,3 +45,13 @@ export async function fetchPublic(input,{method='GET',headers={},body,limit=10*1
  }
  return result;
 }
+
+// Browser traffic uses the same pinned, public-only transport, including subresources and redirects.
+export async function routePublic(route) {
+ try {
+  if(route.request().method()!=='GET')return await route.abort();
+  const response=await fetchPublic(route.request().url());
+  const headers=Object.fromEntries(Object.entries(response.headers).filter(([k,v])=>typeof v==='string'&&!['content-encoding','content-length','transfer-encoding','set-cookie','connection'].includes(k)));
+  await route.fulfill({status:response.status,headers,body:response.body});
+ }catch {await route.abort().catch(()=>{});}
+}

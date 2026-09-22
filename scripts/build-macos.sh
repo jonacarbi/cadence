@@ -12,6 +12,8 @@ if [[ ! -x "$CADENCE_NODE" && -z "${CADENCE_NODE_BIN:-}" ]]; then
 fi
 if [[ ! -x "$CADENCE_NODE" ]]; then echo 'Node 24+ is required.' >&2; exit 1; fi
 swift build --package-path "$CADENCE_ROOT/mac" -c release
+# The native app needs the Playwright version's browser even when Chrome is already installed.
+(cd "$CADENCE_ROOT/server" && "$CADENCE_NODE" --input-type=module -e 'import {browserExecutable} from "./src/browser.js"; process.exit(browserExecutable()?0:1)' || "$CADENCE_NODE" node_modules/playwright/cli.js install chromium)
 mkdir -p "$CADENCE_APP/Contents/MacOS" "$CADENCE_APP/Contents/Resources/runtime" "$CADENCE_APP/Contents/Resources/server"
 cp "$CADENCE_ROOT/mac/.build/release/Cadence" "$CADENCE_APP/Contents/MacOS/Cadence"
 cp "$CADENCE_NODE" "$CADENCE_APP/Contents/Resources/runtime/node"
@@ -29,8 +31,8 @@ cat > "$CADENCE_APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>Cadence</string>
 <key>CFBundleDisplayName</key><string>Cadence</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleShortVersionString</key><string>0.2.0</string>
+<key>CFBundleVersion</key><string>2</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>

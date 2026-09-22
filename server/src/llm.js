@@ -1,7 +1,7 @@
 // LLM access: Claude Code CLI (`claude -p`, Pro subscription) first, 9Router chat completions as fallback.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTER_MODEL } from "./config.js";
+import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTER_MODEL, TEXT_PROVIDER } from "./config.js";
 
 const exec = promisify(execFile);
 
@@ -11,8 +11,15 @@ export async function claude(prompt, { system = "", model = LLM_MODEL, args = []
   const lockdown = agentic ? ["--setting-sources", "user"] : ["--tools", "", "--setting-sources", "", "--disable-slash-commands"];
   const argv = ["-p", prompt, "--model", model, "--output-format", "text", ...args, ...lockdown, "--strict-mcp-config", "--no-session-persistence"];
   if (system) argv.push("--system-prompt", system);
-  const { stdout } = await exec(CLAUDE_BIN, argv, { cwd, timeout, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, CLAUDECODE: "" } });
-  return stdout.trim();
+  try {
+    const child = exec(CLAUDE_BIN, argv, { cwd, timeout, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, CLAUDECODE: "" } });
+    child.child.stdin.end();
+    const { stdout } = await child;
+    return stdout.trim();
+  } catch(error) {
+    if(/limit|quota/i.test(error.stdout||''))throw new Error('Claude usage limit reached. Configure CADENCE_FALLBACK_MODEL for 9Router or wait for your quota to reset.');
+    throw new Error(`Claude generation failed (${error.code||'timeout'}). Check Claude sign-in and local service logs.`);
+  }
 }
 
 async function nineRouter(prompt, system) {
@@ -20,15 +27,18 @@ async function nineRouter(prompt, system) {
   const res = await fetch(`${NINE_ROUTER_URL}/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${NINE_ROUTER_API_KEY}` },
-    body: JSON.stringify({ model: NINE_ROUTER_MODEL, messages: [system && { role: "system", content: system }, { role: "user", content: prompt }].filter(Boolean) }),
-    signal: AbortSignal.timeout(180_000),
+    body: JSON.stringify({ model: NINE_ROUTER_MODEL, stream: false, reasoning_effort: 'low', messages: [system && { role: "system", content: system }, { role: "user", content: prompt }].filter(Boolean) }),
+    signal: AbortSignal.timeout(300_000),
   });
   if (!res.ok) throw new Error(`9router ${res.status}`);
-  return (await res.json()).choices[0].message.content;
+  const content=(await res.json()).choices?.[0]?.message?.content;
+  if(typeof content!=='string'||!content.trim())throw new Error('9Router returned no content');
+  return content;
 }
 
 /** Plain-text completion with fallback. */
 export async function complete(prompt, opts = {}) {
+  if(TEXT_PROVIDER==='9router')return nineRouter(prompt,opts.system);
   try { return await claude(prompt, opts); } catch (e) {
     if (!NINE_ROUTER_MODEL) throw e;
     return nineRouter(prompt, opts.system);

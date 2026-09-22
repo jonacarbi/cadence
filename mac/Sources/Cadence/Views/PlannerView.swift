@@ -18,7 +18,7 @@ struct PlannerView: View {
     @State private var submitting = false
     @State private var activeJob: String?
     @State private var designName: String?
-    private let platforms = ["instagram", "facebook", "linkedin", "x", "threads", "bluesky", "mastodon", "pinterest", "tiktok", "youtube", "telegram", "discord"]
+    @State private var platforms: [String] = []
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 18) {
@@ -55,6 +55,7 @@ struct PlannerView: View {
             }
         }
         .task(id: store.selectedBrand) {
+            if let caps: [Capability] = try? await store.request("/api/capabilities") { platforms = caps.filter { $0.available && $0.id != "mock" }.map(\.id) }
             await loadDesign()
             while !Task.isCancelled {
                 await loadJobs()

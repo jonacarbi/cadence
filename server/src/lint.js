@@ -1,11 +1,26 @@
 // Caption linter (pendpost-style): rules.json + hard platform limits. Returns [{rule, severity, message, platform}].
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { REPO_DIR } from "./config.js";
+import { REPO_DIR, APP_DIR } from "./config.js";
 import { PLATFORMS } from "./providers/index.js";
+import { fetchPublic } from './network.js';
 
-const RULES_PATH = join(REPO_DIR, "server/rules.json");
-export const loadRules = () => JSON.parse(readFileSync(RULES_PATH, "utf8"));
+const RULES_PATH = join(APP_DIR, 'rules.json');
+export const loadRules = () => JSON.parse(readFileSync(existsSync(RULES_PATH)?RULES_PATH:join(REPO_DIR, 'server/rules.json'), "utf8"));
+export function saveRules(rules) {
+  const defaults=JSON.parse(readFileSync(join(REPO_DIR,'server/rules.json'),'utf8'));
+  for(const [key,rule] of Object.entries(defaults)) {
+    if(key.startsWith('_'))continue;
+    const proposed=rules[key];
+    if(!proposed||!['block','warn'].includes(proposed.severity))throw new Error(`Invalid rule: ${key}`);
+    if(Array.isArray(rule.value)) {if(!Array.isArray(proposed.value)||proposed.value.length>100||proposed.value.some(v=>typeof v!=='string'||v.length>300))throw new Error(`Invalid values: ${key}`);}
+    else if(typeof proposed.value!==typeof rule.value)throw new Error(`Invalid value: ${key}`);
+    if(typeof proposed.value==='number'&&(!Number.isInteger(proposed.value)||proposed.value<0))throw new Error(`Invalid limit: ${key}`);
+  }
+  for(const regex of rules.regex.value)new RegExp(regex,'i');
+  writeFileSync(RULES_PATH+'.tmp',JSON.stringify(rules,null,2),{mode:0o600});renameSync(RULES_PATH+'.tmp',RULES_PATH);
+  return rules;
+}
 
 const EMOJI_RE = /\p{Extended_Pictographic}/gu;
 const URL_RE = /https?:\/\/[^\s)]+/g;
@@ -36,7 +51,7 @@ export async function lintPost(copy, rules = loadRules()) {
     if (rules.linkCheck.value) {
       for (const url of text.match(URL_RE) || []) {
         try {
-          const r = await fetch(url, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(8000) });
+          const r = await fetchPublic(url, { method: "HEAD", timeout: 8000 });
           if (r.status >= 400) issues.push({ rule: "linkCheck", severity: "warn", message: `${url} → ${r.status}`, platform });
         } catch { issues.push({ rule: "linkCheck", severity: "warn", message: `${url} unreachable`, platform }); }
       }

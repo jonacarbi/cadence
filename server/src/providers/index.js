@@ -7,7 +7,7 @@ export const PLATFORMS = Object.freeze({
   threads: { name: 'Threads', maxChars: 500 },
   bluesky: { name: 'Bluesky', maxChars: 300 },
   mastodon: { name: 'Mastodon', maxChars: 500 },
-  telegram: { name: 'Telegram', maxChars: 4096 },
+  telegram: { name: 'Telegram', maxChars: 4096, maxMediaChars: 1024 },
   discord: { name: 'Discord', maxChars: 2000 },
   pinterest: { name: 'Pinterest', maxChars: 500, requiresMedia: true },
   tiktok: { name: 'TikTok', maxChars: 2200, requiresMedia: true },

@@ -24,31 +24,33 @@ struct ComposerView: View {
     let post: Post?
     @State private var topic = ""
     @State private var caption = ""
+    @State private var copies: [String: String] = [:]
     @State private var platform = "mastodon"
     @State private var date = Date().addingTimeInterval(86400)
     @State private var saving = false
     private let platforms = ["mastodon", "bluesky", "linkedin", "x", "threads", "facebook", "instagram", "pinterest", "tiktok", "youtube", "telegram", "discord"]
+    private var captionBinding: Binding<String> { Binding(get: { post == nil ? caption : copies[platform] ?? "" }, set: { if post == nil { caption = $0 } else { copies[platform] = $0 } }) }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text(post == nil ? "A new idea, ready to grow." : "Refine your draft").font(.title2.weight(.semibold))
             TextField("Topic or working title", text: $topic).textFieldStyle(.roundedBorder)
             HStack {
-                Picker("Platform", selection: $platform) { ForEach(platforms, id: \.self) { Text($0.capitalized).tag($0) } }
+                Picker("Platform", selection: $platform) { ForEach(post?.platforms ?? platforms, id: \.self) { Text($0.capitalized).tag($0) } }
                 DatePicker("Publish", selection: $date)
             }
             Text("Caption").font(.headline)
-            TextEditor(text: $caption).font(.body).frame(minHeight: 230).padding(8).overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
-            HStack { Text("\(caption.count) characters").font(.caption).foregroundStyle(.secondary); Spacer(); Text("Saved as a draft for review").font(.caption).foregroundStyle(.secondary) }
+            TextEditor(text: captionBinding).font(.body).frame(minHeight: 230).padding(8).overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
+            HStack { Text("\(captionBinding.wrappedValue.count) characters").font(.caption).foregroundStyle(.secondary); Spacer(); Text("Saved as a draft for review").font(.caption).foregroundStyle(.secondary) }
             if post != nil { Text("Changes clear the previous approval.").font(.caption).foregroundStyle(.secondary) }
             HStack {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
                 Button(saving ? "Saving…" : "Save draft") {
                     saving = true
-                    Task { if await store.saveDraft(post: post, topic: topic, caption: caption, platform: platform, date: date) { dismiss() }; saving = false }
-                }.buttonStyle(.borderedProminent).disabled(saving || caption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Task { if await store.saveDraft(post: post, topic: topic, caption: captionBinding.wrappedValue, platform: platform, date: date, copies: post == nil ? nil : copies) { dismiss() }; saving = false }
+                }.buttonStyle(.borderedProminent).disabled(saving || captionBinding.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }.padding(28).frame(width: 650)
-        .onAppear { if let post { topic = post.topic ?? ""; platform = post.platforms.first ?? "mastodon"; caption = post.copy[platform] ?? ""; date = post.date ?? date } }
+        .onAppear { if let post { topic = post.topic ?? ""; copies = post.copy; platform = post.platforms.first ?? "mastodon"; date = post.date ?? date } }
     }
 }

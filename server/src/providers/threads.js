@@ -24,7 +24,7 @@ export async function publish({ auth, account, text, mediaUrls, altText }) {
   }
   await new Promise((r) => setTimeout(r, 5000)); // Meta recommends waiting before publish
   const pub = await api(`${T}/${u}/threads_publish`, { method: "POST", json: { creation_id: creation, access_token: t } });
-  const info = await api(`${T}/${pub.id}?fields=permalink&access_token=${t}`);
+  const info = await api(`${T}/${pub.id}?fields=permalink&access_token=${t}`).catch(()=>({}));
   return { id: pub.id, url: info.permalink };
 }
 

@@ -1,4 +1,5 @@
 // Tiny fetch helpers shared by providers.
+export const mediaType = path => /\.jpe?g$/i.test(path) ? 'image/jpeg' : 'image/png';
 export async function api(url, { method = "GET", headers = {}, json, body, form, timeout = 60_000 } = {}) {
   const h = { ...headers };
   let payload = body;

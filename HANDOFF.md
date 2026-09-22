@@ -4,34 +4,41 @@
 
 Local-first macOS social media agent: extract and reuse client design systems, plan a month, generate OpenAI imagery, collect human approval, schedule and publish with minimal intervention.
 
-## Current state (2026-09-18)
+## Current state (2026-09-20)
 
-Shipped as a bundled app (`scripts/build-macos.sh` → `build/Cadence.app`, installed at `~/Applications/Cadence.app`). Server: 21 tests green. Codex built the fail-closed core (auth, workflow, ledger, scheduler, providers); Claude layered URL-only brands, design loop, autonomy dial, webhooks, analytics, comments/regenerate, OAuth/manual account routes, MCP server, and the remaining mac views (PostDetail, Accounts, Settings, Agent log).
+Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one post per connected platform, daily monthly calendars, persistent progress/resume, saved planning batches, previews and atomic bulk approval/scheduling. Swift release builds and server tests pass. All 36 tests pass. Live terra monthly planning produced 31 posts/124 captions. Earlier direct-CatGPT rendering/mock-delivery passed; final MCP live image check is blocked by CatGPT account image quotas. No real social post was sent.
+
+The existing launchd background service now runs the installed app’s bundled Node/server, so scheduled work uses the same release as the native app. The prior launch-agent configuration is backed up in `~/Library/LaunchAgents`.
 
 ## Next steps / TODO
 
-- Verify a full month plan end-to-end on a real client site and publish to a live account (Bluesky/Mastodon are the cheapest to test).
-- Add Developer ID signing + notarization when credentials exist.
-- OAuth apps for Meta/LinkedIn/X need client IDs in `.env` before `/oauth/<platform>/start` returns a usable URL.
+- Retry the isolated MCP image smoke test after CatGPT image quotas reset. Integration and healthy-account routing tests pass; see the release notes for the exact verification boundary.
+- Connect real social accounts: the installed workspace currently has only mock accounts. Verify each live provider before treating real publishing as release-validated.
+- Configure OAuth app IDs/secrets for OAuth destinations and Supabase media hosting for Instagram/Threads/Pinterest.
+- Developer ID signing/notarization and distribution packaging remain prerequisites for a public release. Current bundle is ad-hoc signed for this Mac.
+- See `docs/RELEASE-0.2.0.md` for validation evidence and limits.
 
 ## Key decisions & gotchas
 
-- Node 24+ (`node:sqlite`). `npm test --prefix server`; `npm start --prefix server` for dev on 8796.
-- Config loads `.env` from the repo root **and** `~/Library/Application Support/Cadence/.env` (bundled app has no repo). Never put values in docs.
-- Bundle must include `server/node_modules` (playwright) — build script runs `npm ci --omit=dev` in the staged bundle.
-- `llm.js claude()` is locked down (`--tools ""`) unless `agentic: true`; design-dna/design-loop runs pass `agentic`.
-- Images are OpenAI-only (user rule): direct key → else CatGPT gateway on :8000.
-- launchd `com.jonacarbi.cadence` runs `scripts/run.sh`; the app attaches if the port is already healthy.
-- MCP registered in `~/.mcp.json` as `cadence` (agent role; set `CADENCE_MCP_ROLE=owner` to allow approvals).
+- User explicitly chose text model **9Router `cx/gpt-5.6-terra`** and visuals **Open Generative AI MCP → CatGPT**. Application Support `.env` contains configuration; never put secret values here.
+- CatGPT's MCP gateway alias is `chatgpt`. The underlying ChatGPT image-model version is not exposed by MCP. Cadence pins `OGA_IMAGE_PROVIDERS=catgpt-gateway` in its child process; no alternate image model fallback.
+- OGA MCP at `~/Projects/open-generative-ai-mcp/src/index.js` has small provider-filter/timeout/healthy-account routing additions. Cadence uses the official MCP SDK and closes children in `finally`.
+- Node 24+ (`node:sqlite`). `npm test --prefix server`; `npm start --prefix server` on 8796. Browser work is headless with cleanup; installed Chrome can satisfy rendering without a separate browser download.
+- Content agent retains the existing autonomy setting. Default is review-all. Monthly dates use IANA timezone conversion; single dates preserve exact timestamps. Planning saves validated batches of up to seven; no partial drafts are committed.
+- Brand snapshots drive both copy and visual production. Rerenders clear approval; concurrent edits invalidate stale generation. Failed visuals stay retryable and are never reported as complete.
+- Daily caps are enforced in the scheduler, which still fails closed on ambiguous publishing results.
+- Rules live in Application Support, not the signed app bundle. Account credentials remain encrypted locally.
+- Pre-existing edits in competitor research, DesignSystemsView, designloop, routes-extra and visuals were preserved.
 
 ## Where things live
 
-- `server/src/api.js` + `routes-extra.js`: HTTP; `auth.js` roles.
-- `server/src/workflow.js`, `scheduler.js`, `autonomy.js`, `webhooks.js`, `analytics.js`.
-- `server/src/brands.js`, `designloop.js`, `campaigns.js`, `visuals.js`, `render.js`, `images.js`, `llm.js`.
-- `server/src/providers/`: adapters + registry; `mcp.js`: stdio MCP.
-- `mac/Sources/Cadence/`: `CadenceApp.swift` (sections), `Models.swift` (Store), `Views/`.
-- `docs/COMPETITOR-RESEARCH.md`: feature ledger.
+- `server/src/content-agent.js`: durable request orchestration and batch scheduling; `campaigns.js`: checkpointed planning.
+- `server/src/oga-images.js`, `images.js`, `browser.js`, `visuals.js`: MCP image production and rendering.
+- `server/src/api.js`, `routes-extra.js`, `readiness.js`: HTTP, actions and setup checks.
+- `server/src/workflow.js`, `scheduler.js`, `autonomy.js`: approval, delivery ledger, caps and automation.
+- `mac/Sources/Cadence/Views/ContentAgentView.swift`: agent UI; `Models.swift`: native API store.
+- `scripts/smoke-agent.mjs`: isolated opt-in live-provider test. `build/release-check/`: local validation artifacts.
+- `scripts/build-macos.sh`: build, browser readiness, dependency staging and ad-hoc signing.
 
 ---
 
@@ -44,9 +51,9 @@ Shipped as a bundled app (`scripts/build-macos.sh` → `build/Cadence.app`, inst
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-18 21:40:59 -03
-- **Built on commit:** 9b89de9 — feat: cadence server core — fail-closed workflow, brand extraction, visuals, autonomy dial, REST API (Jonathan Carbiere, 2026-09-18)
-- **README says:** Local-first macOS social media agent. Paste a client's website, get a codified design system, a month of on-brand posts with OpenAI imagery, an approval inbox, and hands-off publishing at the right time.
+- **Last updated:** 2026-09-22 13:53:23 -03
+- **Built on commit:** 9a95fbc — feat: design loop, MCP server, full mac UI, bundled deps and launchd service (Jonathan Carbiere, 2026-09-18)
+- **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
 
@@ -66,40 +73,81 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Languages
 
-- .js — 46 file(s)
-- .swift — 11 file(s)
-- .md — 3 file(s)
+- .js — 53 file(s)
+- .swift — 12 file(s)
+- .md — 4 file(s)
 - .json — 3 file(s)
 - .sh — 2 file(s)
+- .mjs — 1 file(s)
 - .ignore — 1 file(s)
 - .html — 1 file(s)
 - .example — 1 file(s)
 
 ## Changes in this commit
 
-- A	.env.example
+- M	.env.example
 - M	HANDOFF.md
-- A	README.md
+- M	README.md
+- M	docs/COMPETITOR-RESEARCH.md
+- A	docs/RELEASE-0.2.0.md
 - M	mac/Sources/Cadence/CadenceApp.swift
 - M	mac/Sources/Cadence/Models.swift
-- A	mac/Sources/Cadence/Views/AccountsView.swift
+- A	mac/Sources/Cadence/Views/ContentAgentView.swift
+- M	mac/Sources/Cadence/Views/DesignSystemsView.swift
 - M	mac/Sources/Cadence/Views/Forms.swift
-- A	mac/Sources/Cadence/Views/PostDetail.swift
-- A	mac/Sources/Cadence/Views/SettingsView.swift
+- M	mac/Sources/Cadence/Views/PlannerView.swift
+- M	mac/Sources/Cadence/Views/PostDetail.swift
+- M	mac/Sources/Cadence/Views/SettingsView.swift
 - M	scripts/build-macos.sh
-- A	scripts/run.sh
+- A	scripts/smoke-agent.mjs
+- M	server/package-lock.json
+- M	server/package.json
+- M	server/src/api.js
+- M	server/src/autonomy.js
 - M	server/src/brands.js
+- A	server/src/browser.js
+- M	server/src/campaigns.js
 - M	server/src/config.js
-- A	server/src/designloop.js
-- M	server/src/index.js
+- A	server/src/content-agent.js
+- M	server/src/db.js
+- M	server/src/designloop.js
+- M	server/src/images.js
+- M	server/src/lint.js
 - M	server/src/llm.js
-- A	server/src/mcp.js
+- M	server/src/mcp.js
+- M	server/src/media.js
+- M	server/src/network.js
+- M	server/src/oauth.js
+- A	server/src/oga-images.js
+- M	server/src/providers/bluesky.js
+- M	server/src/providers/discord.js
+- M	server/src/providers/facebook.js
+- M	server/src/providers/http.js
 - M	server/src/providers/index.js
+- M	server/src/providers/instagram.js
+- M	server/src/providers/linkedin.js
+- M	server/src/providers/mastodon.js
+- M	server/src/providers/pinterest.js
 - M	server/src/providers/registry.js
+- M	server/src/providers/telegram.js
+- M	server/src/providers/threads.js
+- M	server/src/providers/x.js
+- A	server/src/readiness.js
+- M	server/src/render.js
 - M	server/src/routes-extra.js
+- M	server/src/scheduler.js
+- M	server/src/visuals.js
+- M	server/src/webhooks.js
+- M	server/src/workflow.js
+- A	server/tests/content-agent.test.js
+- M	server/tests/extra.test.js
+- A	server/tests/oga-images.test.js
+- A	server/tests/providers.test.js
+- M	server/tests/workflow.test.js
 
 ## Recent history
 
+- 9a95fbc feat: design loop, MCP server, full mac UI, bundled deps and launchd service _(Jonathan Carbiere, 2026-09-18)_
 - 9b89de9 feat: cadence server core — fail-closed workflow, brand extraction, visuals, autonomy dial, REST API _(Jonathan Carbiere, 2026-09-18)_
 
 <!-- HANDOFF:AUTO:END -->

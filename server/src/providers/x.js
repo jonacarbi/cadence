@@ -1,6 +1,6 @@
 // X (Twitter) — API v2 with OAuth 2.0 PKCE (tweet.write, users.read, media.write, offline.access).
 import { readFileSync } from "node:fs";
-import { api, bearer, refreshIfNeeded } from "./http.js";
+import { api, bearer, refreshIfNeeded, mediaType } from "./http.js";
 
 export const oauth = {
   authorizeUrl: "https://x.com/i/oauth2/authorize",
@@ -14,7 +14,7 @@ async function uploadMedia(auth, path) {
   const bytes = readFileSync(path);
   const r = await api("https://api.x.com/2/media/upload", {
     method: "POST", headers: bearer(auth.access_token),
-    form: { media: new Blob([bytes], { type: "image/png" }), media_category: "tweet_image" },
+    form: { media: new Blob([bytes], { type: mediaType(path) }), media_category: "tweet_image" },
   });
   return r.data?.id || r.media_id_string;
 }

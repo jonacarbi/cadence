@@ -23,6 +23,7 @@ async function waitReady(auth, id) {
     if (s.status_code === "ERROR") throw new Error("instagram container error");
     await new Promise((r) => setTimeout(r, 3000));
   }
+  throw new Error('Instagram media processing timed out before publication');
 }
 
 export async function publish({ auth, account, text, mediaUrls, altText }) {
@@ -37,7 +38,7 @@ export async function publish({ auth, account, text, mediaUrls, altText }) {
   }
   await waitReady(auth, creation);
   const pub = await api(`${G}/${ig}/media_publish`, { method: "POST", json: { creation_id: creation, access_token: t } });
-  const info = await api(`${G}/${pub.id}?fields=permalink&access_token=${t}`);
+  const info = await api(`${G}/${pub.id}?fields=permalink&access_token=${t}`).catch(()=>({}));
   return { id: pub.id, url: info.permalink };
 }
 

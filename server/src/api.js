@@ -11,6 +11,8 @@ import { discoverDesignSystems, listDesignSystems, importDesignSystem, activateD
 import { createCampaign, listCampaigns } from './campaigns.js';
 import { resumeJob } from './jobs.js';
 import { extraRoutes, oauthCallback } from './routes-extra.js';
+import { createAgentRequest, listRequests, requestById, continueRequest, scheduleRequest } from './content-agent.js';
+import { readiness } from './readiness.js';
 
 async function readBody(req) {
  let size=0; const chunks=[];
@@ -27,11 +29,20 @@ export function createApiServer() {
    if(req.headers.origin) throw new WorkflowError('Browser-origin requests are not allowed',403);
    if(!/^127\.0\.0\.1(?::\d+)?$/.test(req.headers.host||'')) throw new WorkflowError('Invalid host',403);
    const url=new URL(req.url,`http://${HOST}`), path=url.pathname;
-   if(path==='/health' && req.method==='GET') return send(200,{status:'ok',app:'Cadence'});
+   if(path==='/health' && req.method==='GET') return send(200,{status:'ok',app:'Cadence',version:'0.2.0'});
    if(path==='/oauth/callback' && req.method==='GET') return oauthCallback(url,res);
    const actor=authenticate(req.headers.authorization); if(!actor) throw new WorkflowError('Authentication required',401);
    const owner=()=> { if(actor!=='owner') throw new WorkflowError('Owner access required',403); };
    const body=['POST','PATCH','PUT'].includes(req.method) ? await readBody(req) : {};
+   if(!body || typeof body!=='object' || Array.isArray(body))throw new WorkflowError('Request body must be a JSON object');
+   if(path==='/api/readiness'&&req.method==='GET'){owner();return send(200,readiness());}
+   if(path==='/api/agent/requests' && req.method==='POST') {owner();return send(202,createAgentRequest(body));}
+   if(path==='/api/agent/requests' && req.method==='GET') return send(200,listRequests());
+   const agentMatch=path.match(/^\/api\/agent\/requests\/([^/]+)(?:\/(continue|schedule))?$/);
+   if(agentMatch) {
+    if(req.method==='GET'&&!agentMatch[2])return send(200,requestById(agentMatch[1]));
+    if(req.method==='POST') {owner();if(agentMatch[2]==='continue')return send(202,continueRequest(agentMatch[1]));if(agentMatch[2]==='schedule')return send(200,scheduleRequest(agentMatch[1],body.versions,actor));}
+   }
    if(await extraRoutes({req,res,url,path,body,actor,owner,send})) return;
    if(path==='/api/capabilities' && req.method==='GET') return send(200,capabilities());
    if(path==='/api/campaigns' && req.method==='POST') return send(202,createCampaign(body));

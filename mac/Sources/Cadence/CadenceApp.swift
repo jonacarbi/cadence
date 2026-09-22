@@ -17,11 +17,12 @@ struct CadenceApp: App {
 }
 
 enum WorkspaceSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", designs = "Design systems", planner = "Monthly planner", calendar = "Calendar", approvals = "Approvals", library = "All posts", accounts = "Accounts", activity = "Delivery activity", log = "Agent log", settings = "Settings"
+    case overview = "Overview", agent = "Content agent", designs = "Design systems", planner = "Monthly planner", calendar = "Calendar", approvals = "Approvals", library = "All posts", accounts = "Accounts", activity = "Delivery activity", log = "Agent log", settings = "Settings"
     var id: String { rawValue }
     var icon: String {
         switch self {
         case .overview: "square.grid.2x2"
+        case .agent: "bubble.left.and.text.bubble.right"
         case .designs: "paintpalette"
         case .planner: "sparkles"
         case .calendar: "calendar"
@@ -65,7 +66,9 @@ struct WorkspaceView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     header
-                    if store.brands.isEmpty {
+                    if section == .agent {
+                        ContentAgentView()
+                    } else if store.brands.isEmpty {
                         ContentUnavailableView {
                             Label("Your next month starts here", systemImage: "calendar.badge.plus")
                         } description: { Text("Add a client’s business to organize its posts and approvals.") }
@@ -73,6 +76,7 @@ struct WorkspaceView: View {
                     } else {
                         switch section ?? .overview {
                         case .overview: overview
+                        case .agent: ContentAgentView()
                         case .designs: DesignSystemsView()
                         case .planner: PlannerView()
                         case .calendar: CalendarView(posts: store.posts, select: { selectedPost = $0 })

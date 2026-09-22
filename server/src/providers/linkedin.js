@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { api, bearer } from "./http.js";
 
-const V = { "LinkedIn-Version": "202409", "X-Restli-Protocol-Version": "2.0.0" };
+const V = { "LinkedIn-Version": process.env.CADENCE_LINKEDIN_VERSION || "202609", "X-Restli-Protocol-Version": "2.0.0" };
 export const oauth = {
   authorizeUrl: "https://www.linkedin.com/oauth/v2/authorization",
   tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
@@ -26,8 +26,9 @@ export async function publish({ auth, account, text, media, altText }) {
   const res = await fetch("https://api.linkedin.com/rest/posts", {
     method: "POST", headers: { ...bearer(auth.access_token), ...V, "content-type": "application/json" },
     body: JSON.stringify({ author: owner, commentary: text, visibility: "PUBLIC", distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] }, lifecycleState: "PUBLISHED", ...(content && { content }) }),
+    signal: AbortSignal.timeout(60000),
   });
-  if (!res.ok) throw new Error(`linkedin ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) {const error=new Error(`LinkedIn rejected publication (${res.status})`);error.status=res.status;throw error;}
   const id = res.headers.get("x-restli-id");
   return { id, url: `https://www.linkedin.com/feed/update/${id}` };
 }

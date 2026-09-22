@@ -24,7 +24,8 @@ export const SKILLS_DIR = join(HOME, ".claude/skills");
 export const TEMPLATES_DIR = join(REPO_DIR, "server/templates");
 
 // LLM (Claude Code CLI on the Pro subscription, 9Router as fallback)
-export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || "claude";
+export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || [join(HOME,'.local/bin/claude'),'/opt/homebrew/bin/claude','/usr/local/bin/claude'].find(existsSync) || "claude";
+export const TEXT_PROVIDER = process.env.CADENCE_TEXT_PROVIDER || 'claude';
 export const LLM_MODEL = process.env.CADENCE_MODEL || "opus";
 export const NINE_ROUTER_URL = process.env.NINE_ROUTER_URL || "http://localhost:20128/v1";
 export const NINE_ROUTER_API_KEY = process.env.NINE_ROUTER_API_KEY || "";
@@ -36,6 +37,8 @@ export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1
 export const CATGPT_URL = process.env.CATGPT_GATEWAY_URL || "http://localhost:8000/v1";
 export const CATGPT_TOKEN = process.env.CATGPT_GATEWAY_TOKEN || "";
 export const CATGPT_MODEL = process.env.CATGPT_IMAGE_MODEL || "chatgpt";
+export const IMAGE_PROVIDER = process.env.CADENCE_IMAGE_PROVIDER || 'oga-mcp';
+export const OGA_MCP_ENTRY = process.env.CADENCE_OGA_MCP_ENTRY || join(HOME,'Projects/open-generative-ai-mcp/src/index.js');
 
 // Public media hosting (Instagram/Threads/Pinterest need a public URL).
 export const SUPABASE_URL = process.env.SUPABASE_URL || "";

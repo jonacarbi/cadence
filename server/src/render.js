@@ -1,10 +1,11 @@
 // Compose the final post asset: generated photo + brand tokens + headline, rendered by Playwright.
 // Type sizes in the template use vh (viewport = canvas) so layouts scale to any aspect.
-import { chromium } from "playwright";
+import { launchBrowser } from './browser.js';
 import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { TEMPLATES_DIR, ASSETS_DIR } from "./config.js";
 import { uuid } from "./db.js";
+import { routePublic } from './network.js';
 
 export const CANVAS = { portrait: [1080, 1350], square: [1080, 1080], landscape: [1200, 630] };
 export const LAYOUTS = ["editorial", "fullbleed", "split", "type"];
@@ -16,9 +17,7 @@ function fill(tpl, vars) {
     .replace(/{{(\w+)}}/g, (_, k) => (k === "image" || k === "logo" ? String(vars[k] ?? "") : esc(vars[k])));
 }
 
-let browserP;
-const browser = () => (browserP ??= chromium.launch());
-export async function closeBrowser() { if (browserP) { (await browserP).close(); browserP = undefined; } }
+export async function closeBrowser() { /* Each render closes its own browser. */ }
 
 const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", svg: "image/svg+xml", webp: "image/webp", gif: "image/gif" };
 // setContent pages have an opaque origin, so local files go in as data URIs.
@@ -40,18 +39,21 @@ export async function renderFrame(opts) {
     image: dataUrl(opts.image), logo: dataUrl(brand.logo_path),
     headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
   });
-  const page = await (await browser()).newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+  const browser = await launchBrowser();
   try {
+    const page = await browser.newPage({ serviceWorkers: 'block', viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    await page.context().route('**/*', routePublic);
+    await page.routeWebSocket('**/*', socket => socket.close());
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     // shrink headline until it fits its box (max 4 lines)
     await page.evaluate(() => { const h1 = document.querySelector("h1"); let fs = parseFloat(getComputedStyle(h1).fontSize); const box = h1.parentElement; let guard = 40; while (guard-- && (h1.scrollHeight > fs * 4.2 || box.scrollHeight > box.clientHeight + 1) && fs > 24) { fs *= 0.92; h1.style.fontSize = fs + "px"; } });
     const dir = join(ASSETS_DIR, brand.slug || "misc", "renders");
     mkdirSync(dir, { recursive: true });
-    const out = join(dir, `${uuid()}.png`);
-    await page.screenshot({ path: out, type: "png" });
+    const out = join(dir, `${uuid()}.jpg`);
+    await page.screenshot({ path: out, type: "jpeg", quality: 92 });
     return out;
-  } finally { await page.close(); }
+  } finally { await browser.close(); }
 }
 
 /** Render a carousel: cover + N slides. Returns array of paths. */

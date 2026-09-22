@@ -5,10 +5,14 @@ import { PLATFORMS } from './providers/index.js';
 export class WorkflowError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
 }
+let transactionDepth = 0;
 export function transaction(fn) {
-  db.exec('BEGIN IMMEDIATE');
-  try { const result = fn(); db.exec('COMMIT'); return result; }
-  catch (error) { db.exec('ROLLBACK'); throw error; }
+  const nested = transactionDepth > 0, savepoint = `cadence_${transactionDepth}`;
+  db.exec(nested ? `SAVEPOINT ${savepoint}` : 'BEGIN IMMEDIATE');
+  transactionDepth++;
+  try { const result = fn(); db.exec(nested ? `RELEASE ${savepoint}` : 'COMMIT'); return result; }
+  catch (error) { db.exec(nested ? `ROLLBACK TO ${savepoint}` : 'ROLLBACK'); if (nested) db.exec(`RELEASE ${savepoint}`); throw error; }
+  finally { transactionDepth--; }
 }
 export function postById(id) {
   const post = hydrate(one('SELECT * FROM posts WHERE id = ?', id));
@@ -71,6 +75,7 @@ export function approvePost(id, version, actor) {
     const issues = post.platforms.flatMap(p => lintCaption(post.copy[p], p));
     for (const platform of post.platforms) {
       if (PLATFORMS[platform].requiresMedia && !post.image_path) issues.push({severity:'block', platform, message:'Media is required'});
+      if(post.image_path && PLATFORMS[platform].maxMediaChars && [...post.copy[platform]].length>PLATFORMS[platform].maxMediaChars)issues.push({severity:'block',platform,message:`${platform} media captions allow ${PLATFORMS[platform].maxMediaChars} characters`});
     }
     if (hasBlockers(issues)) throw new WorkflowError(issues.filter(i => i.severity === 'block').map(i => i.message).join('; '));
     update('posts', id, { status: 'approved', approved_by: actor, lint_json: JSON.stringify(issues) });

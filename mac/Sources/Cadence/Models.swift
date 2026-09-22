@@ -100,6 +100,7 @@ struct APIError: LocalizedError {
     let message: String
     var errorDescription: String? { message }
 }
+struct MutationResult: Decodable { let ok: Bool }
 @MainActor
 final class Store: ObservableObject {
     @Published var brands: [Brand] = []
@@ -119,6 +120,7 @@ final class Store: ObservableObject {
         guard let url = URL(string: path, relativeTo: base) else { throw APIError(message: "Invalid request") }
         var request = URLRequest(url: url)
         request.timeoutInterval = 20
+        if path.hasSuffix("/regenerate") { request.timeoutInterval = 660 }
         let token: String
         do { token = try String(contentsOf: appDirectory.appendingPathComponent("owner.token"), encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines) }
         catch { throw APIError(message: "The Cadence service has not started. Start the local service, then refresh.") }
@@ -179,9 +181,10 @@ final class Store: ObservableObject {
             await refresh()
         } catch { self.error = error.localizedDescription }
     }
-    func saveDraft(post: Post?, topic: String, caption: String, platform: String, date: Date) async -> Bool {
+    func saveDraft(post: Post?, topic: String, caption: String, platform: String, date: Date, copies: [String: String]? = nil) async -> Bool {
         guard let brand = selectedBrand else { return false }
-        var body: [String: Any] = ["brand_id": brand, "topic": topic, "copy": [platform: caption], "platforms": [platform], "scheduled_at": ISO8601DateFormatter.cadence.string(from: date)]
+        var captions = copies ?? post?.copy ?? [:]; captions[platform] = caption
+        var body: [String: Any] = ["brand_id": brand, "topic": topic, "copy": captions, "platforms": post?.platforms ?? [platform], "scheduled_at": ISO8601DateFormatter.cadence.string(from: date)]
         if let post { body["version"] = post.version }
         do {
             let _: Post = try await request(post.map { "/api/posts/\($0.id)" } ?? "/api/posts", method: post == nil ? "POST" : "PATCH", body: body)

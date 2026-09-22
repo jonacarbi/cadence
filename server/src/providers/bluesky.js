@@ -1,9 +1,9 @@
 // Bluesky — AT Protocol with an app password. No developer app needed.
 import { readFileSync } from "node:fs";
-import { api } from "./http.js";
+import { api, mediaType } from "./http.js";
 
 export async function login(auth) {
-  const s = await api(`${auth.service || "https://bsky.social"}/xrpc/com.atproto.server.createSession`, { method: "POST", json: { identifier: auth.identifier, password: auth.app_password } });
+  const s = await api(`${auth.service || "https://bsky.social"}/xrpc/com.atproto.server.createSession`, { method: "POST", json: { identifier: auth.identifier || auth.handle, password: auth.app_password } });
   return { ...auth, did: s.did, accessJwt: s.accessJwt, handle: s.handle };
 }
 
@@ -27,7 +27,7 @@ export async function publish({ auth: a, text, media, altText }) {
   const h = { authorization: `Bearer ${auth.accessJwt}` };
   const images = [];
   for (const m of media.slice(0, 4)) {
-    const up = await api(`${base}/xrpc/com.atproto.repo.uploadBlob`, { method: "POST", headers: { ...h, "content-type": "image/png" }, body: readFileSync(m) });
+    const up = await api(`${base}/xrpc/com.atproto.repo.uploadBlob`, { method: "POST", headers: { ...h, "content-type": mediaType(m) }, body: readFileSync(m) });
     images.push({ alt: altText || "", image: up.blob });
   }
   const record = { $type: "app.bsky.feed.post", text, createdAt: new Date().toISOString(), facets: facets(text), ...(images.length && { embed: { $type: "app.bsky.embed.images", images } }) };

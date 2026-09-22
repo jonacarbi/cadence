@@ -1,15 +1,33 @@
 import SwiftUI
 
+struct Readiness: Decodable {
+    struct Check: Decodable, Identifiable { let id: String; let title: String; let ready: Bool; let message: String }
+    let checks: [Check]
+    let note: String
+}
+
 /// Autonomy dial, webhooks, design loop, and where the local service keeps its state.
 struct SettingsView: View {
     @EnvironmentObject private var store: Store
     @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "")
     @State private var saved = false
+    @State private var readiness: Readiness?
     private let levels = [("review_all", "Review everything", "Every post waits for your approval."),
                           ("auto_trusted", "Auto for trusted", "Ready posts on trusted accounts schedule themselves; the rest wait."),
                           ("hands_off", "Hands off", "Every ready post schedules itself. You get webhooks, not questions.")]
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
+            if let readiness {
+                section("Ready to create and publish") {
+                    ForEach(readiness.checks) { check in
+                        HStack(alignment: .top) {
+                            Image(systemName: check.ready ? "checkmark.circle.fill" : "exclamationmark.circle.fill").foregroundStyle(check.ready ? .green : .orange)
+                            VStack(alignment: .leading, spacing: 3) { Text(check.title).font(.headline); Text(check.message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) }
+                        }
+                    }
+                    Text(readiness.note).font(.caption).foregroundStyle(.secondary)
+                }
+            }
             section("Autonomy") {
                 ForEach(levels, id: \.0) { level in
                     Button { settings.autonomy = level.0 } label: {
@@ -42,7 +60,7 @@ struct SettingsView: View {
                 Button("Save settings") { save() }.buttonStyle(.borderedProminent)
             }
         }.textFieldStyle(.roundedBorder)
-        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s } }
+        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness") }
     }
     private func section<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 10) { Text(title).font(.title3.weight(.semibold)); content() }
@@ -52,8 +70,8 @@ struct SettingsView: View {
         Task {
             await store.act {
                 let body: [String: Any] = ["autonomy": settings.autonomy, "webhook_url": settings.webhook_url, "webhook_secret": settings.webhook_secret, "design_loop": settings.design_loop, "design_loop_rounds": settings.design_loop_rounds, "cap_per_account_per_day": settings.cap_per_account_per_day]
-                let s: Settings = try await store.request("/api/settings", method: "PUT", body: body)
-                settings = s; saved = true
+                let _: MutationResult = try await store.request("/api/settings", method: "PUT", body: body)
+                settings = try await store.request("/api/settings"); saved = true
             }
         }
     }

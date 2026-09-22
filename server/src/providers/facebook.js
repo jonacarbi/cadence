@@ -1,6 +1,6 @@
 // Facebook Pages — Graph API. Photos upload directly (multipart), text posts via /feed.
 import { readFileSync } from "node:fs";
-import { api } from "./http.js";
+import { api, mediaType } from "./http.js";
 const G = "https://graph.facebook.com/v21.0";
 
 export const oauth = {
@@ -24,7 +24,7 @@ export async function publish({ auth, account, text, media }) {
   }
   const ids = [];
   for (const m of media) {
-    const r = await api(`${G}/${page}/photos`, { method: "POST", form: { source: new Blob([readFileSync(m)], { type: "image/png" }), published: "false", access_token: t } });
+    const r = await api(`${G}/${page}/photos`, { method: "POST", form: { source: new Blob([readFileSync(m)], { type: mediaType(m) }), published: "false", access_token: t } });
     ids.push(r.id);
   }
   const r = await api(`${G}/${page}/feed`, { method: "POST", json: { message: text, attached_media: ids.map((media_fbid) => ({ media_fbid })), access_token: t } });

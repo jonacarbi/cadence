@@ -2,8 +2,9 @@
 // otherwise the CatGPT gateway (ChatGPT Plus session, same image model, at localhost:8000).
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { ASSETS_DIR, OPENAI_API_KEY, OPENAI_IMAGE_MODEL, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL } from "./config.js";
+import { ASSETS_DIR, OPENAI_API_KEY, OPENAI_IMAGE_MODEL, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL, IMAGE_PROVIDER } from "./config.js";
 import { uuid } from "./db.js";
+import { generateWithOGA } from './oga-images.js';
 
 export const SIZES = { portrait: "1024x1536", square: "1024x1024", landscape: "1536x1024" };
 
@@ -38,8 +39,11 @@ async function viaCatGPT(prompt, size) {
 
 /** Generate one image, save to ASSETS_DIR/<brandSlug>/, return absolute path. */
 export async function generateImage(prompt, { aspect = "portrait", brandSlug = "misc" } = {}) {
+  if(IMAGE_PROVIDER==='oga-mcp')return generateWithOGA(prompt,{aspect,brandSlug});
+  if(!['openai','catgpt'].includes(IMAGE_PROVIDER))throw new Error('Unknown image provider: use oga-mcp, openai or catgpt');
   const size = SIZES[aspect] || SIZES.portrait;
-  const b64 = OPENAI_API_KEY ? await viaOpenAI(prompt, size) : await viaCatGPT(prompt, size);
+  if(IMAGE_PROVIDER==='openai'&&!OPENAI_API_KEY)throw new Error('OpenAI image API key is not configured');
+  const b64 = IMAGE_PROVIDER==='openai' ? await viaOpenAI(prompt, size) : await viaCatGPT(prompt, size);
   const dir = join(ASSETS_DIR, brandSlug);
   mkdirSync(dir, { recursive: true });
   const path = join(dir, `${uuid()}.png`);
@@ -47,4 +51,4 @@ export async function generateImage(prompt, { aspect = "portrait", brandSlug = "
   return path;
 }
 
-export const imageProvider = () => (OPENAI_API_KEY ? `openai:${OPENAI_IMAGE_MODEL}` : `catgpt:${CATGPT_MODEL}`);
+export const imageProvider = () => IMAGE_PROVIDER==='oga-mcp'?`oga-mcp:catgpt:${CATGPT_MODEL}`:IMAGE_PROVIDER==='openai'?`openai:${OPENAI_IMAGE_MODEL}`:`catgpt:${CATGPT_MODEL}`;

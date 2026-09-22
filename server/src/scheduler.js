@@ -1,4 +1,4 @@
-import { all, one, run, update, decrypt, hydrate, now } from "./db.js";
+import { all, one, run, update, decrypt, hydrate, now, getSetting } from "./db.js";
 import { transaction } from "./workflow.js";
 import { providerFor } from "./providers/index.js";
 import { lintCaption, hasBlockers } from "./lint.js";
@@ -19,11 +19,15 @@ export function recoverInterruptedDeliveries() {
 
 function claim() {
   return transaction(() => {
-    const row = one(
-      `SELECT d.* FROM deliveries d JOIN posts p ON p.id = d.post_id JOIN accounts a ON a.id = d.account_id WHERE d.status IN ('queued','retry') AND p.status IN ('scheduled','publishing') AND p.approved_by IS NOT NULL AND p.version = d.version AND a.paused = 0 AND p.scheduled_at <= ? AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?) ORDER BY p.scheduled_at LIMIT 1`,
+    const candidates = all(
+      `SELECT d.* FROM deliveries d JOIN posts p ON p.id = d.post_id JOIN accounts a ON a.id = d.account_id WHERE d.status IN ('queued','retry') AND p.status IN ('scheduled','publishing') AND p.approved_by IS NOT NULL AND p.version = d.version AND a.paused = 0 AND p.scheduled_at <= ? AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?) ORDER BY p.scheduled_at`,
       now(),
       now(),
     );
+    const cap=Number(getSetting('cap_per_account_per_day',''));
+    const format=new Intl.DateTimeFormat('en-CA',{timeZone:getSetting('timezone')||Intl.DateTimeFormat().resolvedOptions().timeZone});
+    const today=format.format(new Date());
+    const row=candidates.find(candidate=> !cap || all("SELECT started_at FROM deliveries WHERE account_id=? AND status IN ('published','sending','uncertain') AND started_at>=?",candidate.account_id,new Date(Date.now()-48*3600e3).toISOString()).filter(d=>format.format(new Date(d.started_at))===today).length<cap);
     if (!row) return null;
     run("UPDATE deliveries SET status = 'sending', attempts = attempts + 1, started_at = ? WHERE id = ?", now(), row.id);
     update("posts", row.post_id, { status: "publishing" });
