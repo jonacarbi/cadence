@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { update, logEvent, getSetting } from './db.js';
 import { registerJob } from './jobs.js';
 import { claude, completeJson } from './llm.js';
-import { renderFrame, LAYOUTS } from './render.js';
+import { renderFrame, LAYOUTS, contrastFix } from './render.js';
 import { generateImage } from './images.js';
 import { stylePrompt, syncDesignSystemMd } from './brands.js';
 import { resolveFonts } from './fonts.js';
@@ -41,6 +41,19 @@ Write the copy for one Instagram post that states what this brand does. Return J
   return out;
 }
 
+// The renderer resolves fonts and lifts a low-contrast accent; tokens that skip those steps describe a
+// frame nobody renders. Run the same resolution here so the doc, the critics and the pixels agree.
+// The doc is read from the brand row, so the row has to move first.
+function publish(brandId, tokens) {
+  update('brands', brandId, { tokens_json: JSON.stringify(tokens) });
+  syncDesignSystemMd(brandId);
+}
+
+async function effectiveTokens(t) {
+  const f = await resolveFonts(t);
+  return { ...t, colors: { ...t.colors, accent: contrastFix(t.colors?.accent, t.colors?.surface) }, fonts: { ...t.fonts, display: f.display, body: f.body } };
+}
+
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
     critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
@@ -58,14 +71,13 @@ export async function runDesignLoop(brandId, report = () => {}) {
   const rounds = Number(getSetting('design_loop_rounds', '3'));
   const bar = await tearDown(brand, root);
   const copy = await heroCopy(brand, root);
-  // The System critic reads design-system.md against the pixels, so the tokens must name the fonts that
-  // actually render. The brand's licensed originals stay on record under fonts.requested.
-  const resolved = await resolveFonts(brand.tokens);
-  let tokens = { ...brand.tokens, fonts: { display: resolved.display, body: resolved.body, requested: brand.tokens?.fonts } };
+  // Both critics read design-system.md against the pixels, so the doc has to describe this round's frame:
+  // the fonts the machine actually has and the accent after the renderer's contrast lift. The brand's
+  // licensed originals stay on record under fonts.requested.
+  const original = brand.tokens?.fonts?.requested || brand.tokens?.fonts;
+  let tokens = await effectiveTokens({ ...brand.tokens, fonts: { ...brand.tokens?.fonts, requested: original } });
   let layout = 'editorial', summary = '';
-  // The critics read design-system.md while the loop runs, so the doc has to match round 1's pixels, not the last run's.
-  update('brands', brandId, { tokens_json: JSON.stringify(tokens) });
-  syncDesignSystemMd(brandId);
+  publish(brandId, tokens);
   // Same pipeline as real posts: one OpenAI image in the brand's style. Without it, the type-only layout is judged.
   let image = null;
   try {
@@ -85,7 +97,8 @@ Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tok
     if (next?.tokens?.colors && next?.tokens?.fonts) {
       // The builder answers with the knobs only; everything measured at extraction (palette, heading styles,
       // the requested fonts) is evidence, not a knob, so merge onto the current tokens instead of replacing them.
-      tokens = { ...tokens, ...next.tokens, colors: { ...tokens.colors, ...next.tokens.colors }, fonts: { ...tokens.fonts, ...next.tokens.fonts } };
+      tokens = await effectiveTokens({ ...tokens, ...next.tokens, colors: { ...tokens.colors, ...next.tokens.colors }, fonts: { ...tokens.fonts, ...next.tokens.fonts, requested: original } });
+      publish(brandId, tokens);
       writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2));
     }
     if (LAYOUTS.includes(next?.layout) && (image || next.layout === 'type')) layout = next.layout;

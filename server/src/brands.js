@@ -101,7 +101,7 @@ Measured palette by coverage:
 ${pal}
 
 ## Typography
-- Display: ${t.fonts.display}, fallback system sans. Headline 4–6× body size, tight tracking.
+- Display: ${t.fonts.display}, fallback system sans. Headline 3.5–4.5× the sub size, tight tracking.
 - Body: ${t.fonts.body}. Max 3 type sizes per frame.
 - Measured heading styles: ${(t.headingStyles || []).join("; ") || "n/a"}
 

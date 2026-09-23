@@ -40,7 +40,7 @@ const lum = (hex) => {
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)]; return x === null || y === null ? 21 : (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-const contrastFix = (accent, surface) => {
+export const contrastFix = (accent, surface) => {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(accent || ""));
   if (!m || ratio(accent, surface) >= 4.5) return accent;
   const up = lum(surface) < 0.2;
@@ -54,6 +54,17 @@ const contrastFix = (accent, surface) => {
 };
 
 const dataUrl = (p) => (p && existsSync(p) ? `data:${MIME[p.split(".").pop().toLowerCase()] || "image/png"};base64,${readFileSync(p).toString("base64")}` : "");
+// An <img> gives an SVG its own document, where currentColor resolves to black — a brand mark drawn in
+// currentColor then disappears on a dark surface. Paint it in the text token before encoding.
+const logoUrl = (p, color) => {
+  if (!p || !existsSync(p)) return "";
+  if (!/\.svg$/i.test(p)) return dataUrl(p);
+  // An extracted mark often lacks xmlns, which is legal inline but makes the file unparseable as an
+  // image document, so the <img> silently renders nothing.
+  let svg = readFileSync(p, "utf8").replaceAll("currentColor", color);
+  if (!/xmlns=/.test(svg)) svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
+};
 
 /**
  * Render one frame. opts: {aspect, layout, headline, sub, eyebrow, cta, counter, image (path), brand}
@@ -71,7 +82,7 @@ export async function renderFrame(opts) {
     w, h, lang: brand.voice?.language || "en", layout,
     surface, text: t.colors?.text || "#111", accent, accentInk: ink(accent), secondary: t.colors?.secondary || "#f2f2f2",
     radius: t.radius || "8px", displayFont: fonts.display, bodyFont: fonts.body, fontCss: fonts.css,
-    image: dataUrl(opts.image), logo: dataUrl(brand.logo_path),
+    image: dataUrl(opts.image), logo: logoUrl(brand.logo_path, t.colors?.text || "#111"),
     headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
   });
   const browser = await launchBrowser();
@@ -81,15 +92,15 @@ export async function renderFrame(opts) {
     await page.routeWebSocket('**/*', socket => socket.close());
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
-    // Type is sized bottom-up from the legibility floor (no text under 3% of canvas width), then the
-    // headline takes the largest size inside the 3.5-4.5:1 scale band that still leaves the frame's void intact.
+    // The headline is sized top-down from the frame's void (its block top must sit at 30-48% of canvas
+    // height), and the sub follows at a quarter of it, floored at the 3% legibility minimum. Sizing the sub
+    // first instead forces a headline so large it wraps past the void, so the two passes settle in that order.
     await page.evaluate(({ w, h }) => {
       const q = (s) => document.querySelector(s);
       const h1 = q("h1"); if (!h1) return;
       const box = h1.parentElement, eb = q(".eyebrow"), subEl = q("p.sub");
-      const small = Math.round(w * 0.03), sub = Math.round(small * 1.15);
+      const small = Math.round(w * 0.03);
       for (const el of [eb, q(".pill")]) if (el) el.style.fontSize = small + "px";
-      if (subEl) subEl.style.fontSize = sub + "px";
       // Margins sit below the target ink gaps because each ink gap also carries both elements' half-leading.
       const apply = (fs) => {
         const lh = fs * 1.06;
@@ -98,12 +109,19 @@ export async function renderFrame(opts) {
         if (eb) eb.style.marginBottom = lh * 0.18 + "px";
         if (subEl) subEl.style.marginBottom = lh * 1.2 + "px";
       };
-      const lo = sub * 3.5;
-      let fs = sub * 4.5, guard = 40;
-      apply(fs);
       // A bottom-anchored copy block has no height of its own, so the void above it is the real constraint.
       const over = () => box.getBoundingClientRect().top < h * 0.36 || box.scrollHeight > box.clientHeight + 1;
-      while (guard-- && fs > lo && over()) { fs = Math.max(lo, fs * 0.94); apply(fs); }
+      const settle = (sub) => {
+        if (subEl) subEl.style.fontSize = sub + "px";
+        let fs = w * 0.15, guard = 40;
+        apply(fs);
+        while (guard-- && fs > small * 3.5 && over()) { fs = Math.max(small * 3.5, fs * 0.94); apply(fs); }
+        return fs;
+      };
+      // Cap-height inference is how a critic measures the ratio and it reads a few percent low, so the
+      // nominal 4:1 keeps the measured value inside the 3.5-4.5 band; the sub never drops below the floor.
+      const sub = Math.min(Math.max(Math.round(settle(small) / 4), small), Math.round(small * 1.3));
+      settle(sub);
     }, { w, h });
     const dir = join(ASSETS_DIR, brand.slug || "misc", "renders");
     mkdirSync(dir, { recursive: true });
