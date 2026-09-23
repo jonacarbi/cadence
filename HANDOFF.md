@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 05:55:19 -03
-- **Built on commit:** 12d3e4a — fix: stop the System critic measuring what it cannot measure (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 09:49:01 -03
+- **Built on commit:** 84357ea — fix: clear the previous run's rounds when a loop starts (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,10 +85,11 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	server/src/designloop.js
+- M	server/tests/campaigns.test.js
 
 ## Recent history
 
+- 84357ea fix: clear the previous run's rounds when a loop starts _(Jonathan Carbiere, 2026-09-23)_
 - 12d3e4a fix: stop the System critic measuring what it cannot measure _(Jonathan Carbiere, 2026-09-23)_
 - 6c8bb1b fix: size the lockup mark by its ink, not by its box _(Jonathan Carbiere, 2026-09-23)_
 - edd5f87 fix: tell the Brief critic what the frame can be, and how to count type sizes _(Jonathan Carbiere, 2026-09-23)_
@@ -98,6 +99,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 34389b6 fix: lock the brand mark into the lockup and center every gap in its band _(Jonathan Carbiere, 2026-09-23)_
 - f58274b fix: show the brand mark, size type from the void, keep the doc equal to the pixels _(Jonathan Carbiere, 2026-09-22)_
 - 90dbbad fix: merge design-loop builder tokens instead of replacing them _(Jonathan Carbiere, 2026-09-22)_
-- 15f2a83 fix: render the fonts a brand actually has, and keep the measured palette _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->

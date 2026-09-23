@@ -46,3 +46,25 @@ test('recurring planning repeats last month\'s settings once the owner enables i
  assert.deepEqual(mine(rollMonthlyCampaigns({now:january})),[],'the same month is never planned twice');
  setSetting('auto_plan','off');
 });
+test('a full month is planned in batches and a mid-run failure resumes from the batches already saved',async()=> {
+ const {campaign}=createCampaign({brand_id:brand,month:'2026-12',platforms:['mastodon']},{queue:false});
+ assert.equal(JSON.parse(one('SELECT * FROM campaigns WHERE id=?',campaign.id).plan_json).count,31);
+ let day=0,batches=[],fail=false;
+ const generate=async p=> {
+  const count=Number(p.match(/^Plan (\d+) distinct/)[1]);batches.push(count);
+  if(fail&&batches.length===3)throw new Error('planner offline');
+  return {posts:Array.from({length:count},()=>({day:++day,topic:`Topic ${day}`,copy:{mastodon:'A factual caption'},image_prompt:'Dusty plum composition',alt_text:'Simple illustration'}))};
+ };
+ fail=true;
+ await assert.rejects(planCampaign(campaign.id,()=>{},{generate,queueVisuals:false}),/planner offline/);
+ // The two batches that did return are saved, so the retry asks only for what is missing.
+ assert.deepEqual(batches,[7,7,7]);
+ assert.equal(JSON.parse(one('SELECT * FROM campaigns WHERE id=?',campaign.id).plan_json).items.length,14);
+ assert.equal(all('SELECT id FROM posts WHERE campaign_id=?',campaign.id).length,0);
+ fail=false;batches=[];
+ await planCampaign(campaign.id,()=>{},{generate,queueVisuals:false});
+ assert.deepEqual(batches,[7,7,3]);
+ const posts=all('SELECT * FROM posts WHERE campaign_id=?',campaign.id);
+ assert.equal(posts.length,31);
+ assert.equal(new Set(posts.map(p=>p.scheduled_at)).size,31);
+});
