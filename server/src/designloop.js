@@ -1,7 +1,7 @@
 // Gauntlet loop (design-loop skill) on the brand's hero frame: build → render → three critics in fresh contexts
 // (Brief/sonnet, System/haiku against design-system.md, Craft/opus against bar.md) → apply fixes to the brand
 // tokens → repeat. Runs once per brand after extraction, before design-dna codifies the final look.
-import { mkdirSync, writeFileSync, existsSync, readFileSync, copyFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { update, logEvent, getSetting } from './db.js';
 import { registerJob } from './jobs.js';
@@ -70,6 +70,9 @@ export async function runDesignLoop(brandId, report = () => {}) {
   const brand = getBrand(brandId);
   if (!brand || !existsSync(join(brand.dir, 'reference.png'))) throw new Error('Brand has no reference screenshot yet');
   const root = join(brand.dir, 'design-loop'); mkdirSync(root, { recursive: true });
+  // A run that converges early leaves the later rounds of the previous run on disk, which reads as
+  // this run having failed them.
+  for (const d of readdirSync(root).filter((f) => f.startsWith('round-'))) rmSync(join(root, d), { recursive: true, force: true });
   const rounds = Number(getSetting('design_loop_rounds', '3'));
   const bar = await tearDown(brand, root);
   const copy = await heroCopy(brand, root);
