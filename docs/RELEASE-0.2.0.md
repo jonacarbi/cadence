@@ -7,7 +7,7 @@
 - Platform caption editing, visual preview, timezone-aware calendar placement, version-checked batch approval and atomic scheduling.
 - Text: user-selected `cx/gpt-5.6-terra` through 9Router. Visuals: user-selected Open Generative AI MCP → CatGPT, using its `chatgpt` gateway alias. The MCP does not expose or verify the underlying browser image-model version.
 - MCP child processes close in `finally`; CatGPT is pinned for Cadence, with an eight-minute image wait, routing around unhealthy accounts, and no fallback to other image providers.
-- Settings readiness checks cover text configuration, browser rendering, MCP installation, real accounts and media hosting.
+- Settings readiness checks cover text configuration, browser rendering, MCP installation, real accounts and media hosting. The image check probes the gateway's live status, so a recorded rate limit reads as not ready with the hours until reset. A clear result is worded as “no rate limit recorded” rather than “ready to generate”: the gateway counts real 429s, and a plan's own image allowance arrives as ordinary reply text it never sees.
 
 ## Reliability fixes
 
@@ -21,7 +21,7 @@
 
 ## Verification
 
-- All 36 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
+- All 40 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
 - Swift release compilation and ad-hoc bundle signature verification.
 - Native UI inspection of the installed Content agent, monthly controls and Settings checks.
 - Live website extraction against `https://example.com`.

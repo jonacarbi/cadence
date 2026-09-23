@@ -4,7 +4,9 @@ import { all } from './db.js';
 import { CLAUDE_BIN, NINE_ROUTER_MODEL, TEXT_PROVIDER, OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, IMAGE_PROVIDER, OGA_MCP_ENTRY, CATGPT_MODEL, CATGPT_URL, CATGPT_TOKEN } from './config.js';
 
 // A configured gateway can still be out of image quota for hours, which otherwise shows up only as
-// requests that burn four retries each and fail. The gateway reports it, so ask before promising.
+// requests that burn four retries each and fail. The gateway records a limit once it has hit a real
+// 429, so a negative is worth surfacing; a positive only means no limit has been recorded yet, since
+// a plan refusal arrives as ordinary reply text the gateway never counts. Don't promise more.
 async function catgptQuota(fetchImpl) {
   try {
     const res = await fetchImpl(`${CATGPT_URL.replace(/\/$/,'')}/status`, { headers: CATGPT_TOKEN ? { authorization: `Bearer ${CATGPT_TOKEN}` } : {}, signal: AbortSignal.timeout(5000) });
@@ -20,7 +22,7 @@ function imageCheck(quota) {
   if (IMAGE_PROVIDER === 'oga-mcp' && !existsSync(OGA_MCP_ENTRY)) return { ready: false, message: `${via}: the MCP entry point is missing.` };
   if (!quota.reachable) return { ready: false, message: `${via} is not answering. Start it and sign it in.` };
   if (!quota.can) return { ready: false, message: `${via} is out of image quota${quota.hours ? ` for about ${quota.hours}h` : ''}. Sign in to an account with image credits, or set OPENAI_API_KEY to use the API directly.` };
-  return { ready: true, message: `${via}. Signed in and within quota.` };
+  return { ready: true, message: `${via}. Reachable with no rate limit recorded; a plan's own image allowance is only visible when a post is generated.` };
 }
 
 export async function readiness({ fetchImpl = fetch } = {}) {

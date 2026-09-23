@@ -98,6 +98,6 @@ test('readiness reports an image gateway that is out of quota instead of calling
  const img=async fetchImpl=>(await readiness({fetchImpl})).checks.find(c=>c.id==='images');
  const limited=await img(reply({can_generate_image:false,retry_after_seconds:50400}));
  assert.equal(limited.ready,false);assert.match(limited.message,/out of image quota for about 14h/);
- assert.equal((await img(reply({can_generate_image:true}))).ready,true);
+ const fine=await img(reply({can_generate_image:true}));assert.equal(fine.ready,true);assert.match(fine.message,/no rate limit recorded/);
  assert.equal((await img(async()=>{throw new Error('down');})).ready,false);
 });
