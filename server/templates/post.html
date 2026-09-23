@@ -11,10 +11,10 @@
   .frame { position: relative; width: 100%; height: 100vh; display: grid; }
   .photo { position: absolute; inset: 0; background: url("{{image}}") center / cover no-repeat; }
   .logo { position: absolute; height: 4.2vh; max-width: 30%; object-fit: contain; }
-  .eyebrow { display: flex; align-items: center; gap: 1.6vh; font: 600 2.2vh var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+  .eyebrow { display: flex; align-items: baseline; gap: 1.6vh; font: 600 2.2vh var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
   /* A mark alone in a corner is read last. Locked up with the wordmark, on the same left edge as the
      headline, it is the first ink under the void — where the eye lands in the first glance. */
-  .eyebrow > .mark { height: 1em; object-fit: contain; }
+  .eyebrow > .mark { height: 1em; object-fit: contain; }  /* height and baseline offset are re-measured from the ink in render.js */
   h1 { font-family: var(--display); font-weight: 700; line-height: 1.06; letter-spacing: -0.02em; text-wrap: balance; }
   p.sub { font-size: 2.6vh; line-height: 1.48; color: var(--dim); max-width: 34ch; }
   .pill { display: inline-block; padding: 1.4vh 3.4vh; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 600 2.2vh var(--body); }

@@ -59,7 +59,7 @@ async function effectiveTokens(t) {
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
     critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
-    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. Mechanically list every violation of the system with the rule it breaks. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
+    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. Mechanically list every violation of the system with the rule it breaks. Sample the pixels for any colour claim rather than naming the colour by eye: a light text token on a dark surface reads as white without being it. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
     critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, { ...readOnly, model: 'opus' }),
   ]);
   writeFileSync(join(dir, 'critics.md'), `# Brief\n${brief}\n\n# System\n${system}\n\n# Craft\n${craft}\n`);

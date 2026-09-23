@@ -110,6 +110,28 @@ export async function renderFrame(opts) {
       const box = h1.parentElement, eb = q(".eyebrow"), subEl = q("p.sub");
       const small = Math.round(w * 0.03);
       for (const el of [eb, q(".pill")]) if (el) el.style.fontSize = small + "px";
+      // A logo file's ink fills an arbitrary share of its box, so sizing the mark by its box renders the
+      // wordmark inside it at some other size than the label beside it, which reads as an extra type size
+      // in a second family. Measure the ink and match it to the label's cap height instead.
+      const mark = q(".eyebrow > .mark");
+      if (mark) {
+        const c = document.createElement("canvas"), n = 200;
+        c.width = c.height = n;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(mark, 0, 0, n, n);
+        const a = ctx.getImageData(0, 0, n, n).data;
+        let top = n, bot = -1;
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (a[(y * n + x) * 4 + 3] > 8) { if (y < top) top = y; bot = y; break; }
+        ctx.font = getComputedStyle(eb).font;
+        const cap = ctx.measureText("H").actualBoundingBoxAscent;
+        if (bot > top && cap > 0) {
+          const boxH = cap / ((bot + 1 - top) / n);
+          mark.style.height = boxH + "px";
+          // .eyebrow aligns on the baseline, where an image's baseline is its box bottom, so drop the box
+          // by the empty strip under its ink to seat the ink itself on that baseline.
+          mark.style.transform = `translateY(${boxH * (n - 1 - bot) / n}px)`;
+        }
+      }
       // Margins sit well below the target ink gaps: each ink gap also carries both elements' half-leading,
       // which measured ~0.25x the headline line-height, so every margin is the target gap minus that.
       const apply = (fs) => {
