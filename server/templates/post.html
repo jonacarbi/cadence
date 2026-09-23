@@ -14,7 +14,7 @@
   .eyebrow { display: flex; align-items: center; gap: 1.6vh; font: 600 2.2vh var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
   /* A mark alone in a corner is read last. Locked up with the wordmark, on the same left edge as the
      headline, it is the first ink under the void — where the eye lands in the first glance. */
-  .eyebrow > .mark { height: 5vh; object-fit: contain; }
+  .eyebrow > .mark { height: 1em; object-fit: contain; }
   h1 { font-family: var(--display); font-weight: 700; line-height: 1.06; letter-spacing: -0.02em; text-wrap: balance; }
   p.sub { font-size: 2.6vh; line-height: 1.48; color: var(--dim); max-width: 34ch; }
   .pill { display: inline-block; padding: 1.4vh 3.4vh; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 600 2.2vh var(--body); }
@@ -45,8 +45,9 @@
   .layout-type .photo { display: none; }
   .layout-type .copy { position: absolute; left: 7.4vw; right: 7.4vw; bottom: 7.4vw; display: grid; align-content: end; }
   .layout-type h1 { font-size: 9vh; }
-  .layout-type .bar { width: 22%; height: 1.2vh; background: var(--accent); margin-top: 3vh; }
-  .outline-cta .pill { background: transparent; color: var(--text); box-shadow: inset 0 0 0 .3vh var(--dim); }
+  /* The ring, not the fill, is the frame's one accent element: the label then measures against the
+     surface, and the accent only has to clear 4.5:1 there, which the token can be lifted to meet. */
+  .outline-cta .pill { background: transparent; color: var(--text); box-shadow: inset 0 0 0 .3vh var(--accent); }
   .layout-type .logo { bottom: 7.4vw; right: 7.4vw; }
 
   /* Carousel slide (square): centered headline over secondary surface with small photo tile */
@@ -63,7 +64,6 @@
     <h1>{{headline}}</h1>
     {{#sub}}<p class="sub">{{sub}}</p>{{/sub}}
     {{#cta}}<div><span class="pill">{{cta}}</span></div>{{/cta}}
-    {{#bar}}<div class="bar"></div>{{/bar}}
   </div>
   {{#counter}}<div class="counter">{{counter}}</div>{{/counter}}
   <div class="grain"></div>

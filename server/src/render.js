@@ -92,7 +92,7 @@ export async function renderFrame(opts) {
     // The type layout has no photo to anchor recognition, so its mark rides in the eyebrow lockup
     // instead of a corner; every other layout keeps the corner placement.
     logo: layout === "type" ? "" : mark, lockup, eyerow: opts.eyebrow || lockup,
-    headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
+    headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter,
   });
   const browser = await launchBrowser();
   try {
@@ -116,9 +116,7 @@ export async function renderFrame(opts) {
         const lh = fs * 1.06;
         h1.style.fontSize = fs + "px";
         h1.style.marginBottom = lh * 0.43 + "px";
-        // A text-only eyebrow carries half-leading into the ink gap; a mark's box ends at its ink, so
-        // the lockup row needs the larger margin to land on the same gap.
-        if (eb) eb.style.marginBottom = lh * (eb.querySelector(".mark") ? 0.2 : 0.055) + "px";
+        if (eb) eb.style.marginBottom = lh * 0.055 + "px";
         if (subEl) subEl.style.marginBottom = lh * 1.35 + "px";
       };
       // A bottom-anchored copy block has no height of its own, so the void above it is the real constraint.
