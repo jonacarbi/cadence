@@ -5,6 +5,8 @@ struct AccountsView: View {
     @EnvironmentObject private var store: Store
     @State private var capabilities: [Capability] = []
     @State private var connecting: Capability?
+    @State private var sources: [Source] = []
+    @State private var feedURL = ""
     private var accounts: [Account] { store.accounts.filter { $0.brand_id == store.selectedBrand } }
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -26,9 +28,54 @@ struct AccountsView: View {
                     }
                 }
             }
+            feeds
         }
         .task { capabilities = (try? await store.request("/api/capabilities")) ?? [] }
+        .task(id: store.selectedBrand) { await loadSources() }
         .sheet(item: $connecting) { cap in ManualAccountForm(capability: cap).environmentObject(store) }
+    }
+    /// Watched feeds: new entries arrive as drafts in Approvals, so the owner still decides what ships.
+    private var feeds: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Watched feeds").font(.headline)
+            Text("New entries from an RSS or Atom feed become drafts for review. Everything already published when you subscribe is treated as history.")
+                .font(.caption).foregroundStyle(.secondary)
+            ForEach(sources, id: \.id) { (source: Source) in
+                HStack(spacing: 12) {
+                    Image(systemName: "dot.radiowaves.up.forward").font(.title3).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(source.label).font(.subheadline.weight(.semibold))
+                        Text(source.last_error ?? source.url).font(.caption)
+                            .foregroundStyle(source.last_error == nil ? Color.secondary : Color.orange).lineLimit(1)
+                    }
+                    Spacer()
+                    if source.pending > 0 { Text("\(source.pending) waiting").font(.caption).foregroundStyle(.secondary) }
+                    Button(source.paused == 1 ? "Resume" : "Pause") {
+                        Task { await store.act { let _: Source = try await store.request("/api/sources/\(source.id)", method: "PATCH", body: ["paused": source.paused == 0]) }; await loadSources() }
+                    }.controlSize(.small)
+                    Button(role: .destructive) {
+                        Task { await store.act { let _: [String: Bool] = try await store.request("/api/sources/\(source.id)", method: "DELETE", body: nil) }; await loadSources() }
+                    } label: { Image(systemName: "trash") }.controlSize(.small)
+                }.padding(12).background(.background, in: RoundedRectangle(cornerRadius: 10))
+            }
+            HStack {
+                TextField("https://example.com/feed.xml", text: $feedURL).textFieldStyle(.roundedBorder).onSubmit { addFeed() }
+                Button("Watch", action: addFeed).disabled(feedURL.isEmpty || store.selectedBrand == nil)
+            }
+        }
+    }
+    private func loadSources() async {
+        guard let brand = store.selectedBrand else { sources = []; return }
+        sources = (try? await store.request("/api/sources?brand_id=\(brand)")) ?? []
+    }
+    private func addFeed() {
+        guard let brand = store.selectedBrand, !feedURL.isEmpty else { return }
+        let url = feedURL
+        Task {
+            await store.act { let _: Source = try await store.request("/api/sources", method: "POST", body: ["brand_id": brand, "url": url]) }
+            feedURL = ""
+            await loadSources()
+        }
     }
     private func row(_ account: Account) -> some View {
         HStack(spacing: 12) {

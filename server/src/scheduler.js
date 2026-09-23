@@ -7,6 +7,7 @@ import { autoApproveDue } from "./autonomy.js";
 import { collectAnalytics } from "./analytics.js";
 import { notify } from "./webhooks.js";
 import { rollMonthlyCampaigns } from "./campaigns.js";
+import { scanSources } from "./sources.js";
 // A process dying after a remote send is ambiguous. Require reconciliation rather than blind retry.
 
 export function recoverInterruptedDeliveries() {
@@ -111,6 +112,7 @@ export function startScheduler() {
       await tick();
       await collectAnalytics();
       rollMonthlyCampaigns();
+      await scanSources();
     } catch (e) {
       console.error("Scheduler:", e.message);
     } finally {

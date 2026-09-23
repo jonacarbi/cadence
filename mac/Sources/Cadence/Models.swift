@@ -56,6 +56,14 @@ struct Capability: Codable, Identifiable {
     let auth: String?
     let fields: [String]
 }
+struct Source: Codable, Identifiable {
+    let id: String
+    let url: String
+    let label: String
+    let paused: Int
+    let last_error: String?
+    let pending: Int
+}
 struct Settings: Codable {
     var autonomy: String
     var webhook_url: String

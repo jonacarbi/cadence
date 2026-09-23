@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 10:14:29 -03
-- **Built on commit:** 99c11d4 — feat: publish photo posts to TikTok (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 10:22:55 -03
+- **Built on commit:** 7e369c6 — feat: a per-brand image library the owner fills themselves (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -73,7 +73,7 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Languages
 
-- .js — 56 file(s)
+- .js — 57 file(s)
 - .swift — 13 file(s)
 - .md — 4 file(s)
 - .json — 3 file(s)
@@ -87,15 +87,17 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 - M	docs/COMPETITOR-RESEARCH.md
 - M	docs/RELEASE-0.2.0.md
-- A	mac/Sources/Cadence/Views/MediaLibrary.swift
-- M	mac/Sources/Cadence/Views/PostDetail.swift
+- M	mac/Sources/Cadence/Models.swift
+- M	mac/Sources/Cadence/Views/AccountsView.swift
 - M	server/src/db.js
-- A	server/src/library.js
 - M	server/src/routes-extra.js
+- M	server/src/scheduler.js
+- A	server/src/sources.js
 - M	server/tests/extra.test.js
 
 ## Recent history
 
+- 7e369c6 feat: a per-brand image library the owner fills themselves _(Jonathan Carbiere, 2026-09-23)_
 - 99c11d4 feat: publish photo posts to TikTok _(Jonathan Carbiere, 2026-09-23)_
 - 5559e53 fix: say what the image gateway probe actually knows _(Jonathan Carbiere, 2026-09-23)_
 - 46f5c48 fix: report an image gateway that is out of quota as not ready _(Jonathan Carbiere, 2026-09-23)_
@@ -105,6 +107,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 6c8bb1b fix: size the lockup mark by its ink, not by its box _(Jonathan Carbiere, 2026-09-23)_
 - edd5f87 fix: tell the Brief critic what the frame can be, and how to count type sizes _(Jonathan Carbiere, 2026-09-23)_
 - 8711f0e fix: one accent element, three type sizes, and an unmeasurable tracking rule _(Jonathan Carbiere, 2026-09-23)_
-- b4cb334 fix: drop the pill fill when no label can clear 7:1 on it _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

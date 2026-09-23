@@ -65,6 +65,18 @@ CREATE TABLE IF NOT EXISTS design_systems (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(brand_id, content_hash));
 CREATE UNIQUE INDEX IF NOT EXISTS design_system_active ON design_systems(brand_id) WHERE active = 1;
+CREATE TABLE IF NOT EXISTS sources (
+  id TEXT PRIMARY KEY, brand_id TEXT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+  url TEXT NOT NULL, label TEXT NOT NULL DEFAULT '', paused INTEGER NOT NULL DEFAULT 0,
+  last_checked_at TEXT, last_error TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(brand_id, url));
+CREATE TABLE IF NOT EXISTS source_items (
+  id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  guid TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', link TEXT NOT NULL DEFAULT '',
+  summary TEXT NOT NULL DEFAULT '', post_id TEXT REFERENCES posts(id) ON DELETE SET NULL,
+  drafted INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(source_id, guid));
 CREATE TABLE IF NOT EXISTS media (
   id TEXT PRIMARY KEY, brand_id TEXT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
   path TEXT NOT NULL, filename TEXT NOT NULL, bytes INTEGER NOT NULL,

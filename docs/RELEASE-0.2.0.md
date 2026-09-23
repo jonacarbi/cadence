@@ -21,7 +21,7 @@
 
 ## Verification
 
-- All 42 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, the brand image library, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
+- All 43 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, the brand image library, watched-feed ingestion, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
 - Swift release compilation and ad-hoc bundle signature verification.
 - Native UI inspection of the installed Content agent, monthly controls and Settings checks.
 - Live website extraction against `https://example.com`.
