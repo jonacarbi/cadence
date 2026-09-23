@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 05:19:26 -03
-- **Built on commit:** edd5f87 — fix: tell the Brief critic what the frame can be, and how to count type sizes (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 05:37:03 -03
+- **Built on commit:** 6c8bb1b — fix: size the lockup mark by its ink, not by its box (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -86,11 +86,10 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 ## Changes in this commit
 
 - M	server/src/designloop.js
-- M	server/src/render.js
-- M	server/templates/post.html
 
 ## Recent history
 
+- 6c8bb1b fix: size the lockup mark by its ink, not by its box _(Jonathan Carbiere, 2026-09-23)_
 - edd5f87 fix: tell the Brief critic what the frame can be, and how to count type sizes _(Jonathan Carbiere, 2026-09-23)_
 - 8711f0e fix: one accent element, three type sizes, and an unmeasurable tracking rule _(Jonathan Carbiere, 2026-09-23)_
 - b4cb334 fix: drop the pill fill when no label can clear 7:1 on it _(Jonathan Carbiere, 2026-09-23)_
@@ -100,6 +99,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 90dbbad fix: merge design-loop builder tokens instead of replacing them _(Jonathan Carbiere, 2026-09-22)_
 - 15f2a83 fix: render the fonts a brand actually has, and keep the measured palette _(Jonathan Carbiere, 2026-09-22)_
 - 2e4270f fix: size type from a legibility floor and lift the accent to 4.5:1 _(Jonathan Carbiere, 2026-09-22)_
-- 103cc41 fix: type scale, rhythm and tracking derived from the headline's final size _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->
