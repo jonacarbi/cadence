@@ -41,6 +41,8 @@ codesign --force --sign - "$CADENCE_APP/Contents/Resources/runtime/node"
 codesign --force --sign - "$CADENCE_APP"
 codesign --verify --deep --strict "$CADENCE_APP"
 if [[ -d "$CADENCE_ROOT/build/Cadence.app" ]]; then
+  # One snapshot is a rollback; every snapshot ever built is 170MB per build of dead weight.
+  rm -rf "$CADENCE_ROOT"/build/Cadence.previous-*.app
   mv "$CADENCE_ROOT/build/Cadence.app" "$CADENCE_ROOT/build/Cadence.previous-$$.app"
 fi
 mv "$CADENCE_APP" "$CADENCE_ROOT/build/Cadence.app"
