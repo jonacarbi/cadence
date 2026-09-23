@@ -17,12 +17,14 @@ const critic = (p, o) => claude(p, o).catch((e) => `VERDICT: FAIL\nCritic did no
 const verdict = (text) => /VERDICT:\s*PASS/i.test(text);
 const BRIEF = 'Make a scroll-stopping Instagram post for this brand that a follower recognizes as the brand within one second.';
 
+const KNOBS = `The frame contains an eyebrow line, a headline of 1-4 lines, a sub line, a CTA pill and an optional full-width photo, and nothing else. The only adjustable things are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used. There is no gradient, texture, glow, pattern, screenshot or free-form shape to add, and the logo is a fixed file composited at one size.`;
+
 async function tearDown(brand, dir) {
   const bar = join(dir, 'bar.md');
   if (existsSync(bar)) return bar;
   // The bar must only ask for what this pipeline can change, or every round fails on elements the template has no slot for.
   const text = await claude(`Read the reference screenshot at ${join(brand.dir, 'reference.png')}. Tear its visual language down into 8–15 checkable mechanisms for a 1080x1350 social frame: type scale ratios, colour usage counts, margins as % of canvas, alignment, one accent rule, contrast.
-The frame being judged contains exactly these elements and nothing else: an eyebrow line, a headline of 1–4 lines, a sub line, a CTA pill, an optional full-width photo, and an optional accent rule. The only things adjustable are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used.
+The frame being judged contains exactly these elements and nothing else: an eyebrow line, a headline of 1–4 lines, a sub line, a CTA pill, and an optional full-width photo. The only things adjustable are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used.
 So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, { ...readOnly, model: 'opus' });
   writeFileSync(bar, text); return bar;
 }
@@ -56,7 +58,7 @@ async function effectiveTokens(t) {
 
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
-    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
+    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
     critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. Mechanically list every violation of the system with the rule it breaks. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
     critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, { ...readOnly, model: 'opus' }),
   ]);

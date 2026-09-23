@@ -102,12 +102,12 @@ ${pal}
 
 ## Typography
 - Display: ${t.fonts.display}, fallback system sans. Headline 3.5–4.5× the sub size, tight tracking.
-- Body: ${t.fonts.body}. Max 3 type sizes per frame.
+- Body: ${t.fonts.body}. Max 3 type sizes per frame, counted as distinct font sizes measured by cap height. Case is not a size: an uppercase label and a mixed-case one set at the same size are one size, and a wordmark locked up with a label at that size is the same size again.
 - Measured heading styles: ${(t.headingStyles || []).join("; ") || "n/a"}
 
 ## Shape & spacing
 - Corner radius: ${t.radius}
-- Margins ≥ 8% of the canvas on every side. Generous negative space; one idea per frame.
+- Margins 6–8% of the canvas on every side. Generous negative space; one idea per frame.
 
 ## Voice
 - Tone: ${voice.tone || "confident, specific, plain"}
