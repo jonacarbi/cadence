@@ -12,10 +12,14 @@ export const CANVAS = { portrait: [1080, 1350], square: [1080, 1080], landscape:
 export const LAYOUTS = ["editorial", "fullbleed", "split", "type"];
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const SECTION = /{{#(\w+)}}([\s\S]*?){{\/\1}}/g;
+const RAW = ["image", "logo", "lockup", "fontCss"];
 function fill(tpl, vars) {
-  return tpl
-    .replace(/{{#(\w+)}}([\s\S]*?){{\/\1}}/g, (_, k, inner) => (vars[k] ? inner : ""))
-    .replace(/{{(\w+)}}/g, (_, k) => (["image", "logo", "fontCss"].includes(k) ? String(vars[k] ?? "") : esc(vars[k])));
+  // One pass only emits a section's body, it does not re-scan it, so a section nested inside another
+  // survives verbatim into the markup. Keep passing until nothing matches.
+  let out = tpl, prev;
+  do { prev = out; out = out.replace(SECTION, (_, k, inner) => (vars[k] ? inner : "")); } while (out !== prev);
+  return out.replace(/{{(\w+)}}/g, (_, k) => (RAW.includes(k) ? String(vars[k] ?? "") : esc(vars[k])));
 }
 
 export async function closeBrowser() { /* Each render closes its own browser. */ }
@@ -77,12 +81,17 @@ export async function renderFrame(opts) {
   const surface = t.colors?.surface || "#fff";
   const accent = contrastFix(t.colors?.accent || "#2563eb", surface);
   const fonts = await resolveFonts(t);
+  const mark = logoUrl(brand.logo_path, t.colors?.text || "#111");
+  const lockup = layout === "type" ? mark : "";
   const tpl = readFileSync(join(TEMPLATES_DIR, "post.html"), "utf8");
   const html = fill(tpl, {
     w, h, lang: brand.voice?.language || "en", layout,
     surface, text: t.colors?.text || "#111", accent, accentInk: ink(accent), secondary: t.colors?.secondary || "#f2f2f2",
     radius: t.radius || "8px", displayFont: fonts.display, bodyFont: fonts.body, fontCss: fonts.css,
-    image: dataUrl(opts.image), logo: logoUrl(brand.logo_path, t.colors?.text || "#111"),
+    image: dataUrl(opts.image),
+    // The type layout has no photo to anchor recognition, so its mark rides in the eyebrow lockup
+    // instead of a corner; every other layout keeps the corner placement.
+    logo: layout === "type" ? "" : mark, lockup, eyerow: opts.eyebrow || lockup,
     headline: opts.headline, sub: opts.sub, eyebrow: opts.eyebrow, cta: opts.cta, counter: opts.counter, bar: layout === "type",
   });
   const browser = await launchBrowser();
@@ -95,19 +104,22 @@ export async function renderFrame(opts) {
     // The headline is sized top-down from the frame's void (its block top must sit at 30-48% of canvas
     // height), and the sub follows at a quarter of it, floored at the 3% legibility minimum. Sizing the sub
     // first instead forces a headline so large it wraps past the void, so the two passes settle in that order.
-    await page.evaluate(({ w, h }) => {
+    const metrics = await page.evaluate(({ w, h }) => {
       const q = (s) => document.querySelector(s);
       const h1 = q("h1"); if (!h1) return;
       const box = h1.parentElement, eb = q(".eyebrow"), subEl = q("p.sub");
       const small = Math.round(w * 0.03);
       for (const el of [eb, q(".pill")]) if (el) el.style.fontSize = small + "px";
-      // Margins sit below the target ink gaps because each ink gap also carries both elements' half-leading.
+      // Margins sit well below the target ink gaps: each ink gap also carries both elements' half-leading,
+      // which measured ~0.25x the headline line-height, so every margin is the target gap minus that.
       const apply = (fs) => {
         const lh = fs * 1.06;
         h1.style.fontSize = fs + "px";
-        h1.style.marginBottom = lh * 0.55 + "px";
-        if (eb) eb.style.marginBottom = lh * 0.18 + "px";
-        if (subEl) subEl.style.marginBottom = lh * 1.2 + "px";
+        h1.style.marginBottom = lh * 0.43 + "px";
+        // A text-only eyebrow carries half-leading into the ink gap; a mark's box ends at its ink, so
+        // the lockup row needs the larger margin to land on the same gap.
+        if (eb) eb.style.marginBottom = lh * (eb.querySelector(".mark") ? 0.2 : 0.055) + "px";
+        if (subEl) subEl.style.marginBottom = lh * 1.35 + "px";
       };
       // A bottom-anchored copy block has no height of its own, so the void above it is the real constraint.
       const over = () => box.getBoundingClientRect().top < h * 0.36 || box.scrollHeight > box.clientHeight + 1;
@@ -122,7 +134,13 @@ export async function renderFrame(opts) {
       // nominal 4:1 keeps the measured value inside the 3.5-4.5 band; the sub never drops below the floor.
       const sub = Math.min(Math.max(Math.round(settle(small) / 4), small), Math.round(small * 1.3));
       settle(sub);
+      // The gap bands are checked ink to ink, so report the measured ones rather than the margins set.
+      const lh = parseFloat(h1.style.fontSize) * 1.06, r = (el) => el.getBoundingClientRect();
+      const g = (a, b) => (a && b ? ((r(b).top - r(a).bottom) / lh).toFixed(2) : "n/a");
+      return { headlineTopPct: ((r(box).top + (eb ? r(eb).height : 0)) / h * 100).toFixed(1),
+        gaps: [g(eb, h1), g(h1, subEl), g(subEl, q(".pill")?.parentElement)], lh: Math.round(lh) };
     }, { w, h });
+    if (process.env.CADENCE_RENDER_METRICS) console.error("[render metrics]", JSON.stringify(metrics));
     const dir = join(ASSETS_DIR, brand.slug || "misc", "renders");
     mkdirSync(dir, { recursive: true });
     const out = join(dir, `${uuid()}.jpg`);

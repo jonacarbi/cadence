@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 23:57:25 -03
-- **Built on commit:** 90dbbad — fix: merge design-loop builder tokens instead of replacing them (Jonathan Carbiere, 2026-09-22)
+- **Last updated:** 2026-09-23 00:21:21 -03
+- **Built on commit:** f58274b — fix: show the brand mark, size type from the void, keep the doc equal to the pixels (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -86,11 +86,12 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 ## Changes in this commit
 
 - M	server/src/brands.js
-- M	server/src/designloop.js
 - M	server/src/render.js
+- M	server/templates/post.html
 
 ## Recent history
 
+- f58274b fix: show the brand mark, size type from the void, keep the doc equal to the pixels _(Jonathan Carbiere, 2026-09-22)_
 - 90dbbad fix: merge design-loop builder tokens instead of replacing them _(Jonathan Carbiere, 2026-09-22)_
 - 15f2a83 fix: render the fonts a brand actually has, and keep the measured palette _(Jonathan Carbiere, 2026-09-22)_
 - 2e4270f fix: size type from a legibility floor and lift the accent to 4.5:1 _(Jonathan Carbiere, 2026-09-22)_
@@ -100,6 +101,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - abc866b fix: design loop judges the brand's real proposition, not placeholder copy _(Jonathan Carbiere, 2026-09-22)_
 - 05e8db4 fix: CTA pill ink follows accent luminance, not the surface token _(Jonathan Carbiere, 2026-09-22)_
 - df8aa1f fix: one accent per frame, rising gap rhythm, and design-system.md that follows the tokens _(Jonathan Carbiere, 2026-09-22)_
-- fcc4776 fix: teardown bar now only asks for mechanisms the frame and token knobs can satisfy _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->

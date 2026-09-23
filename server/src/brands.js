@@ -117,7 +117,7 @@ ${pal}
 
 ## Bans
 - No stock-photo gradients, no glossy 3D blobs, no default AI look.
-- No more than one accent element per frame. No text smaller than 3% of canvas width (the narrow edge is what legibility scales with).
+- No more than one accent element per frame. No type set smaller than 3% of canvas width (that is the em size; a grotesk cap height measures ~70% of it, so ~2.1% of width is the correct reading for the smallest label).
 - Never reproduce the logo by generation; composite the real logo file.
 `;
 }
