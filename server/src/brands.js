@@ -103,7 +103,7 @@ ${pal}
 ## Typography
 - Display: ${t.fonts.display}, fallback system sans. Headline 4–6× body size, tight tracking.
 - Body: ${t.fonts.body}. Max 3 type sizes per frame.
-- Measured heading styles: ${t.headingStyles.join("; ") || "n/a"}
+- Measured heading styles: ${(t.headingStyles || []).join("; ") || "n/a"}
 
 ## Shape & spacing
 - Corner radius: ${t.radius}

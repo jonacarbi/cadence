@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-22 20:13:26 -03
-- **Built on commit:** 2e4270f — fix: size type from a legibility floor and lift the accent to 4.5:1 (Jonathan Carbiere, 2026-09-22)
+- **Last updated:** 2026-09-22 23:31:47 -03
+- **Built on commit:** 15f2a83 — fix: render the fonts a brand actually has, and keep the measured palette (Jonathan Carbiere, 2026-09-22)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -87,12 +87,10 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 - M	server/src/brands.js
 - M	server/src/designloop.js
-- A	server/src/fonts.js
-- M	server/src/render.js
-- M	server/templates/post.html
 
 ## Recent history
 
+- 15f2a83 fix: render the fonts a brand actually has, and keep the measured palette _(Jonathan Carbiere, 2026-09-22)_
 - 2e4270f fix: size type from a legibility floor and lift the accent to 4.5:1 _(Jonathan Carbiere, 2026-09-22)_
 - 103cc41 fix: type scale, rhythm and tracking derived from the headline's final size _(Jonathan Carbiere, 2026-09-22)_
 - f38cb11 fix: hero frame carries a written post line, not a truncated offer paragraph _(Jonathan Carbiere, 2026-09-22)_
@@ -102,6 +100,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - df8aa1f fix: one accent per frame, rising gap rhythm, and design-system.md that follows the tokens _(Jonathan Carbiere, 2026-09-22)_
 - fcc4776 fix: teardown bar now only asks for mechanisms the frame and token knobs can satisfy _(Jonathan Carbiere, 2026-09-22)_
 - 410cc77 fix: design loop reported its round summary as job progress, failing the job at the SQLite bind _(Jonathan Carbiere, 2026-09-22)_
-- 307b5bb fix: run claude from a stable cwd so an app update doesn't break every agentic job _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->

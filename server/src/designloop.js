@@ -83,8 +83,9 @@ export async function runDesignLoop(brandId, report = () => {}) {
     const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}. Current layout: "${layout}" (options: ${LAYOUTS.join(', ')}; "type" has no photo).
 Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tokens with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode})>, "layout": "<one of the options>"}. Only change what the critics asked for; keep the brand's real colours and fonts.`, { model: 'opus' });
     if (next?.tokens?.colors && next?.tokens?.fonts) {
-      // The builder answers with the four colour knobs; the measured palette is evidence, not a knob, so it survives.
-      tokens = { ...next.tokens, colors: { palette: tokens.colors?.palette, ...next.tokens.colors }, fonts: { requested: tokens.fonts?.requested, ...next.tokens.fonts } };
+      // The builder answers with the knobs only; everything measured at extraction (palette, heading styles,
+      // the requested fonts) is evidence, not a knob, so merge onto the current tokens instead of replacing them.
+      tokens = { ...tokens, ...next.tokens, colors: { ...tokens.colors, ...next.tokens.colors }, fonts: { ...tokens.fonts, ...next.tokens.fonts } };
       writeFileSync(join(dir, 'tokens.json'), JSON.stringify(tokens, null, 2));
     }
     if (LAYOUTS.includes(next?.layout) && (image || next.layout === 'type')) layout = next.layout;
