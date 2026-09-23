@@ -65,6 +65,11 @@ CREATE TABLE IF NOT EXISTS design_systems (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(brand_id, content_hash));
 CREATE UNIQUE INDEX IF NOT EXISTS design_system_active ON design_systems(brand_id) WHERE active = 1;
+CREATE TABLE IF NOT EXISTS media (
+  id TEXT PRIMARY KEY, brand_id TEXT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+  path TEXT NOT NULL, filename TEXT NOT NULL, bytes INTEGER NOT NULL,
+  alt_text TEXT NOT NULL DEFAULT '', tags TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
 `);
 
 // Additive migrations preserve existing local installations.

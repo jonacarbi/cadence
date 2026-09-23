@@ -12,6 +12,7 @@ struct PostDetail: View {
     @State private var preview: NSImage?
     @State private var rescheduling = false
     @State private var newDate = Date()
+    @State private var picking = false
     private var current: Post { store.posts.first { $0.id == post.id } ?? post }
     private var canReview: Bool { ["draft", "rejected"].contains(current.status) }
     var body: some View {
@@ -25,6 +26,7 @@ struct PostDetail: View {
         }.frame(width: 1040, height: 720)
         .task(id: current.image_path) { await loadPreview(); await loadComments() }
         .sheet(isPresented: $editing) { ComposerView(post: current).environmentObject(store) }
+        .sheet(isPresented: $picking) { MediaLibrary(post: current).environmentObject(store) }
     }
     private var visual: some View {
         VStack(spacing: 14) {
@@ -45,6 +47,7 @@ struct PostDetail: View {
             HStack {
                 Button("New visual", systemImage: "arrow.triangle.2.circlepath") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": true]) } } }
                 Button("Re-compose", systemImage: "rectangle.3.group") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": false]) } } }
+                Button("Use my image", systemImage: "photo") { picking = true }
             }.controlSize(.small).disabled(acting || current.format == "text" || !["draft","rejected","approved","scheduled"].contains(current.status))
         }.padding(20)
     }

@@ -15,6 +15,7 @@ import { analyticsFor } from './analytics.js';
 import { completeJson } from './llm.js';
 import { getBrand, slugify } from './brands.js';
 import { loadRules, saveRules } from './lint.js';
+import { importMedia, listMedia, deleteMedia, setPostMedia } from './library.js';
 
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.md': 'text/markdown', '.json': 'application/json' };
 const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan'];
@@ -150,6 +151,13 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
       update('posts',post.id,{scheduled_at:new Date().toISOString()});
     });
     send(200, postById(x[1])); return true;
+  }
+  if (path === '/api/media' && req.method === 'GET') { const b = url.searchParams.get('brand_id'); if (!b) throw new WorkflowError('brand_id is required'); send(200, listMedia(b)); return true; }
+  if (path === '/api/media' && req.method === 'POST') { owner(); send(201, importMedia(body.brand_id, body)); return true; }
+  if ((x = m(/^\/api\/media\/([^/]+)$/)) && req.method === 'DELETE') { owner(); send(200, deleteMedia(x[1])); return true; }
+  if ((x = m(/^\/api\/posts\/([^/]+)\/media$/))) {
+    if (req.method === 'POST') { owner(); send(200, setPostMedia(x[1], body.media_id, body.version)); return true; }
+    if (req.method === 'DELETE') { owner(); send(200, setPostMedia(x[1], null, body.version ?? postById(x[1]).version)); return true; }
   }
   if (path === '/api/assets' && req.method === 'GET') return serveAsset(url, res);
   if (path === '/api/analytics' && req.method === 'GET') { const b = url.searchParams.get('brand_id'); if (!b) throw new WorkflowError('brand_id is required'); send(200, analyticsFor(b)); return true; }

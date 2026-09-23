@@ -101,3 +101,36 @@ test('readiness reports an image gateway that is out of quota instead of calling
  const fine=await img(reply({can_generate_image:true}));assert.equal(fine.ready,true);assert.match(fine.message,/no rate limit recorded/);
  assert.equal((await img(async()=>{throw new Error('down');})).ready,false);
 });
+
+test('an uploaded image survives the original being deleted, and cannot be removed while a post uses it', async () => {
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://library.example' } })).json();
+  const { writeFileSync, existsSync, unlinkSync, readFileSync } = await import('node:fs');
+  const source = join(dir, 'product-shot.png');
+  writeFileSync(source, Buffer.from('89504e470d0a1a0a', 'hex'));
+
+  assert.equal((await req('/api/media', { method: 'POST', body: { brand_id: brand.id, path: join(dir, 'nope.png') } })).status, 404);
+  assert.equal((await req('/api/media', { method: 'POST', body: { brand_id: brand.id, path: join(dir, 'product-shot.png') + '.exe' } })).status, 404);
+
+  const item = await (await req('/api/media', { method: 'POST', body: { brand_id: brand.id, path: source, alt_text: 'A product on a plain table' } })).json();
+  unlinkSync(source); // The library owns its own copy, so losing the original changes nothing.
+  assert.ok(existsSync(item.path));
+  assert.equal(readFileSync(item.path).length, 8);
+  assert.equal((await (await req(`/api/media?brand_id=${brand.id}`)).json()).length, 1);
+
+  const post = await (await req('/api/posts', { method: 'POST', body: { brand_id: brand.id, platforms: ['mastodon'], copy: { mastodon: 'A caption' }, scheduled_at: future() } })).json();
+  const attached = await (await req(`/api/posts/${post.id}/media`, { method: 'POST', body: { media_id: item.id, version: post.version } })).json();
+  assert.equal(attached.image_path, item.path);
+  assert.equal(attached.alt_text, 'A product on a plain table');
+  assert.equal(attached.version, post.version + 1);
+  assert.equal((await req(`/api/posts/${post.id}/media`, { method: 'POST', body: { media_id: item.id, version: post.version } })).status, 409); // stale version
+
+  assert.equal((await req(`/api/media/${item.id}`, { method: 'DELETE' })).status, 409);
+  assert.ok(existsSync(item.path));
+  assert.equal((await req(`/api/media/${item.id}`, { method: 'DELETE', token: agentToken })).status, 403);
+
+  // The 409 tells the owner to detach first, so that has to be something they can actually do.
+  const detached = await (await req(`/api/posts/${post.id}/media`, { method: 'DELETE' })).json();
+  assert.equal(detached.image_path, null);
+  assert.equal((await req(`/api/media/${item.id}`, { method: 'DELETE' })).status, 200);
+  assert.equal(existsSync(item.path), false);
+});
