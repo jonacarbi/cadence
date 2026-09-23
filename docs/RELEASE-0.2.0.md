@@ -21,7 +21,7 @@
 
 ## Verification
 
-- All 45 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, the brand image library, watched-feed ingestion, cross-platform repurposing, credential storage, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
+- All 54 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, the brand image library, watched-feed ingestion, cross-platform repurposing, credential storage, a request-level contract test for every publish adapter, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
 - Swift release compilation and ad-hoc bundle signature verification.
 - Native UI inspection of the installed Content agent, monthly controls and Settings checks.
 - Live website extraction against `https://example.com`.
@@ -31,7 +31,7 @@
 
 ## Remaining setup and distribution limits
 
-The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and TikTok image posting needs public media hosting (Pinterest uploads the bytes directly, so it does not). Reddit has an adapter but no registered app.
+The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and TikTok image posting needs public media hosting (Pinterest uploads the bytes directly, so it does not). Reddit is now a registered platform (posting to the connected account's own profile subreddit by default) but still needs a Reddit app registration before sign-in works.
 
 TikTok posts through the Content Posting API's photo lane. Two of its constraints shape the adapter: an unaudited client may only post at a restricted privacy level, so the adapter reads `privacy_level_options` from the account rather than assuming public; and PULL_FROM_URL requires the media host's domain to be verified in the developer portal, which is a portal step no code can cover.
 

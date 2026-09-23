@@ -9,6 +9,7 @@ export const PLATFORMS = Object.freeze({
   mastodon: { name: 'Mastodon', maxChars: 500 },
   telegram: { name: 'Telegram', maxChars: 4096, maxMediaChars: 1024 },
   discord: { name: 'Discord', maxChars: 2000 },
+  reddit: { name: 'Reddit', maxChars: 40000 },
   pinterest: { name: 'Pinterest', maxChars: 500, requiresMedia: true },
   tiktok: { name: 'TikTok', maxChars: 2200, requiresMedia: true },
   youtube: { name: 'YouTube', maxChars: 5000, requiresMedia: true },

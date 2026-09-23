@@ -7,7 +7,7 @@ export const oauth = {
   tokenUrl: "https://www.reddit.com/api/v1/access_token",
   scope: "identity submit read",
   pkce: false,
-  async identity(auth) { const me = await api("https://oauth.reddit.com/api/v1/me", { headers: { authorization: `Bearer ${auth.access_token}`, "user-agent": UA } }); return { id: me.name, label: `u/${me.name}` }; },
+  async identity(auth) { const me = await api("https://oauth.reddit.com/api/v1/me", { headers: { authorization: `Bearer ${auth.access_token}`, "user-agent": UA } }); return { id: me.name, label: `u/${me.name}`, extraAuth: { subreddit: `u_${me.name}` } }; }, // Profile subreddit: posts work the moment the account connects.
 };
 
 export async function publish({ auth: a, text, mediaUrls }) {

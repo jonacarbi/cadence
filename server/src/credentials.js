@@ -17,8 +17,8 @@ export const FIELDS = [
   { key: 'SUPABASE_URL', title: 'Supabase project URL', group: 'Media hosting', hint: 'Instagram, Threads and TikTok can only publish an image that is already on a public URL.', secret: false },
   { key: 'SUPABASE_SERVICE_KEY', title: 'Supabase service key', group: 'Media hosting', hint: 'Write access to the media bucket.' },
   ...['instagram', 'facebook', 'linkedin', 'x', 'threads', 'pinterest', 'tiktok', 'reddit'].flatMap((p) => [
-    { key: `${p.toUpperCase()}_CLIENT_ID`, title: `${p} client ID`, group: 'Social sign-in', hint: `From the ${p} developer portal. Needed before “Sign in” works for ${p}.`, secret: false },
-    { key: `${p.toUpperCase()}_CLIENT_SECRET`, title: `${p} client secret`, group: 'Social sign-in', hint: `Paired with the ${p} client ID.` },
+    { key: `CADENCE_${p.toUpperCase()}_CLIENT_ID`, title: `${p[0].toUpperCase() + p.slice(1)} client ID`, group: 'Social sign-in', hint: `From the ${p} developer portal. Needed before “Sign in” works for ${p}.`, secret: false },
+    { key: `CADENCE_${p.toUpperCase()}_CLIENT_SECRET`, title: `${p[0].toUpperCase() + p.slice(1)} client secret`, group: 'Social sign-in', hint: `Paired with the ${p} client ID.` },
   ]),
 ];
 const BY_KEY = new Map(FIELDS.map((f) => [f.key, f]));
