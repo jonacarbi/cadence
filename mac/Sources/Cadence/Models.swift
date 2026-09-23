@@ -64,6 +64,19 @@ struct Source: Codable, Identifiable {
     let last_error: String?
     let pending: Int
 }
+struct Credential: Codable, Identifiable {
+    var id: String { key }
+    let key: String
+    let title: String
+    let group: String
+    let hint: String
+    let secret: Bool
+    let set: Bool
+}
+struct CredentialUpdate: Codable {
+    let credentials: [Credential]
+    let restart_required: Bool
+}
 struct Settings: Codable {
     var autonomy: String
     var webhook_url: String

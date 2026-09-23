@@ -205,3 +205,37 @@ test('repurposing reuses the artwork and leaves the original untouched', async (
   assert.equal(original.version, post.version); // The source is not edited.
   assert.equal((await req(`/api/posts/${post.id}/repurpose`, { token: agentToken, method: 'POST', body: { platforms: ['mock'] } })).status, 403);
 });
+
+test('credentials are written to the env file, never read back, and never forge a second variable', async () => {
+  const { listCredentials, setCredential, requestRestart } = await import('../src/credentials.js');
+  const { readFileSync, statSync } = await import('node:fs');
+  const envPath = join(dir, '.env');
+
+  assert.equal((await req('/api/credentials', { token: agentToken })).status, 403); // Owner-only: the agent never handles keys.
+  const before = await (await req('/api/credentials')).json();
+  assert.equal(before.find((f) => f.key === 'OPENAI_API_KEY').set, false);
+  assert.equal(Object.keys(before[0]).includes('value'), false); // The list may never carry a value.
+
+  assert.equal((await req('/api/credentials', { method: 'PUT', body: { key: 'PATH', value: '/evil' } })).status, 400); // Not an allowlisted key.
+  assert.equal((await req('/api/credentials', { method: 'PUT', body: { key: 'OPENAI_API_KEY', value: 'sk-a\nADMIN=1' } })).status, 400); // A newline would forge a variable.
+
+  const saved = await (await req('/api/credentials', { method: 'PUT', body: { key: 'OPENAI_API_KEY', value: 'sk-test-value' } })).json();
+  assert.equal(saved.restart_required, true); // Config constants are read once at import.
+  assert.equal(saved.credentials.find((f) => f.key === 'OPENAI_API_KEY').set, true);
+  assert.equal((statSync(envPath).mode & 0o777), 0o600); // Nobody else on the machine may read it.
+  assert.match(readFileSync(envPath, 'utf8'), /^OPENAI_API_KEY=sk-test-value$/m);
+  assert.equal(JSON.stringify(await (await req('/api/credentials')).json()).includes('sk-test-value'), false);
+
+  setCredential('OPENAI_API_KEY', ''); // Clearing removes the line rather than writing an empty one.
+  assert.equal(readFileSync(envPath, 'utf8').includes('OPENAI_API_KEY'), false);
+  assert.equal(listCredentials().find((f) => f.key === 'OPENAI_API_KEY').set, false);
+
+  const job = insert('jobs', { type: 'campaign-plan', ref_id: 'x', status: 'running' });
+  assert.equal((await req('/api/restart', { method: 'POST' })).status, 409); // A restart would interrupt it.
+  const { update: patch } = await import('../src/db.js');
+  patch('jobs', job, { status: 'complete' });
+  let exited = false;
+  assert.equal(requestRestart({ exit: () => { exited = true; } }).ok, true);
+  await new Promise((r) => setTimeout(r, 300));
+  assert.equal(exited, true); // launchd KeepAlive brings the agent straight back.
+});

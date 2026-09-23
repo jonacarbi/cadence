@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 10:25:44 -03
-- **Built on commit:** e80a8bb — feat: watched RSS/Atom feeds draft posts for review (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 10:29:36 -03
+- **Built on commit:** fb7369a — feat: repurpose a post onto other connected platforms (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -73,11 +73,11 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Languages
 
-- .js — 57 file(s)
+- .js — 58 file(s)
 - .swift — 13 file(s)
 - .md — 4 file(s)
+- .sh — 3 file(s)
 - .json — 3 file(s)
-- .sh — 2 file(s)
 - .mjs — 1 file(s)
 - .ignore — 1 file(s)
 - .html — 1 file(s)
@@ -87,12 +87,16 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 - M	docs/COMPETITOR-RESEARCH.md
 - M	docs/RELEASE-0.2.0.md
-- M	mac/Sources/Cadence/Views/PostDetail.swift
+- M	mac/Sources/Cadence/Models.swift
+- M	mac/Sources/Cadence/Views/SettingsView.swift
+- A	scripts/release-macos.sh
+- A	server/src/credentials.js
 - M	server/src/routes-extra.js
 - M	server/tests/extra.test.js
 
 ## Recent history
 
+- fb7369a feat: repurpose a post onto other connected platforms _(Jonathan Carbiere, 2026-09-23)_
 - e80a8bb feat: watched RSS/Atom feeds draft posts for review _(Jonathan Carbiere, 2026-09-23)_
 - 7e369c6 feat: a per-brand image library the owner fills themselves _(Jonathan Carbiere, 2026-09-23)_
 - 99c11d4 feat: publish photo posts to TikTok _(Jonathan Carbiere, 2026-09-23)_
@@ -102,6 +106,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 84357ea fix: clear the previous run's rounds when a loop starts _(Jonathan Carbiere, 2026-09-23)_
 - 12d3e4a fix: stop the System critic measuring what it cannot measure _(Jonathan Carbiere, 2026-09-23)_
 - 6c8bb1b fix: size the lockup mark by its ink, not by its box _(Jonathan Carbiere, 2026-09-23)_
-- edd5f87 fix: tell the Brief critic what the frame can be, and how to count type sizes _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

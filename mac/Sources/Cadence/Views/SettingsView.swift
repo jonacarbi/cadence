@@ -12,6 +12,9 @@ struct SettingsView: View {
     @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "", auto_plan: "off")
     @State private var saved = false
     @State private var readiness: Readiness?
+    @State private var credentials: [Credential] = []
+    @State private var entry: [String: String] = [:]
+    @State private var restartNeeded = false
     private let levels = [("review_all", "Review everything", "Every post waits for your approval."),
                           ("auto_trusted", "Auto for trusted", "Ready posts on trusted accounts schedule themselves; the rest wait."),
                           ("hands_off", "Hands off", "Every ready post schedules itself. You get webhooks, not questions.")]
@@ -58,13 +61,66 @@ struct SettingsView: View {
                 LabeledContent("Data", value: store.appDirectory.path)
                 LabeledContent("MCP", value: "node server/src/mcp.js — tools for Claude Code / Codex")
             }
+            credentialSection
             HStack {
                 if saved { Label("Saved", systemImage: "checkmark").foregroundStyle(.green) }
                 Spacer()
                 Button("Save settings") { save() }.buttonStyle(.borderedProminent)
             }
         }.textFieldStyle(.roundedBorder)
-        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness") }
+        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness"); credentials = (try? await store.request("/api/credentials")) ?? [] }
+    }
+    /// Keys for the services Cadence talks to. Saved values are never sent back, so a filled field
+    /// shows as "Saved" rather than as dots that could be copied out.
+    private var credentialSection: some View {
+        section("Keys and credentials") {
+            Text("Stored in the app's own .env file, readable only by your account. Cadence reads its configuration once at startup, so a new key applies after the agent restarts.")
+                .font(.caption).foregroundStyle(.secondary)
+            ForEach(Array(Set(credentials.map(\.group))).sorted(), id: \.self) { group in
+                DisclosureGroup(group) {
+                    ForEach(credentials.filter { $0.group == group }) { field in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(field.title).font(.subheadline.weight(.medium))
+                                if field.set { Label("Saved", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green) }
+                                Spacer()
+                                if field.set { Button("Clear") { store_save(field.key, "") }.controlSize(.small) }
+                            }
+                            Text(field.hint).font(.caption).foregroundStyle(.secondary)
+                            HStack {
+                                Group {
+                                    if field.secret { SecureField(field.set ? "Replace" : "Paste the value", text: binding(field.key)) }
+                                    else { TextField(field.set ? "Replace" : "Paste the value", text: binding(field.key)) }
+                                }.onSubmit { store_save(field.key, entry[field.key] ?? "") }
+                                Button("Save") { store_save(field.key, entry[field.key] ?? "") }
+                                    .disabled((entry[field.key] ?? "").isEmpty).controlSize(.small)
+                            }
+                        }.padding(.vertical, 4)
+                    }
+                }
+            }
+            if restartNeeded {
+                HStack {
+                    Text("A saved key applies after a restart.").font(.callout)
+                    Button("Restart the agent") {
+                        Task { await store.act { let _: MutationResult = try await store.request("/api/restart", method: "POST", body: [:]) }; restartNeeded = false }
+                    }.buttonStyle(.borderedProminent).controlSize(.small)
+                }
+            }
+        }
+    }
+    private func binding(_ key: String) -> Binding<String> {
+        Binding(get: { entry[key] ?? "" }, set: { entry[key] = $0 })
+    }
+    private func store_save(_ key: String, _ value: String) {
+        Task {
+            await store.act {
+                let result: CredentialUpdate = try await store.request("/api/credentials", method: "PUT", body: ["key": key, "value": value])
+                credentials = result.credentials
+                restartNeeded = true
+            }
+            entry[key] = ""
+        }
     }
     private func section<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 10) { Text(title).font(.title3.weight(.semibold)); content() }
