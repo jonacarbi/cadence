@@ -13,6 +13,7 @@ import * as mastodon from './mastodon.js';
 import * as telegram from './telegram.js';
 import * as discord from './discord.js';
 import * as pinterest from './pinterest.js';
+import * as tiktok from './tiktok.js';
 import * as mock from './mock.js';
 
 /** Per-platform extras the capability table does not carry: preferred aspect, auth style, public-URL need. */
@@ -27,6 +28,7 @@ export const META = {
   telegram: { aspect: 'square', auth: 'manual', fields: ['bot_token', 'chat_id'], mod: telegram },
   discord: { aspect: 'square', auth: 'manual', fields: ['webhook_url'], mod: discord },
   pinterest: { aspect: 'portrait', auth: 'oauth', mod: pinterest },
+  tiktok: { aspect: 'portrait', auth: 'oauth', needsPublicUrl: true, mod: tiktok },
   mock: { aspect: 'square', auth: 'manual', fields: [], mod: mock },
 };
 

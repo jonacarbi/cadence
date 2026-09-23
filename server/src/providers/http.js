@@ -22,7 +22,7 @@ export async function refreshIfNeeded(auth, tokenUrl, extra = {}) {
   if (!auth.refresh_token || !auth.expires_at || Date.now() < auth.expires_at - 60_000) return auth;
   const params = new URLSearchParams({ grant_type: "refresh_token", refresh_token: auth.refresh_token, ...extra });
   const headers = { "content-type": "application/x-www-form-urlencoded" };
-  if (auth.client_id && auth.client_secret && !extra.client_id) headers.authorization = "Basic " + Buffer.from(`${auth.client_id}:${auth.client_secret}`).toString("base64");
+  if (auth.client_id && auth.client_secret && !extra.client_id && !extra.client_key) headers.authorization = "Basic " + Buffer.from(`${auth.client_id}:${auth.client_secret}`).toString("base64");
   const t = await api(tokenUrl, { method: "POST", headers, body: params.toString() });
   return { ...auth, access_token: t.access_token, refresh_token: t.refresh_token || auth.refresh_token, expires_at: Date.now() + (t.expires_in || 3600) * 1000, _updated: true };
 }

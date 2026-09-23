@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { login } from '../src/providers/bluesky.js';
 import { publish as instagram } from '../src/providers/instagram.js';
 import { publish as linkedin } from '../src/providers/linkedin.js';
+import { publish as tiktok } from '../src/providers/tiktok.js';
 
 test('Bluesky accepts the handle field collected by the native account form',async t=>{
  t.mock.method(globalThis,'fetch',async(url,options)=>{
@@ -31,4 +32,26 @@ test('LinkedIn uses a supported version and propagates explicit API rejections',
  assert.equal((await linkedin(input)).id,'urn:li:share:test');
  globalThis.fetch=async()=>new Response(null,{status:429});
  await assert.rejects(linkedin(input),error=>error.status===429);
+});
+test('TikTok posts photos at an allowed privacy level and keeps the receipt when the status poll breaks',async t=>{
+ const calls=[];
+ const mock=status=>t.mock.method(globalThis,'fetch',async(url,options)=>{
+  const path=String(url);calls.push(path);
+  if(path.endsWith('/creator_info/query/'))return Response.json({data:{creator_username:'studio',privacy_level_options:['SELF_ONLY']}});
+  if(path.endsWith('/content/init/')){
+   const b=JSON.parse(options.body);
+   assert.equal(b.media_type,'PHOTO');
+   assert.equal(b.source_info.source,'PULL_FROM_URL');
+   assert.equal(b.post_info.privacy_level,'SELF_ONLY'); // An unaudited client may not post publicly.
+   return Response.json({data:{publish_id:'pub-1'}});
+  }
+  return status();
+ });
+ const input={auth:{access_token:'test'},account:{},text:'A caption',mediaUrls:['https://example.com/a.jpg']};
+ mock(()=>Response.json({data:{status:'PUBLISH_COMPLETE',publicaly_available_post_id:['7333']}}));
+ assert.equal((await tiktok(input)).id,'7333');
+ mock(()=>Response.json({error:'gone'},{status:403}));
+ assert.equal((await tiktok(input)).id,'pub-1'); // Init already accepted the post; a dead poll must not lose that.
+ mock(()=>Response.json({data:{status:'FAILED',fail_reason:'photo_pull_failed'}}));
+ await assert.rejects(tiktok(input),e=>e.definitelyNotSent===true);
 });

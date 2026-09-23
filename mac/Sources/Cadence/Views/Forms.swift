@@ -28,7 +28,8 @@ struct ComposerView: View {
     @State private var platform = "mastodon"
     @State private var date = Date().addingTimeInterval(86400)
     @State private var saving = false
-    private let platforms = ["mastodon", "bluesky", "linkedin", "x", "threads", "facebook", "instagram", "pinterest", "tiktok", "youtube", "telegram", "discord"]
+    // Only platforms with a working adapter: offering one without it makes a draft that can never publish.
+    @State private var platforms = ["mastodon"]
     private var captionBinding: Binding<String> { Binding(get: { post == nil ? caption : copies[platform] ?? "" }, set: { if post == nil { caption = $0 } else { copies[platform] = $0 } }) }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -51,6 +52,7 @@ struct ComposerView: View {
                 }.buttonStyle(.borderedProminent).disabled(saving || captionBinding.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }.padding(28).frame(width: 650)
+        .task { if let caps: [Capability] = try? await store.request("/api/capabilities") { platforms = caps.filter { $0.available && $0.id != "mock" }.map(\.id) } }
         .onAppear { if let post { topic = post.topic ?? ""; copies = post.copy; platform = post.platforms.first ?? "mastodon"; date = post.date ?? date } }
     }
 }

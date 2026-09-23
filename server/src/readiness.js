@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs';
 import { browserExecutable } from './browser.js';
 import { all } from './db.js';
+import { META } from './providers/registry.js';
+import { PLATFORMS } from './providers/index.js';
 import { CLAUDE_BIN, NINE_ROUTER_MODEL, TEXT_PROVIDER, OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, IMAGE_PROVIDER, OGA_MCP_ENTRY, CATGPT_MODEL, CATGPT_URL, CATGPT_TOKEN } from './config.js';
 
 // A configured gateway can still be out of image quota for hours, which otherwise shows up only as
@@ -27,6 +29,7 @@ function imageCheck(quota) {
 
 export async function readiness({ fetchImpl = fetch } = {}) {
   const accounts=all('SELECT platform,paused FROM accounts');
+  const hosted=Object.keys(META).filter(p=>META[p].needsPublicUrl).map(p=>PLATFORMS[p].name);
   const quota=IMAGE_PROVIDER==='openai'?null:await catgptQuota(fetchImpl);
   const hasText=TEXT_PROVIDER==='9router'?Boolean(NINE_ROUTER_MODEL):existsSync(CLAUDE_BIN)||Boolean(NINE_ROUTER_MODEL);
   return {checks:[
@@ -34,6 +37,6 @@ export async function readiness({ fetchImpl = fetch } = {}) {
     {id:'browser',title:'Visual rendering',ready:Boolean(browserExecutable()),message:browserExecutable()?'Chrome/Chromium available for background rendering.':'Install Google Chrome or run: npx playwright install chromium (from the server directory).'},
     {id:'images',title:'Image generation',...imageCheck(quota)},
     {id:'accounts',title:'Social accounts',ready:accounts.some(a=>a.platform!=='mock'&&!a.paused),message:accounts.some(a=>a.platform!=='mock'&&!a.paused)?'Real publishing accounts connected. Connections are scoped to each brand.':'Only dry-run accounts or no accounts connected. Add a real destination in Accounts.'},
-    {id:'media',title:'Public media hosting',ready:Boolean(SUPABASE_URL&&SUPABASE_SERVICE_KEY)||!accounts.some(a=>!a.paused&&['instagram','threads','pinterest'].includes(a.platform)),message:SUPABASE_URL&&SUPABASE_SERVICE_KEY?'Supabase media hosting configured.':'Instagram, Threads and Pinterest images require SUPABASE_URL and SUPABASE_SERVICE_KEY.'},
+    {id:'media',title:'Public media hosting',ready:Boolean(SUPABASE_URL&&SUPABASE_SERVICE_KEY)||!accounts.some(a=>!a.paused&&META[a.platform]?.needsPublicUrl),message:SUPABASE_URL&&SUPABASE_SERVICE_KEY?'Supabase media hosting configured.':`${hosted.join(', ')} images require SUPABASE_URL and SUPABASE_SERVICE_KEY.`},
   ],note:'Image quota is probed live; credentials and real publishing are verified when used.'};
 }

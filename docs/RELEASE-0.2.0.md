@@ -21,7 +21,7 @@
 
 ## Verification
 
-- All 40 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
+- All 41 server tests pass. The suite covers authentication, brand isolation, workflow transitions, concurrency, ambiguity, daily caps, full-month dates, checkpoint recovery, full-month batch planning and mid-run resume, image-quota readiness, atomic approvals, native response shapes, provider regressions, MCP provider pinning, path confinement and child cleanup.
 - Swift release compilation and ad-hoc bundle signature verification.
 - Native UI inspection of the installed Content agent, monthly controls and Settings checks.
 - Live website extraction against `https://example.com`.
@@ -31,7 +31,11 @@
 
 ## Remaining setup and distribution limits
 
-The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and Pinterest image posting needs public media hosting. TikTok and YouTube are not implemented, and Reddit is not registered.
+The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and TikTok image posting needs public media hosting (Pinterest uploads the bytes directly, so it does not). Reddit has an adapter but no registered app.
+
+TikTok posts through the Content Posting API's photo lane. Two of its constraints shape the adapter: an unaudited client may only post at a restricted privacy level, so the adapter reads `privacy_level_options` from the account rather than assuming public; and PULL_FROM_URL requires the media host's domain to be verified in the developer portal, which is a portal step no code can cover.
+
+YouTube stays unimplemented on purpose. Cadence produces still images, and `videos.insert` requires a video file; Community posts, the one image-shaped surface, have no public API. Implementing it would mean adding video generation, which is out of scope, so the platform is declared but reports `available: false` rather than offering a lane that cannot publish.
 
 The current ARM64 bundle is ad-hoc signed for local use. A public customer release needs Developer ID signing, notarization, an installation strategy for the external MCP/9Router/CatGPT dependencies, and any required platform app review. There is no claim of completed public distribution or validated real-account publishing.
 

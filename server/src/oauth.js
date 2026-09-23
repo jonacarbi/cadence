@@ -26,7 +26,7 @@ export function startUrl(platform, brandId) {
   pending.set(state, { platform, verifier, brandId, createdAt: Date.now() });
   const u = new URL(def.authorizeUrl);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("client_id", client_id);
+  u.searchParams.set(def.clientParam || "client_id", client_id);
   u.searchParams.set("redirect_uri", redirectUri());
   u.searchParams.set("scope", def.scope);
   u.searchParams.set("state", state);
@@ -42,7 +42,8 @@ export async function finish(query) {
   if(typeof query.code!=='string'||!query.code)throw new Error('OAuth authorization code is missing');
   const def = META[p.platform].mod.oauth;
   const { client_id, client_secret } = creds(p.platform);
-  const params = new URLSearchParams({ grant_type: "authorization_code", code: query.code, redirect_uri: redirectUri(), client_id });
+  const idParam = def.clientParam || "client_id";
+  const params = new URLSearchParams({ grant_type: "authorization_code", code: query.code, redirect_uri: redirectUri(), [idParam]: client_id });
   if (def.pkce) params.set("code_verifier", p.verifier);
   if (client_secret) params.set("client_secret", client_secret);
   const headers = { "content-type": "application/x-www-form-urlencoded", "user-agent": "Cadence/1.0" };

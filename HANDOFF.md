@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 09:54:11 -03
-- **Built on commit:** 46f5c48 — fix: report an image gateway that is out of quota as not ready (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 10:08:21 -03
+- **Built on commit:** 5559e53 — fix: say what the image gateway probe actually knows (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -73,7 +73,7 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Languages
 
-- .js — 54 file(s)
+- .js — 55 file(s)
 - .swift — 12 file(s)
 - .md — 4 file(s)
 - .json — 3 file(s)
@@ -86,11 +86,17 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 ## Changes in this commit
 
 - M	docs/RELEASE-0.2.0.md
+- M	mac/Sources/Cadence/Views/Forms.swift
+- M	server/src/oauth.js
+- M	server/src/providers/http.js
+- M	server/src/providers/registry.js
+- A	server/src/providers/tiktok.js
 - M	server/src/readiness.js
-- M	server/tests/extra.test.js
+- M	server/tests/providers.test.js
 
 ## Recent history
 
+- 5559e53 fix: say what the image gateway probe actually knows _(Jonathan Carbiere, 2026-09-23)_
 - 46f5c48 fix: report an image gateway that is out of quota as not ready _(Jonathan Carbiere, 2026-09-23)_
 - 9d09678 test: cover full-month batch planning and mid-run resume _(Jonathan Carbiere, 2026-09-23)_
 - 84357ea fix: clear the previous run's rounds when a loop starts _(Jonathan Carbiere, 2026-09-23)_
@@ -100,6 +106,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 8711f0e fix: one accent element, three type sizes, and an unmeasurable tracking rule _(Jonathan Carbiere, 2026-09-23)_
 - b4cb334 fix: drop the pill fill when no label can clear 7:1 on it _(Jonathan Carbiere, 2026-09-23)_
 - a41c7f0 chore: keep one rollback snapshot instead of every build ever made _(Jonathan Carbiere, 2026-09-23)_
-- 34389b6 fix: lock the brand mark into the lockup and center every gap in its band _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->
