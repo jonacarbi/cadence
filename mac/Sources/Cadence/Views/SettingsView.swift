@@ -9,7 +9,7 @@ struct Readiness: Decodable {
 /// Autonomy dial, webhooks, design loop, and where the local service keeps its state.
 struct SettingsView: View {
     @EnvironmentObject private var store: Store
-    @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "", auto_plan: "off")
+    @State private var settings = Settings(autonomy: "review_all", webhook_url: "", webhook_secret: "", design_loop: "on", design_loop_rounds: "3", cap_per_account_per_day: "", timezone: "", auto_plan: "off", stale_after_hours: "6")
     @State private var saved = false
     @State private var readiness: Readiness?
     @State private var credentials: [Credential] = []
@@ -42,6 +42,8 @@ struct SettingsView: View {
                     }.buttonStyle(.plain)
                 }
                 HStack { Text("Max posts per account per day"); TextField("no cap", text: $settings.cap_per_account_per_day).frame(width: 80) }
+                HStack { Text("Hold a post if it is this many hours overdue"); TextField("6", text: $settings.stale_after_hours).frame(width: 60) }
+                Text("If this Mac is asleep or off when a post is due, it publishes on wake. Anything older than this window is held for review instead of going out late. 0 publishes it however late it is.").font(.caption).foregroundStyle(.secondary)
             }
             section("Design loop") {
                 Toggle("Run the critic gauntlet when a new brand is extracted", isOn: Binding(get: { settings.design_loop != "off" }, set: { settings.design_loop = $0 ? "on" : "off" }))
@@ -129,7 +131,7 @@ struct SettingsView: View {
     private func save() {
         Task {
             await store.act {
-                let body: [String: Any] = ["autonomy": settings.autonomy, "webhook_url": settings.webhook_url, "webhook_secret": settings.webhook_secret, "design_loop": settings.design_loop, "design_loop_rounds": settings.design_loop_rounds, "cap_per_account_per_day": settings.cap_per_account_per_day, "timezone": settings.timezone, "auto_plan": settings.auto_plan]
+                let body: [String: Any] = ["autonomy": settings.autonomy, "webhook_url": settings.webhook_url, "webhook_secret": settings.webhook_secret, "design_loop": settings.design_loop, "design_loop_rounds": settings.design_loop_rounds, "cap_per_account_per_day": settings.cap_per_account_per_day, "timezone": settings.timezone, "auto_plan": settings.auto_plan, "stale_after_hours": settings.stale_after_hours]
                 let _: MutationResult = try await store.request("/api/settings", method: "PUT", body: body)
                 settings = try await store.request("/api/settings"); saved = true
             }

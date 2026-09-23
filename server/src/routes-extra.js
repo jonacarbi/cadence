@@ -20,7 +20,7 @@ import { addSource, listSources, deleteSource, pauseSource } from './sources.js'
 import { listCredentials, setCredential, requestRestart } from './credentials.js';
 
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.md': 'text/markdown', '.json': 'application/json' };
-const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan'];
+const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan', 'stale_after_hours'];
 
 function parseSite(url) {
   let site; try { site = new URL(url); } catch { throw new WorkflowError('A valid website URL is required'); }
@@ -151,6 +151,7 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
       if (!SETTINGS.includes(k)) throw new WorkflowError(`Unknown setting ${k}`);
       if(k==='autonomy'&&!LEVELS.includes(v))throw new WorkflowError('Invalid autonomy level');
       if(k==='cap_per_account_per_day'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>100))throw new WorkflowError('Daily cap must be 1–100 or empty');
+      if(k==='stale_after_hours'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)>168))throw new WorkflowError('Hold overdue posts after 0–168 hours');
       if(k==='design_loop_rounds'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>6))throw new WorkflowError('Design rounds must be 1–6');
       if((k==='design_loop'||k==='auto_plan')&&!['','on','off'].includes(v))throw new WorkflowError(`${k==='auto_plan'?'Recurring planning':'Design loop'} must be on or off`);
       if(k==='timezone'&&v)try{new Intl.DateTimeFormat('en',{timeZone:v}).format();}catch{throw new WorkflowError('Unknown timezone');}

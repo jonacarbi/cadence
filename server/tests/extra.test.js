@@ -239,3 +239,31 @@ test('credentials are written to the env file, never read back, and never forge 
   await new Promise((r) => setTimeout(r, 300));
   assert.equal(exited, true); // launchd KeepAlive brings the agent straight back.
 });
+
+test('a post the Mac slept through is held for review, not published late', async () => {
+  const { holdStale } = await import('../src/scheduler.js');
+  const { run, one, setSetting } = await import('../src/db.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://sleepy.example' } })).json();
+  insert('accounts', { brand_id: brand.id, platform: 'mock', label: 'Mock', auth_enc: encrypt({}) });
+  const make = async (hoursLate) => {
+    const post = await (await req('/api/posts', { token: agentToken, method: 'POST', body: { brand_id: brand.id, platforms: ['mock'], copy: { mock: 'A timely note' }, scheduled_at: future() } })).json();
+    await req(`/api/posts/${post.id}/approve-and-schedule`, { method: 'POST', body: { version: 1 } });
+    run('UPDATE posts SET scheduled_at = ? WHERE id = ?', new Date(Date.now() - hoursLate * 3600e3).toISOString(), post.id); // The window passed while the Mac slept.
+    return post.id;
+  };
+  const fresh = await make(1), stale = await make(30);
+  assert.equal(holdStale().length, 1); // Only the one past the grace window.
+  assert.equal(all('SELECT * FROM deliveries WHERE post_id = ?', stale)[0].status, 'missed');
+  assert.match(all('SELECT * FROM deliveries WHERE post_id = ?', stale)[0].error, /reschedule it/);
+  assert.equal(one('SELECT status FROM posts WHERE id = ?', stale).status, 'missed');
+  assert.equal(one('SELECT status FROM posts WHERE id = ?', fresh).status, 'scheduled'); // An hour late still goes out.
+  // Rescheduling is the recovery: a new time drops approval, so the owner re-reads it before it goes out.
+  const moved = await req(`/api/posts/${stale}`, { method: 'PATCH', body: { version: 1, scheduled_at: future() } });
+  assert.equal((await moved.json()).status, 'draft');
+  setSetting('stale_after_hours', '0');
+  const off = await make(30);
+  assert.deepEqual(holdStale(), []); // Owners who would rather be late than silent can turn it off.
+  assert.equal(all('SELECT * FROM deliveries WHERE post_id = ?', off)[0].status, 'queued');
+  setSetting('stale_after_hours', '');
+  assert.equal((await req('/api/settings', { method: 'PUT', body: { stale_after_hours: '400' } })).status, 400);
+});

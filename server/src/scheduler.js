@@ -1,4 +1,4 @@
-import { all, one, run, update, decrypt, hydrate, now, getSetting } from "./db.js";
+import { all, one, run, update, decrypt, hydrate, now, getSetting, logEvent } from "./db.js";
 import { transaction } from "./workflow.js";
 import { providerFor } from "./providers/index.js";
 import { lintCaption, hasBlockers } from "./lint.js";
@@ -16,6 +16,27 @@ export function recoverInterruptedDeliveries() {
       "UPDATE deliveries SET status = 'uncertain', error = 'Publisher interrupted; check the remote account before retrying' WHERE status = 'sending'",
     );
     run("UPDATE posts SET status = 'uncertain' WHERE status = 'publishing'");
+  });
+}
+
+/** A Mac that slept through a publishing window wakes up with a backlog. Publishing it all at once posts
+ *  yesterday's moment today, so anything overdue by more than the grace window is held for the owner
+ *  instead. `stale_after_hours` = 0 turns the hold off for owners who would rather be late than silent. */
+export function holdStale(nowMs = Date.now()) {
+  const hours = Number(getSetting('stale_after_hours', '') || 6);
+  if (!hours) return [];
+  const cutoff = new Date(nowMs - hours * 3600_000).toISOString();
+  return transaction(() => {
+    const stale = all(
+      `SELECT d.id, d.post_id, p.scheduled_at FROM deliveries d JOIN posts p ON p.id = d.post_id WHERE d.status IN ('queued','retry') AND p.status IN ('scheduled','publishing') AND p.scheduled_at < ?`,
+      cutoff,
+    );
+    for (const row of stale) {
+      update('deliveries', row.id, { status: 'missed', error: `Not published within ${hours}h of its scheduled time; reschedule it if it still fits.`, next_attempt_at: null });
+      summarize(row.post_id);
+    }
+    if (stale.length) logEvent('warn', 'delivery.missed', `${stale.length} scheduled ${stale.length === 1 ? 'delivery was' : 'deliveries were'} held: too late to publish`, { ids: stale.map((r) => r.id) });
+    return stale;
   });
 }
 
@@ -47,12 +68,15 @@ function summarize(postId) {
       ? "uncertain"
       : states.some((s) => ["queued", "retry", "sending"].includes(s))
         ? "scheduled"
-        : "failed";
+        : states.includes("missed")
+          ? "missed"
+          : "failed";
   update("posts", postId, { status });
 }
 
 export async function tick({ getProvider = providerFor, max = 20 } = {}) {
   autoApproveDue();
+  for (const row of holdStale()) void notify('post.missed', { post_id: row.post_id, scheduled_at: row.scheduled_at });
   for (let i = 0; i < max; i++) {
     const delivery = claim();
     if (!delivery) break;

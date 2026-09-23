@@ -36,4 +36,4 @@ An outbound timeout is not proof of failure. A delivery with an uncertain remote
 
 ## External acceptance prerequisites
 
-Live publishing needs user-authorized social accounts and platform API access. Signed public distribution needs an Apple Developer signing identity and notarization credentials. A local scheduler needs the Mac running and awake; a launch agent cannot publish while hardware is off. These prerequisites do not prevent implementing or testing the remaining local app.
+Live publishing needs user-authorized social accounts and platform API access. Signed public distribution needs an Apple Developer signing identity and notarization credentials. A local scheduler needs the Mac running and awake; a launch agent cannot publish while hardware is off. Cadence no longer dumps that backlog on wake: anything overdue by more than `stale_after_hours` (6 by default, 0 to disable) is marked missed, logged, and sent to the `post.missed` webhook so the owner reschedules it instead of posting yesterday's moment today. These prerequisites do not prevent implementing or testing the remaining local app.

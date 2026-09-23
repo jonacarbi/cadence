@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 10:45:17 -03
-- **Built on commit:** 3f0e2f0 — fix: register Reddit, correct OAuth credential keys, cover every adapter (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 10:51:16 -03
+- **Built on commit:** 168a62b — fix: name a wedged ChatGPT session for what it is (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,10 +85,18 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	server/src/images.js
+- M	docs/COMPETITOR-RESEARCH.md
+- M	docs/RELEASE-0.2.0.md
+- M	mac/Sources/Cadence/CadenceApp.swift
+- M	mac/Sources/Cadence/Models.swift
+- M	mac/Sources/Cadence/Views/SettingsView.swift
+- M	server/src/routes-extra.js
+- M	server/src/scheduler.js
+- M	server/tests/extra.test.js
 
 ## Recent history
 
+- 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
 - 3f0e2f0 fix: register Reddit, correct OAuth credential keys, cover every adapter _(Jonathan Carbiere, 2026-09-23)_
 - 7871bb9 feat: enter keys in the app, and a signing/notarization release script _(Jonathan Carbiere, 2026-09-23)_
 - fb7369a feat: repurpose a post onto other connected platforms _(Jonathan Carbiere, 2026-09-23)_
@@ -98,6 +106,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 5559e53 fix: say what the image gateway probe actually knows _(Jonathan Carbiere, 2026-09-23)_
 - 46f5c48 fix: report an image gateway that is out of quota as not ready _(Jonathan Carbiere, 2026-09-23)_
 - 9d09678 test: cover full-month batch planning and mid-run resume _(Jonathan Carbiere, 2026-09-23)_
-- 84357ea fix: clear the previous run's rounds when a loop starts _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

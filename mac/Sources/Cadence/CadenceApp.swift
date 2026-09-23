@@ -165,6 +165,6 @@ struct WorkspaceView: View {
 }
 struct StatusBadge: View {
     let status: String
-    private var color: Color { switch status { case "published", "approved", "connected": .green; case "scheduled": .blue; case "failed", "uncertain": .orange; default: .secondary } }
+    private var color: Color { switch status { case "published", "approved", "connected": .green; case "scheduled": .blue; case "failed", "uncertain", "missed": .orange; default: .secondary } }
     var body: some View { Text(status.capitalized).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 5).foregroundStyle(color).background(color.opacity(0.1), in: Capsule()) }
 }
