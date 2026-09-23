@@ -91,3 +91,13 @@ test('a handler that reports a bad progress value still completes', async () => 
   assert.equal(done.status, 'complete');
   assert.equal(done.message, 'Complete');
 });
+
+test('readiness reports an image gateway that is out of quota instead of calling it ready',async()=> {
+ const {readiness}=await import('../src/readiness.js');
+ const reply=body=>async()=>({ok:true,json:async()=>body});
+ const img=async fetchImpl=>(await readiness({fetchImpl})).checks.find(c=>c.id==='images');
+ const limited=await img(reply({can_generate_image:false,retry_after_seconds:50400}));
+ assert.equal(limited.ready,false);assert.match(limited.message,/out of image quota for about 14h/);
+ assert.equal((await img(reply({can_generate_image:true}))).ready,true);
+ assert.equal((await img(async()=>{throw new Error('down');})).ready,false);
+});

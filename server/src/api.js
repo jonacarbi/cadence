@@ -35,7 +35,7 @@ export function createApiServer() {
    const owner=()=> { if(actor!=='owner') throw new WorkflowError('Owner access required',403); };
    const body=['POST','PATCH','PUT'].includes(req.method) ? await readBody(req) : {};
    if(!body || typeof body!=='object' || Array.isArray(body))throw new WorkflowError('Request body must be a JSON object');
-   if(path==='/api/readiness'&&req.method==='GET'){owner();return send(200,readiness());}
+   if(path==='/api/readiness'&&req.method==='GET'){owner();return send(200,await readiness());}
    if(path==='/api/agent/requests' && req.method==='POST') {owner();return send(202,createAgentRequest(body));}
    if(path==='/api/agent/requests' && req.method==='GET') return send(200,listRequests());
    const agentMatch=path.match(/^\/api\/agent\/requests\/([^/]+)(?:\/(continue|schedule))?$/);
