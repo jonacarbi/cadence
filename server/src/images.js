@@ -29,6 +29,9 @@ async function viaCatGPT(prompt, size) {
       signal: AbortSignal.timeout(300_000),
     });
   } catch (e) {
+    // A timeout is not an unreachable gateway: the gateway answers, but the browser session behind the
+    // account stopped responding (logged out, or the container was OOM-killed). Different fix, so say so.
+    if (e.name === 'TimeoutError') throw new Error('CATGPT_STUCK: the ChatGPT session behind the gateway stopped responding. Open its noVNC window and sign in again, or set an OpenAI API key in Settings.');
     throw new Error(`CATGPT_DOWN: gateway unreachable (${e.message}). Run \`catgpt\` in a terminal.`);
   }
   if (!res.ok) throw new Error(`catgpt ${res.status}: ${(await res.text()).slice(0, 200)}`);
