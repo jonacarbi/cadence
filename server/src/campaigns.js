@@ -2,6 +2,7 @@ import { one, all, insert, update, hydrate, getSetting, logEvent } from './db.js
 import { createPost, transaction, WorkflowError } from './workflow.js';
 import { designContext } from './design-systems.js';
 import { completeJson } from './llm.js';
+import { recommendHour } from './analytics.js';
 import { registerJob, enqueue } from './jobs.js';
 import { PLATFORMS } from './providers/index.js';
 import './visuals.js';
@@ -22,7 +23,7 @@ export function createCampaign(input, { queue = true } = {}) {
  if(!Number.isInteger(count)||count<1||count>days)throw new WorkflowError(`Choose 1–${days} posts`);
  const timeZone=input.time_zone||Intl.DateTimeFormat().resolvedOptions().timeZone;
  try {new Intl.DateTimeFormat('en',{timeZone}).format();} catch {throw new WorkflowError('Unknown timezone');}
- const hour=input.hour??10;if(!Number.isInteger(hour)||hour<0||hour>23)throw new WorkflowError('Hour must be 0–23');
+ const hour=input.hour??recommendHour(input.brand_id,10,timeZone).hour;if(!Number.isInteger(hour)||hour<0||hour>23)throw new WorkflowError('Hour must be 0–23');
  if(!Array.isArray(input.platforms)||!input.platforms.length||input.platforms.some(p=>!PLATFORMS[p])||new Set(input.platforms).size!==input.platforms.length)throw new WorkflowError('Choose valid, unique platforms');
  if(input.dates && (!Array.isArray(input.dates)||input.dates.length!==count||new Set(input.dates.map(d=>d?.day)).size!==count||input.dates.some(d=>!d||!Number.isInteger(d.day)||d.day<1||d.day>days||!Number.isFinite(Date.parse(d.at)))))throw new WorkflowError('Invalid campaign dates');
  const design=designContext(input.brand_id);

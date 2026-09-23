@@ -9,6 +9,7 @@ import { completeJson } from './llm.js';
 import { extractBrand, designSystemMd } from './brands.js';
 import { importDesignSystem, activateDesignSystem } from './design-systems.js';
 import { createCampaign, planCampaign, localSchedule } from './campaigns.js';
+import { recommendHour } from './analytics.js';
 import { produceCampaign } from './visuals.js';
 import { fetchPublic } from './network.js';
 import { PLATFORMS, capabilities } from './providers/index.js';
@@ -34,7 +35,7 @@ export function createAgentRequest(body) {
   if (!['brand', 'single', 'month'].includes(mode)) throw new WorkflowError('Choose brand, single, or month');
   const timeZone = text(body.time_zone) || getSetting('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
   try { new Intl.DateTimeFormat('en', { timeZone }).format(); } catch { throw new WorkflowError('Unknown timezone'); }
-  const hour = body.hour ?? 10;
+  const hour = body.hour ?? recommendHour(body.brand_id ?? '', 10, timeZone).hour;
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) throw new WorkflowError('Hour must be 0–23');
   const localToday = new Intl.DateTimeFormat('en-CA', { timeZone, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
   const nextMonth = new Date(`${localToday.slice(0,7)}-01T12:00:00Z`); nextMonth.setUTCMonth(nextMonth.getUTCMonth()+1);

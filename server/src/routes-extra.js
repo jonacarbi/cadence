@@ -11,7 +11,7 @@ import { startUrl, finish, addManualAccount } from './oauth.js';
 import { enqueue } from './jobs.js';
 import { requeueVisual } from './visuals.js';
 import { LEVELS, setAutonomy, autonomy } from './autonomy.js';
-import { analyticsFor } from './analytics.js';
+import { analyticsFor, recommendHour } from './analytics.js';
 import { completeJson } from './llm.js';
 import { getBrand, slugify } from './brands.js';
 import { loadRules, saveRules } from './lint.js';
@@ -205,6 +205,7 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
     if (req.method === 'PATCH') { if (typeof body.paused !== 'boolean') throw new WorkflowError('paused must be true or false'); send(200, pauseSource(x[1], body.paused)); return true; }
   }
   if (path === '/api/assets' && req.method === 'GET') return serveAsset(url, res);
+  if (path === '/api/analytics/best-hour' && req.method === 'GET') { const b = url.searchParams.get('brand_id'); if (!b) throw new WorkflowError('brand_id is required'); send(200, recommendHour(b)); return true; }
   if (path === '/api/analytics' && req.method === 'GET') { const b = url.searchParams.get('brand_id'); if (!b) throw new WorkflowError('brand_id is required'); send(200, analyticsFor(b)); return true; }
   if (path === '/api/rules' && req.method === 'GET') { send(200, loadRules()); return true; }
   if (path === '/api/rules' && req.method === 'PUT') { owner();try{send(200,saveRules(body));}catch(error){throw new WorkflowError(error.message);}return true; }

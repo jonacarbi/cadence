@@ -267,3 +267,28 @@ test('a post the Mac slept through is held for review, not published late', asyn
   setSetting('stale_after_hours', '');
   assert.equal((await req('/api/settings', { method: 'PUT', body: { stale_after_hours: '400' } })).status, 400);
 });
+
+test('planning picks the hour this brand actually performs in, once there is enough evidence', async () => {
+  const { recommendHour } = await import('../src/analytics.js');
+  const { run } = await import('../src/db.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://timing.example' } })).json();
+  const scored = (hour, likes, n) => {
+    for (let i = 0; i < n; i++) {
+      const id = insert('posts', { brand_id: brand.id, status: 'published', copy_json: '{}', assets_json: '{}', platforms_json: '["mock"]',
+        scheduled_at: `2026-03-${String(i + 1).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00.000Z` });
+      run("INSERT INTO analytics (post_id, platform, metrics_json) VALUES (?,'mock',?)", id, JSON.stringify({ likes, impressions: 9999 }));
+    }
+  };
+  const utc = (brandId) => recommendHour(brandId, 10, 'UTC');
+  scored(18, 50, 3);
+  assert.deepEqual(utc(brand.id), { hour: 10, basis: 'default', samples: 3 }); // Three posts is not a pattern.
+  scored(8, 1, 3);
+  const best = utc(brand.id);
+  assert.equal(best.basis, 'analytics');
+  assert.equal(best.hour, 18);          // Impressions must not sway it; only engagement counts.
+  assert.equal(best.samples, 6);
+  const r = await req(`/api/analytics/best-hour?brand_id=${brand.id}`);
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).basis, 'analytics');
+  assert.equal((await req('/api/analytics/best-hour')).status, 400);
+});

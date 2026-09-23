@@ -68,3 +68,13 @@ test('a full month is planned in batches and a mid-run failure resumes from the 
  assert.equal(posts.length,31);
  assert.equal(new Set(posts.map(p=>p.scheduled_at)).size,31);
 });
+test('a plan with no stated hour uses the hour this brand performs best in',()=> {
+ const at=(hour,day)=>`2026-03-${String(day).padStart(2,'0')}T${String(hour).padStart(2,'0')}:00:00.000Z`;
+ const scored=(hour,likes,n)=>{for(let i=0;i<n;i++){const id=insert('posts',{brand_id:brand,status:'published',copy_json:'{}',assets_json:'{}',platforms_json:'["mastodon"]',scheduled_at:at(hour,i+1)});
+  run("INSERT INTO analytics (post_id, platform, metrics_json) VALUES (?,'mastodon',?)",id,JSON.stringify({favourites:likes,impressions:9999}));}};
+ const plan=c=>JSON.parse(one('SELECT plan_json FROM campaigns WHERE id=?',c.id).plan_json).hour;
+ assert.equal(plan(createCampaign({brand_id:brand,month:'2027-01',count:1,platforms:['mastodon'],time_zone:'UTC'},{queue:false}).campaign),10); // No history: the plain default.
+ scored(19,50,4);scored(6,1,4);
+ assert.equal(plan(createCampaign({brand_id:brand,month:'2027-02',count:1,platforms:['mastodon'],time_zone:'UTC'},{queue:false}).campaign),19);
+ assert.equal(plan(createCampaign({brand_id:brand,month:'2027-03',count:1,platforms:['mastodon'],time_zone:'UTC',hour:7},{queue:false}).campaign),7); // An explicit hour still wins.
+});

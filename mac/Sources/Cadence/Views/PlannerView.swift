@@ -8,6 +8,7 @@ struct AgentJob: Codable, Identifiable {
     let message: String
 }
 struct CampaignCreated: Decodable { let job: AgentJob }
+struct BestHour: Decodable { let hour: Int; let basis: String; let samples: Int }
 struct PlannerView: View {
     @EnvironmentObject private var store: Store
     @State private var month = Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
@@ -19,6 +20,7 @@ struct PlannerView: View {
     @State private var activeJob: String?
     @State private var designName: String?
     @State private var platforms: [String] = []
+    @State private var best: BestHour?
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 18) {
@@ -37,7 +39,7 @@ struct PlannerView: View {
                 }
                 Text("What should this month focus on?").font(.headline)
                 TextEditor(text: $brief).frame(minHeight: 130).padding(8).overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
-                Text("Include confirmed offers, audience, language, and important dates. Drafts are scheduled for 10:00 in \(TimeZone.current.identifier).").font(.caption).foregroundStyle(.secondary)
+                Text(timingNote).font(.caption).foregroundStyle(.secondary)
                 HStack {
                     Text("Generation uses your configured text provider.").font(.caption).foregroundStyle(.secondary)
                     Spacer()
@@ -57,11 +59,21 @@ struct PlannerView: View {
         .task(id: store.selectedBrand) {
             if let caps: [Capability] = try? await store.request("/api/capabilities") { platforms = caps.filter { $0.available && $0.id != "mock" }.map(\.id) }
             await loadDesign()
+            best = try? await store.request("/api/analytics/best-hour?brand_id=\(store.selectedBrand ?? "")")
             while !Task.isCancelled {
                 await loadJobs()
                 do { try await Task.sleep(for: .seconds(2)) } catch { break }
             }
         }
+    }
+    /// The server picks the hour from this client's own results, so say which hour it landed on and why.
+    private var timingNote: String {
+        let zone = TimeZone.current.identifier
+        guard let best else { return "Include confirmed offers, audience, language, and important dates." }
+        let when = "\(String(format: "%02d", best.hour)):00 in \(zone)"
+        return best.basis == "analytics"
+            ? "Include confirmed offers, audience, language, and important dates. Drafts are scheduled for \(when) — the hour this client's \(best.samples) measured posts performed best in."
+            : "Include confirmed offers, audience, language, and important dates. Drafts are scheduled for \(when); once published posts have collected metrics, Cadence moves that to the hour that actually performs."
     }
     private func loadDesign() async {
         guard let id = store.selectedBrand else { return }
@@ -83,7 +95,7 @@ struct PlannerView: View {
         Task {
             defer { submitting = false }
             do {
-                let result: CampaignCreated = try await store.request("/api/campaigns", method: "POST", body: ["brand_id": brand, "month": formatter.string(from: month), "count": count, "platforms": selected.sorted(), "brief": brief, "time_zone": TimeZone.current.identifier, "hour": 10])
+                let result: CampaignCreated = try await store.request("/api/campaigns", method: "POST", body: ["brand_id": brand, "month": formatter.string(from: month), "count": count, "platforms": selected.sorted(), "brief": brief, "time_zone": TimeZone.current.identifier])
                 activeJob = result.job.id; await loadJobs()
             } catch { store.error = error.localizedDescription }
         }
