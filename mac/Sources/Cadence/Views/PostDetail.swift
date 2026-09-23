@@ -13,6 +13,10 @@ struct PostDetail: View {
     @State private var rescheduling = false
     @State private var newDate = Date()
     @State private var picking = false
+    /// Connected, unpaused platforms for this brand that the post does not already target.
+    private var repurposeTargets: [String] {
+        Array(Set(store.accounts.filter { $0.brand_id == current.brand_id && $0.paused == 0 }.map(\.platform)).subtracting(current.platforms)).sorted()
+    }
     private var current: Post { store.posts.first { $0.id == post.id } ?? post }
     private var canReview: Bool { ["draft", "rejected"].contains(current.status) }
     var body: some View {
@@ -48,6 +52,14 @@ struct PostDetail: View {
                 Button("New visual", systemImage: "arrow.triangle.2.circlepath") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": true]) } } }
                 Button("Re-compose", systemImage: "rectangle.3.group") { perform { await store.act { let _: CampaignCreated = try await store.request("/api/posts/\(current.id)/rerender", method: "POST", body: ["fresh_image": false]) } } }
                 Button("Use my image", systemImage: "photo") { picking = true }
+                // Same message, same artwork, rewritten for a channel this post does not use yet.
+                if !repurposeTargets.isEmpty {
+                    Menu("Repurpose") {
+                        ForEach(repurposeTargets, id: \.self) { platform in
+                            Button(platform.capitalized) { perform { await store.act { let _: Post = try await store.request("/api/posts/\(current.id)/repurpose", method: "POST", body: ["platforms": [platform]]) } } }
+                        }
+                    }.fixedSize()
+                }
             }.controlSize(.small).disabled(acting || current.format == "text" || !["draft","rejected","approved","scheduled"].contains(current.status))
         }.padding(20)
     }

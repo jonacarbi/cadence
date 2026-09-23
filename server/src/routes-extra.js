@@ -4,8 +4,8 @@ import { join, resolve, extname } from 'node:path';
 import { mkdirSync, existsSync, createReadStream, realpathSync, statSync } from 'node:fs';
 import { all, one, insert, update, hydrate, run, getSetting, setSetting } from './db.js';
 import { BRANDS_DIR, ASSETS_DIR } from './config.js';
-import { WorkflowError, postById, approvePost, schedulePost, editPost, transaction } from './workflow.js';
-import { PLATFORMS } from './providers/index.js';
+import { WorkflowError, postById, approvePost, schedulePost, editPost, createPost, transaction } from './workflow.js';
+import { PLATFORMS, capabilities } from './providers/index.js';
 import { META } from './providers/registry.js';
 import { startUrl, finish, addManualAccount } from './oauth.js';
 import { enqueue } from './jobs.js';
@@ -61,6 +61,37 @@ Return JSON {copy:{<platform>:string}, image_prompt:string, alt_text:string, ass
   const edited = editPost(id, { copy: draft.copy, image_prompt: draft.image_prompt, alt_text: draft.alt_text, assets: draft.assets, platforms: post.platforms, scheduled_at: post.scheduled_at }, post.version);
   requeueVisual(id, { fresh: body.fresh_image !== false });
   return edited;
+}
+
+/** Repurpose a post onto other platforms: same message and same artwork, rewritten for each channel.
+ *  A new draft rather than an edit, so the original's approval and receipts are untouched. */
+export async function repurpose(id, body, { generate = completeJson } = {}) {
+  const post = postById(id);
+  const supported = new Set(capabilities().filter((p) => p.available).map((p) => p.id));
+  const platforms = [...new Set(Array.isArray(body.platforms) ? body.platforms : [])];
+  if (!platforms.length) throw new WorkflowError('Pick at least one platform to repurpose to');
+  const unusable = platforms.filter((p) => !supported.has(p));
+  if (unusable.length) throw new WorkflowError(`No publishing adapter for ${unusable.join(', ')}`);
+  const unconnected = platforms.filter((p) => !one('SELECT id FROM accounts WHERE brand_id = ? AND platform = ? AND paused = 0', post.brand_id, p));
+  if (unconnected.length) throw new WorkflowError(`This brand has no connected account for ${unconnected.join(', ')}`);
+  const brand = getBrand(post.brand_id);
+  const draft = await generate(`You are adapting an existing social post for ${brand.name} to other platforms. Voice: ${JSON.stringify(brand.voice || {})}.
+Original copy per platform: ${JSON.stringify(post.copy)}. Topic: ${post.topic}.
+Rewrite the same message for ${platforms.join(', ')}, matching each platform's length, hashtag and call-to-action conventions.
+Keep the claims identical to the original: do not add offers, prices, results or testimonials it does not make.
+Return JSON {copy:{<platform>:string}}.`);
+  const copy = Object.fromEntries(platforms.map((p) => [p, String(draft.copy?.[p] || '').trim()]));
+  const missing = platforms.filter((p) => !copy[p]);
+  if (missing.length) throw new WorkflowError(`The model returned no copy for ${missing.join(', ')}`, 502);
+  const created = createPost({
+    brand_id: post.brand_id, campaign_id: post.campaign_id, platforms, copy,
+    topic: post.topic, pillar: post.pillar, image_prompt: post.image_prompt, alt_text: post.alt_text,
+    assets: post.assets, format: post.format, design_system_id: post.design_system_id,
+    scheduled_at: body.scheduled_at || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+  });
+  // Reuse the artwork: repurposing is about reach, not a second image bill. createPost does not take
+  // a path, since every other caller renders its own.
+  return post.image_path ? update('posts', created.id, { image_path: post.image_path }) && postById(created.id) : created;
 }
 
 function serveAsset(url, res) {
@@ -138,6 +169,7 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
   }
   if ((x = m(/^\/api\/posts\/([^/]+)\/approve-and-schedule$/)) && req.method === 'POST') { owner(); send(200, approveAndSchedule(x[1], body.version, actor, body.account_ids)); return true; }
   if ((x = m(/^\/api\/posts\/([^/]+)\/regenerate$/)) && req.method === 'POST') { owner(); send(202, await regenerate(x[1], body, actor)); return true; }
+  if ((x = m(/^\/api\/posts\/([^/]+)\/repurpose$/)) && req.method === 'POST') { owner(); send(201, await repurpose(x[1], body)); return true; }
   if ((x = m(/^\/api\/posts\/([^/]+)\/rerender$/)) && req.method === 'POST') { owner(); postById(x[1]); send(202, { job: requeueVisual(x[1], { fresh: Boolean(body.fresh_image) }) }); return true; }
   if ((x = m(/^\/api\/posts\/([^/]+)\/publish-now$/)) && req.method === 'POST') {
     owner();

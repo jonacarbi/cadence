@@ -180,3 +180,28 @@ test('a watched feed drafts only what it publishes after subscribing', async () 
   assert.equal((await req(`/api/sources/${broken.id}`, { method: 'DELETE' })).status, 200);
   assert.equal(listSources(brand.id).length, 1);
 });
+
+test('repurposing reuses the artwork and leaves the original untouched', async () => {
+  const { repurpose } = await import('../src/routes-extra.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://repurpose.example' } })).json();
+  insert('accounts', { brand_id: brand.id, platform: 'mock', label: 'Mock', auth_enc: encrypt({}) });
+  const post = await (await req('/api/posts', { method: 'POST', body: { brand_id: brand.id, platforms: ['mock'], copy: { mock: 'The original' }, topic: 'Launch week', scheduled_at: future() } })).json();
+  const { update: patch } = await import('../src/db.js');
+  patch('posts', post.id, { image_path: '/tmp/original.png' });
+
+  const generate = async () => ({ copy: { mock: 'A second-channel cut of the same message' } });
+  await assert.rejects(repurpose(post.id, { platforms: [] }, { generate }), /at least one platform/);
+  await assert.rejects(repurpose(post.id, { platforms: ['mastodon'] }, { generate }), /no connected account/); // Adapter exists, account does not.
+  await assert.rejects(repurpose(post.id, { platforms: ['mock'] }, { generate: async () => ({ copy: {} }) }), /no copy for mock/); // An empty draft must not become a post.
+
+  const copy = await repurpose(post.id, { platforms: ['mock'] }, { generate });
+  assert.notEqual(copy.id, post.id);
+  assert.equal(copy.status, 'draft'); // Repurposing never inherits approval.
+  assert.equal(copy.topic, 'Launch week');
+  assert.equal(copy.image_path, '/tmp/original.png'); // Same artwork, no second image bill.
+  assert.equal(copy.copy.mock, 'A second-channel cut of the same message');
+  const original = (await (await req(`/api/posts?brand_id=${brand.id}`)).json()).find((p) => p.id === post.id);
+  assert.equal(original.copy.mock, 'The original');
+  assert.equal(original.version, post.version); // The source is not edited.
+  assert.equal((await req(`/api/posts/${post.id}/repurpose`, { token: agentToken, method: 'POST', body: { platforms: ['mock'] } })).status, 403);
+});
