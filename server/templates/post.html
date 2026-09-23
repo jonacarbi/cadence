@@ -46,7 +46,7 @@
   .layout-type .copy { position: absolute; left: 7.4vw; right: 7.4vw; bottom: 7.4vw; display: grid; align-content: end; }
   .layout-type h1 { font-size: 9vh; }
   .layout-type .bar { width: 22%; height: 1.2vh; background: var(--accent); margin-top: 3vh; }
-  .layout-type .pill { background: transparent; color: var(--text); box-shadow: inset 0 0 0 .3vh var(--dim); }
+  .outline-cta .pill { background: transparent; color: var(--text); box-shadow: inset 0 0 0 .3vh var(--dim); }
   .layout-type .logo { bottom: 7.4vw; right: 7.4vw; }
 
   /* Carousel slide (square): centered headline over secondary surface with small photo tile */
@@ -55,7 +55,7 @@
   .layout-slide h1 { font-size: 6.4vh; }
   .layout-slide .counter { position: absolute; top: 4vw; right: 7.4vw; font: 600 2.2vh var(--body); opacity: .6; }
 </style></head>
-<body><div class="frame layout-{{layout}}">
+<body><div class="frame layout-{{layout}} {{outline}}">
   <div class="photo"></div>
   {{#logo}}<img class="logo" src="{{logo}}" alt="">{{/logo}}
   <div class="copy">

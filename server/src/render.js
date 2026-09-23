@@ -26,14 +26,9 @@ export async function closeBrowser() { /* Each render closes its own browser. */
 
 const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", svg: "image/svg+xml", webp: "image/webp", gif: "image/gif" };
 // setContent pages have an opaque origin, so local files go in as data URIs.
-// The pill label sits on the accent fill, so its ink follows the accent's luminance instead of the surface token,
-// which can land at 4:1 on a mid accent.
-const ink = (hex) => {
-  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
-  if (!m) return "#ffffff";
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.55 ? "#0b0b0f" : "#ffffff";
-};
+// The pill label sits on the accent fill, so it takes whichever of black or white measures further
+// from that fill rather than the surface token's ink.
+const ink = (hex) => (ratio("#ffffff", hex) >= ratio("#0b0b0f", hex) ? "#ffffff" : "#0b0b0f");
 
 // WCAG floor for the accent against the surface: the loop's colour critic fails below 4.5:1,
 // and a mid accent on a dark surface lands around 4.2:1. Lift the accent until it clears.
@@ -83,10 +78,15 @@ export async function renderFrame(opts) {
   const fonts = await resolveFonts(t);
   const mark = logoUrl(brand.logo_path, t.colors?.text || "#111");
   const lockup = layout === "type" ? mark : "";
+  // A mid accent is too close to both black and white for a label to clear 7:1 on it. Lifting the fill
+  // would break the accent's own 4.5:1 floor against the surface, so the pill loses its fill instead and
+  // the label measures against the surface, where the text token already clears by a wide margin.
+  const accentInk = ink(accent);
+  const outline = layout === "type" || ratio(accentInk, accent) < 7;
   const tpl = readFileSync(join(TEMPLATES_DIR, "post.html"), "utf8");
   const html = fill(tpl, {
-    w, h, lang: brand.voice?.language || "en", layout,
-    surface, text: t.colors?.text || "#111", accent, accentInk: ink(accent), secondary: t.colors?.secondary || "#f2f2f2",
+    w, h, lang: brand.voice?.language || "en", layout, outline: outline ? "outline-cta" : "",
+    surface, text: t.colors?.text || "#111", accent, accentInk, secondary: t.colors?.secondary || "#f2f2f2",
     radius: t.radius || "8px", displayFont: fonts.display, bodyFont: fonts.body, fontCss: fonts.css,
     image: dataUrl(opts.image),
     // The type layout has no photo to anchor recognition, so its mark rides in the eyebrow lockup

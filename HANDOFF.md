@@ -51,8 +51,8 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-09-23 00:22:02 -03
-- **Built on commit:** 34389b6 — fix: lock the brand mark into the lockup and center every gap in its band (Jonathan Carbiere, 2026-09-23)
+- **Last updated:** 2026-09-23 00:36:32 -03
+- **Built on commit:** a41c7f0 — chore: keep one rollback snapshot instead of every build ever made (Jonathan Carbiere, 2026-09-23)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -85,10 +85,12 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
-- M	scripts/build-macos.sh
+- M	server/src/render.js
+- M	server/templates/post.html
 
 ## Recent history
 
+- a41c7f0 chore: keep one rollback snapshot instead of every build ever made _(Jonathan Carbiere, 2026-09-23)_
 - 34389b6 fix: lock the brand mark into the lockup and center every gap in its band _(Jonathan Carbiere, 2026-09-23)_
 - f58274b fix: show the brand mark, size type from the void, keep the doc equal to the pixels _(Jonathan Carbiere, 2026-09-22)_
 - 90dbbad fix: merge design-loop builder tokens instead of replacing them _(Jonathan Carbiere, 2026-09-22)_
@@ -98,6 +100,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - f38cb11 fix: hero frame carries a written post line, not a truncated offer paragraph _(Jonathan Carbiere, 2026-09-22)_
 - 8c45f79 fix: a slow vision critic no longer kills the design loop _(Jonathan Carbiere, 2026-09-22)_
 - abc866b fix: design loop judges the brand's real proposition, not placeholder copy _(Jonathan Carbiere, 2026-09-22)_
-- 05e8db4 fix: CTA pill ink follows accent luminance, not the surface token _(Jonathan Carbiere, 2026-09-22)_
 
 <!-- HANDOFF:AUTO:END -->
