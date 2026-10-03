@@ -30,6 +30,9 @@ for (const d of [APP_DIR, DATA_DIR, BRANDS_DIR, ASSETS_DIR, LOG_DIR]) mkdirSync(
 export const PORT = Number(process.env.PORT || 8796);
 export const HOST = "127.0.0.1";
 export const BASE_URL = `http://${HOST}:${PORT}`;
+// Meta requires an https OAuth redirect, so the callback also gets a TLS listener when a cert exists.
+export const TLS_DIR = join(APP_DIR, "tls");
+export const HTTPS_PORT = PORT + 1;
 export const DB_PATH = join(DATA_DIR, "cadence.sqlite");
 export const SKILLS_DIR = join(HOME, ".claude/skills");
 export const TEMPLATES_DIR = join(REPO_DIR, "server/templates");

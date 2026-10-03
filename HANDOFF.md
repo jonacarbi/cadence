@@ -52,7 +52,7 @@ The existing launchd background service now runs the installed app’s bundled N
 - **Project:** `cadence`
 - **Branch:** `master`
 - **Last updated:** 2026-10-03 02:58:52 -03
-- **Built on commit:** 9033087 — feat: schedule plans at the hour this client's own posts perform best (Jonathan Carbiere, 2026-09-23)
+- **Built on commit:** fff3654 — fix: detach the login-shell PATH probe so it can't steal the parent terminal (Jonathan Carbiere, 2026-10-03)
 - **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
 
 ## How to build / run / test
@@ -75,8 +75,8 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 - .js — 59 file(s)
 - .swift — 13 file(s)
+- .sh — 4 file(s)
 - .md — 4 file(s)
-- .sh — 3 file(s)
 - .json — 3 file(s)
 - .mjs — 1 file(s)
 - .ignore — 1 file(s)
@@ -85,10 +85,15 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 
 ## Changes in this commit
 
+- A	scripts/make-tls-cert.sh
+- M	server/src/api.js
 - M	server/src/config.js
+- M	server/src/index.js
+- M	server/src/oauth.js
 
 ## Recent history
 
+- fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
 - 9033087 feat: schedule plans at the hour this client's own posts perform best _(Jonathan Carbiere, 2026-09-23)_
 - 02a7962 feat: hold posts the Mac slept through instead of publishing them late _(Jonathan Carbiere, 2026-09-23)_
 - 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
@@ -98,6 +103,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - e80a8bb feat: watched RSS/Atom feeds draft posts for review _(Jonathan Carbiere, 2026-09-23)_
 - 7e369c6 feat: a per-brand image library the owner fills themselves _(Jonathan Carbiere, 2026-09-23)_
 - 99c11d4 feat: publish photo posts to TikTok _(Jonathan Carbiere, 2026-09-23)_
-- 5559e53 fix: say what the image gateway probe actually knows _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

@@ -1,4 +1,8 @@
+import { createServer as createHttpsServer } from 'node:https';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { createApiServer, listen } from './api.js';
+import { TLS_DIR, HTTPS_PORT } from './config.js';
 import { startScheduler } from './scheduler.js';
 import { startWorker } from './jobs.js';
 import './providers/registry.js';
@@ -7,7 +11,10 @@ import './visuals.js';
 import './designloop.js';
 const server=createApiServer();
 const address=await listen(server);
+// Same handler over TLS, only so OAuth providers that demand https can redirect back (scripts/make-tls-cert.sh).
+const tls=existsSync(join(TLS_DIR,'cert.pem'))?createHttpsServer({key:readFileSync(join(TLS_DIR,'key.pem')),cert:readFileSync(join(TLS_DIR,'cert.pem'))},server.listeners('request')[0]):null;
+if(tls) await listen(tls,HTTPS_PORT);
 const stop=startScheduler();
 const stopWorker=startWorker();
 console.log(`Cadence listening on http://${address.address}:${address.port}`);
-for(const signal of ['SIGINT','SIGTERM']) process.once(signal,()=> {stop();stopWorker();server.close(()=>process.exit(0));});
+for(const signal of ['SIGINT','SIGTERM']) process.once(signal,()=> {stop();stopWorker();tls?.close();server.close(()=>process.exit(0));});

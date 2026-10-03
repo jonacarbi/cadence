@@ -1,7 +1,7 @@
 // OAuth2 connect flow: /oauth/start/:platform → provider consent → /oauth/callback → account row.
 // App credentials (client id/secret) come from env: CADENCE_<PLATFORM>_CLIENT_ID / _CLIENT_SECRET.
 import { randomBytes, createHash } from "node:crypto";
-import { BASE_URL } from "./config.js";
+import { HTTPS_PORT } from "./config.js";
 import { PLATFORMS } from "./providers/index.js";
 import { META } from "./providers/registry.js";
 import { insert, encrypt, logEvent, hydrate, one } from "./db.js";
@@ -13,7 +13,7 @@ export function creds(platform) {
   const P = platform.toUpperCase();
   return { client_id: process.env[`CADENCE_${P}_CLIENT_ID`] || "", client_secret: process.env[`CADENCE_${P}_CLIENT_SECRET`] || "" };
 }
-export const redirectUri = () => `${BASE_URL}/oauth/callback`;
+export const redirectUri = () => `https://localhost:${HTTPS_PORT}/oauth/callback`;
 
 export function startUrl(platform, brandId) {
   for(const [state,p] of pending)if(Date.now()-p.createdAt>600000)pending.delete(state);

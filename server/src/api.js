@@ -27,7 +27,7 @@ export function createApiServer() {
   try {
    // Native clients and authenticated tools only. No browser-origin requests or DNS rebinding.
    if(req.headers.origin) throw new WorkflowError('Browser-origin requests are not allowed',403);
-   if(!/^127\.0\.0\.1(?::\d+)?$/.test(req.headers.host||'')) throw new WorkflowError('Invalid host',403);
+   if(!/^(127\.0\.0\.1|localhost)(?::\d+)?$/.test(req.headers.host||'')) throw new WorkflowError('Invalid host',403);
    const url=new URL(req.url,`http://${HOST}`), path=url.pathname;
    if(path==='/health' && req.method==='GET') return send(200,{status:'ok',app:'Cadence',version:'0.2.0'});
    if(path==='/oauth/callback' && req.method==='GET') return oauthCallback(url,res);
