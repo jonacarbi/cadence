@@ -1,5 +1,5 @@
 // Gauntlet loop (design-loop skill) on the brand's hero frame: build → render → three critics in fresh contexts
-// (Brief/sonnet, System/haiku against design-system.md, Craft/opus against bar.md) → apply fixes to the brand
+// (Brief, System against design-system.md, Craft against bar.md; all on LLM_MODEL = Sonnet 5.5) → apply fixes to the brand
 // tokens → repeat. Runs once per brand after extraction, before design-dna codifies the final look.
 import { mkdirSync, writeFileSync, existsSync, readFileSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,7 +25,7 @@ async function tearDown(brand, dir) {
   // The bar must only ask for what this pipeline can change, or every round fails on elements the template has no slot for.
   const text = await claude(`Read the reference screenshot at ${join(brand.dir, 'reference.png')}. Tear its visual language down into 8–15 checkable mechanisms for a 1080x1350 social frame: type scale ratios, colour usage counts, margins as % of canvas, alignment, one accent rule, contrast.
 The frame being judged contains exactly these elements and nothing else: an eyebrow line, a headline of 1–4 lines, a sub line, a CTA pill, and an optional full-width photo. The only things adjustable are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used.
-So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, { ...readOnly, model: 'opus' });
+So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, readOnly);
   writeFileSync(bar, text); return bar;
 }
 
@@ -58,9 +58,9 @@ async function effectiveTokens(t) {
 
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
-    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, { ...readOnly, model: 'sonnet' }),
-    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. List every violation of the system with the rule it breaks. Judge only what is visible without measuring: the fonts, the palette and its roles, the bans, one idea per frame. Every rule stated as a size, a ratio, a percentage of canvas or a contrast figure is measured by another critic against a stricter bar, so skip those here rather than estimating them, and never call a colour by name off the rendering. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, { ...readOnly, model: 'haiku' }),
-    critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, { ...readOnly, model: 'opus' }),
+    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, readOnly),
+    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. List every violation of the system with the rule it breaks. Judge only what is visible without measuring: the fonts, the palette and its roles, the bans, one idea per frame. Every rule stated as a size, a ratio, a percentage of canvas or a contrast figure is measured by another critic against a stricter bar, so skip those here rather than estimating them, and never call a colour by name off the rendering. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, readOnly),
+    critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, readOnly),
   ]);
   writeFileSync(join(dir, 'critics.md'), `# Brief\n${brief}\n\n# System\n${system}\n\n# Craft\n${craft}\n`);
   return { pass: verdict(brief) && verdict(system) && verdict(craft), notes: [brief, system, craft].filter((t) => !verdict(t)).join('\n\n') };
@@ -98,7 +98,7 @@ export async function runDesignLoop(brandId, report = () => {}) {
     if (pass) break;
     // Builder: the template is fixed; tokens + layout choice are the design.
     const next = await completeJson(`You are fixing a social post design for ${brand.name}. Current tokens: ${JSON.stringify(tokens)}. Current layout: "${layout}" (options: ${LAYOUTS.join(', ')}; "type" has no photo).
-Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tokens with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode})>, "layout": "<one of the options>"}. Only change what the critics asked for; keep the brand's real colours and fonts.`, { model: 'opus' });
+Critic notes:\n${notes.slice(0, 6000)}\nReturn JSON {"tokens": <full updated tokens with the same shape ({colors:{surface,text,accent,secondary,palette},fonts:{display,body},radius,mode})>, "layout": "<one of the options>"}. Only change what the critics asked for; keep the brand's real colours and fonts.`);
     if (next?.tokens?.colors && next?.tokens?.fonts) {
       // The builder answers with the knobs only; everything measured at extraction (palette, heading styles,
       // the requested fonts) is evidence, not a knob, so merge onto the current tokens instead of replacing them.

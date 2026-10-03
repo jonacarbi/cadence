@@ -40,7 +40,7 @@ export const TEMPLATES_DIR = join(REPO_DIR, "server/templates");
 // LLM (Claude Code CLI on the Pro subscription, 9Router as fallback)
 export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || onPath('claude') || [join(HOME,'.local/bin/claude'),'/opt/homebrew/bin/claude','/usr/local/bin/claude'].find(existsSync) || "claude";
 export const TEXT_PROVIDER = process.env.CADENCE_TEXT_PROVIDER || 'claude';
-export const LLM_MODEL = process.env.CADENCE_MODEL || "opus";
+export const LLM_MODEL = process.env.CADENCE_MODEL || "claude-sonnet-5-5";
 export const NINE_ROUTER_URL = process.env.NINE_ROUTER_URL || "http://localhost:20128/v1";
 export const NINE_ROUTER_API_KEY = process.env.NINE_ROUTER_API_KEY || "";
 export const NINE_ROUTER_MODEL = process.env.CADENCE_FALLBACK_MODEL || "";
