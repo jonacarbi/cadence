@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadence | Local-first social media agent, on your own AI</title>
+<meta name="description" content="Cadence is an open-source, local-first social media agent. Paste a website, get a brand system and a month of posts, approve them, and publish. Works with Claude Code, Codex, Gemini, opencode or any OpenAI-compatible endpoint.">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://cadence-social-agent.netlify.app/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cadence">
+<meta property="og:title" content="Cadence: your brand, on beat">
+<meta property="og:description" content="Paste a website, get a month of posts. You approve, Cadence publishes. Local-first, with your own AI agent.">
+<meta property="og:url" content="https://cadence-social-agent.netlify.app/">
+<meta property="og:image" content="https://cadence-social-agent.netlify.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cadence wordmark and mark on a musical staff">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cadence: your brand, on beat">
+<meta name="twitter:description" content="Local-first, open-source social media agent that runs on your own AI agent.">
+<meta name="twitter:image" content="https://cadence-social-agent.netlify.app/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Cadence","applicationCategory":"BusinessApplication","operatingSystem":"macOS, Linux, Windows","description":"Open-source, local-first social media agent that plans, approves and publishes posts using your own AI agent.","url":"https://cadence-social-agent.netlify.app/","image":"https://cadence-social-agent.netlify.app/og.png","license":"https://opensource.org/licenses/MIT","codeRepository":"https://github.com/jonacarbi/cadence","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Jonathan Carbiere"}}
+</script>
+<script src="/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <a class="brand" href="/" aria-label="Cadence home"><img src="/mark.svg" width="32" height="32" alt=""><span>Cadence</span></a>
+  <nav aria-label="Main">
+    <a href="#how">How it works</a>
+    <a href="#agent">Your agent</a>
+    <a href="#safety">Safety</a>
+    <a href="#install">Install</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <button class="theme" type="button" id="theme" aria-label="Toggle light and dark theme"><span aria-hidden="true"></span></button>
+  <a class="btn btn-ghost gh" href="https://github.com/jonacarbi/cadence">GitHub</a>
+</header>
+
+<main id="main">
+<section class="hero" aria-labelledby="h1">
+  <div class="hero-copy">
+    <h1 id="h1">Your brand,<br>on <em>beat.</em></h1>
+    <p class="lede">Paste a website, get a month of posts. You approve; Cadence publishes. Local-first, with your own AI agent.</p>
+    <p class="cta"><a class="btn" href="#install">Install Cadence</a><a class="btn btn-ghost" href="https://github.com/jonacarbi/cadence">View on GitHub</a></p>
+  </div>
+  <figure class="score" aria-label="A month of posts as a measure of music: one beat per post">
+    <svg viewBox="0 0 640 220" role="img" aria-labelledby="score-t">
+      <title id="score-t">Five staff lines with a vermilion dot landing on each beat</title>
+      <g class="lines"><path d="M0 60H640M0 90H640M0 120H640M0 150H640M0 180H640"/></g>
+      <g class="bars"><path d="M160 60V180M320 60V180M480 60V180M639 60V180"/></g>
+      <g class="notes">
+        <circle cx="80" cy="150" r="9"/><circle cx="240" cy="120" r="9"/><circle cx="400" cy="90" r="9"/><circle cx="560" cy="120" r="9"/>
+      </g>
+      <circle class="beat" cx="80" cy="150" r="13"/>
+    </svg>
+    <figcaption>One post per beat. Steady, spaced, approved.</figcaption>
+  </figure>
+</section>
+
+<section class="how" id="how" aria-labelledby="how-h">
+  <h2 id="how-h">Five measures, start to finish</h2>
+  <ol class="measures">
+    <li><h3>Website</h3><p>Paste a client URL. Cadence reads the site and extracts its colors, type, voice and audience.</p></li>
+    <li><h3>Brand system</h3><p>The extraction is saved as a reusable brand system that every post is written and designed against.</p></li>
+    <li><h3>Month plan</h3><p>Pillars, a posting rhythm and platform-specific copy with branded visuals, laid out day by day.</p></li>
+    <li><h3>Approval inbox</h3><p>Every post waits for you: preview, edit, comment, regenerate. Nothing leaves until you approve.</p></li>
+    <li><h3>Publish</h3><p>A scheduler posts through official APIs, honors caps, and never blind-retries an unclear result.</p></li>
+  </ol>
+</section>
+
+<section class="agent" id="agent" aria-labelledby="agent-h">
+  <div class="agent-head">
+    <h2 id="agent-h">Bring your own agent</h2>
+    <p>Cadence does not ship a model. It drives the agent you already use, so that agent's skills and memory shape the writing. Switch any time in Settings.</p>
+  </div>
+  <ul class="agents">
+    <li><strong>Claude Code</strong><span>CLI, your plan or API key</span></li>
+    <li><strong>Codex</strong><span>CLI</span></li>
+    <li><strong>Gemini</strong><span>CLI</span></li>
+    <li><strong>opencode</strong><span>CLI</span></li>
+    <li><strong>OpenAI-compatible</strong><span>OpenAI, OpenRouter, Ollama, LM Studio and others</span></li>
+  </ul>
+</section>
+
+<section class="platforms" id="platforms" aria-labelledby="plat-h">
+  <h2 id="plat-h">Twelve platforms with real adapters</h2>
+  <p class="plat-list">Instagram <i></i> Facebook <i></i> LinkedIn <i></i> X <i></i> Threads <i></i> Bluesky <i></i> Mastodon <i></i> Pinterest <i></i> TikTok <i></i> Reddit <i></i> Telegram <i></i> Discord</p>
+  <p class="note">Bluesky, Mastodon, Telegram and Discord connect with a token or webhook. The rest use OAuth through a developer app you create, and some platforms review apps before they allow posting. <a href="https://github.com/jonacarbi/cadence/blob/master/docs/CONNECT-ACCOUNTS.md">Step-by-step guide</a>. YouTube is not supported yet.</p>
+</section>
+
+<section class="safety" id="safety" aria-labelledby="safe-h">
+  <h2 id="safe-h">Built to stay on the right side of every platform</h2>
+  <div class="safety-grid">
+    <ul>
+      <li><strong>Official APIs only.</strong> No scraping, no password logins, no browser automation to post.</li>
+      <li><strong>Human approval.</strong> Review-everything is the default. Autonomy is a dial you turn yourself.</li>
+      <li><strong>Daily caps per account</strong> and a minimum gap between posts.</li>
+      <li><strong>Jitter and warm-up</strong> so a new account does not jump to full volume overnight.</li>
+      <li><strong>Fail closed.</strong> A blocked or revoked account pauses its lane; an unclear send is marked uncertain, never retried blind.</li>
+    </ul>
+    <aside>
+      <p class="pull">Lower risk, not zero risk.</p>
+      <p>No tool can guarantee an account is never limited. Cadence follows the platforms' rules and posts like a careful person would. Read the <a href="https://github.com/jonacarbi/cadence/blob/master/docs/SAFETY.md">safety guide</a>.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="privacy" aria-labelledby="priv-h">
+  <h2 id="priv-h">Local-first, so your clients stay yours</h2>
+  <p>Brands, drafts and the database live on your machine. The server listens on loopback only. Account credentials are encrypted at rest and never sent back over the API. Text and images only leave your computer when your chosen agent or a platform needs them.</p>
+</section>
+
+<section class="install" id="install" aria-labelledby="inst-h">
+  <h2 id="inst-h">Install</h2>
+  <div class="tabs" role="tablist" aria-label="Operating system">
+    <button role="tab" id="t-mac" aria-controls="p-mac" aria-selected="true" type="button">macOS</button>
+    <button role="tab" id="t-lin" aria-controls="p-lin" aria-selected="false" tabindex="-1" type="button">Linux</button>
+    <button role="tab" id="t-win" aria-controls="p-win" aria-selected="false" tabindex="-1" type="button">Windows</button>
+  </div>
+  <div class="panel" role="tabpanel" id="p-mac" aria-labelledby="t-mac"><p>Needs Node 24 or newer (<code>brew install node</code>) and git. The native SwiftUI app is built with <code>scripts/build-macos.sh</code> on macOS 14 or newer.</p></div>
+  <div class="panel" role="tabpanel" id="p-lin" aria-labelledby="t-lin" hidden><p>Needs Node 24 or newer and git. <code>node server/bin/cadence.mjs service install</code> sets up a systemd user service so publishing runs without a window.</p></div>
+  <div class="panel" role="tabpanel" id="p-win" aria-labelledby="t-win" hidden><p>Needs Node 24 or newer (<code>winget install OpenJS.NodeJS</code>) and git. Run these in PowerShell. <code>node server/bin/cadence.mjs service install</code> registers a Task Scheduler logon task. Instagram, Facebook, Threads and TikTok sign-in also needs openssl (Git for Windows includes it).</p></div>
+  <div class="code">
+    <pre id="cmds"><code>git clone https://github.com/jonacarbi/cadence.git
+cd cadence
+npm run setup
+npm start
+# in a second terminal:
+npm run open</code></pre>
+    <button class="copy" type="button" data-copy="cmds">Copy</button>
+  </div>
+  <p class="note"><code>npm run open</code> opens the app in your browser, already signed in. Run <code>node server/bin/cadence.mjs service install</code> to keep publishing in the background, and <code>npm run doctor</code> if something does not work.</p>
+</section>
+
+<section class="faq" id="faq" aria-labelledby="faq-h">
+  <h2 id="faq-h">Questions</h2>
+  <details><summary>Is it free?</summary><p>Yes. Cadence is MIT licensed. You pay only for the AI agent or API you choose and any platform fees, such as X API tiers.</p></details>
+  <details><summary>Will it get my accounts banned?</summary><p>It is designed to lower that risk: official APIs, human approval, caps, spacing, jitter and warm-up. No tool can promise zero risk, and you stay responsible for what you publish.</p></details>
+  <details><summary>Where does my data go?</summary><p>Stays on your machine. Prompts go to the agent you configure, and posts go to the platforms you connect. There is no Cadence cloud.</p></details>
+  <details><summary>Do I need developer apps for every platform?</summary><p>For Instagram, Facebook, Threads, LinkedIn, X, Pinterest, TikTok and Reddit, yes. Bluesky, Mastodon, Telegram and Discord need only a token or webhook.</p></details>
+  <details><summary>Can my own agent use it?</summary><p>Yes. Cadence exposes an MCP server so Claude Code or Codex can plan and comment. Approval stays with the owner token.</p></details>
+  <details><summary>Does it run on Windows and Linux?</summary><p>The server, CLI and browser interface target macOS, Linux and Windows. The native SwiftUI app is macOS only.</p></details>
+</section>
+</main>
+
+<footer>
+  <a class="brand" href="/"><img src="/mark.svg" width="28" height="28" alt=""><span>Cadence</span></a>
+  <p>MIT licensed. Built by Jonathan Carbiere.</p>
+  <p><a href="https://github.com/jonacarbi/cadence">GitHub</a> <a href="https://github.com/jonacarbi/cadence/blob/master/SECURITY.md">Security</a> <a href="https://github.com/jonacarbi/cadence/blob/master/CHANGELOG.md">Changelog</a></p>
+</footer>
+</body>
+</html>

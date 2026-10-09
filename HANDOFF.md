@@ -53,7 +53,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - **Project:** `cadence`
 - **Branch:** `master`
 - **Last updated:** 2026-10-09 20:29:40 -03
-- **Built on commit:** 340d99e — feat: pluggable agents, guided account setup and posting safety rails (Jonathan Carbiere, 2026-10-09)
+- **Built on commit:** 96fc014 — feat: cross-platform browser studio with cookie sign-in and setup guide (Jonathan Carbiere, 2026-10-09)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -71,6 +71,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - .env.example
 - .gitignore
 - .ignore
+- brand/
 - docs/
 - HANDOFF.md
 - mac/
@@ -78,57 +79,69 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - README.md
 - scripts/
 - server/
+- site/
 
 ## Languages
 
-- .js — 84 file(s)
+- .js — 85 file(s)
+- .png — 17 file(s)
 - .swift — 13 file(s)
+- .svg — 10 file(s)
+- .md — 7 file(s)
 - .sh — 5 file(s)
 - .mjs — 4 file(s)
-- .md — 4 file(s)
 - .json — 4 file(s)
+- .html — 4 file(s)
+- .css — 4 file(s)
 - .woff2 — 3 file(s)
-- .css — 3 file(s)
-- .txt — 2 file(s)
-- .svg — 2 file(s)
-- .html — 2 file(s)
-- .ps1 — 1 file(s)
+- .txt — 3 file(s)
 
 ## Changes in this commit
 
-- M	mac/Sources/Cadence/CadenceApp.swift
-- M	mac/Sources/Cadence/Models.swift
-- M	mac/Sources/Cadence/Views/SettingsView.swift
-- A	server/web/css/base.css
-- A	server/web/css/tokens.css
-- A	server/web/css/views.css
-- A	server/web/favicon.svg
-- A	server/web/fonts/OFL-HankenGrotesk.txt
-- A	server/web/fonts/OFL-Newsreader.txt
-- A	server/web/fonts/hanken-grotesk-latin-wght-normal.woff2
-- A	server/web/fonts/newsreader-latin-opsz-italic.woff2
-- A	server/web/fonts/newsreader-latin-opsz-normal.woff2
-- A	server/web/index.html
-- A	server/web/js/api.js
-- A	server/web/js/app.js
-- A	server/web/js/connect.js
-- A	server/web/js/postcard.js
-- A	server/web/js/state.js
-- A	server/web/js/theme.js
-- A	server/web/js/ui.js
-- A	server/web/js/views/accounts.js
-- A	server/web/js/views/activity.js
-- A	server/web/js/views/brands.js
-- A	server/web/js/views/calendar.js
-- A	server/web/js/views/create.js
-- A	server/web/js/views/inbox.js
-- A	server/web/js/views/safety.js
-- A	server/web/js/views/settings.js
-- A	server/web/js/views/setup.js
-- A	server/web/mark.svg
+- A	brand/app-icon.svg
+- A	brand/apple-touch-icon.png
+- A	brand/favicon.ico
+- A	brand/favicon.svg
+- A	brand/icon-512.png
+- A	brand/logo-dark.svg
+- A	brand/logo.svg
+- A	brand/mark.svg
+- A	brand/og.png
+- A	brand/og.svg
+- A	docs/CONNECT-ACCOUNTS.md
+- M	docs/RELEASE-0.2.0.md
+- A	docs/SAFETY.md
+- A	docs/screenshots/accounts-dark.png
+- A	docs/screenshots/accounts-light.png
+- A	docs/screenshots/inbox-dark.png
+- A	docs/screenshots/inbox-light.png
+- A	docs/screenshots/setup-dark.png
+- A	docs/screenshots/setup-light.png
+- A	docs/site-screens/1440-dark.png
+- A	docs/site-screens/1440-light.png
+- A	docs/site-screens/320-light.png
+- A	docs/site-screens/390-dark.png
+- A	docs/site-screens/390-light.png
+- A	mac/Resources/AppIcon.icns
+- M	scripts/build-macos.sh
+- A	site/404.html
+- A	site/README.md
+- A	site/app.js
+- A	site/apple-touch-icon.png
+- A	site/favicon.ico
+- A	site/favicon.svg
+- A	site/icon-512.png
+- A	site/index.html
+- A	site/mark.svg
+- A	site/netlify.toml
+- A	site/og.png
+- A	site/robots.txt
+- A	site/sitemap.xml
+- A	site/style.css
 
 ## Recent history
 
+- 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
 - 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
 - da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 - 6a67933 feat: serve the OAuth callback over local https for providers that require it _(Jonathan Carbiere, 2026-10-03)_
@@ -138,6 +151,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
 - 3f0e2f0 fix: register Reddit, correct OAuth credential keys, cover every adapter _(Jonathan Carbiere, 2026-09-23)_
 - 7871bb9 feat: enter keys in the app, and a signing/notarization release script _(Jonathan Carbiere, 2026-09-23)_
-- fb7369a feat: repurpose a post onto other connected platforms _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

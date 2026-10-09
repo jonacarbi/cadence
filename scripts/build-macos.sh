@@ -16,6 +16,7 @@ swift build --package-path "$CADENCE_ROOT/mac" -c release
 (cd "$CADENCE_ROOT/server" && "$CADENCE_NODE" --input-type=module -e 'import {browserExecutable} from "./src/browser.js"; process.exit(browserExecutable()?0:1)' || "$CADENCE_NODE" node_modules/playwright/cli.js install chromium)
 mkdir -p "$CADENCE_APP/Contents/MacOS" "$CADENCE_APP/Contents/Resources/runtime" "$CADENCE_APP/Contents/Resources/server"
 cp "$CADENCE_ROOT/mac/.build/release/Cadence" "$CADENCE_APP/Contents/MacOS/Cadence"
+cp "$CADENCE_ROOT/mac/Resources/AppIcon.icns" "$CADENCE_APP/Contents/Resources/AppIcon.icns"
 cp "$CADENCE_NODE" "$CADENCE_APP/Contents/Resources/runtime/node"
 if [[ -f "$(dirname "$CADENCE_NODE")/../LICENSE" ]]; then
   cp "$(dirname "$CADENCE_NODE")/../LICENSE" "$CADENCE_APP/Contents/Resources/runtime/NODE-LICENSE.txt"
@@ -28,6 +29,7 @@ cat > "$CADENCE_APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
 <key>CFBundleExecutable</key><string>Cadence</string>
 <key>CFBundleIdentifier</key><string>app.cadence.desktop</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleName</key><string>Cadence</string>
 <key>CFBundleDisplayName</key><string>Cadence</string>
 <key>CFBundlePackageType</key><string>APPL</string>

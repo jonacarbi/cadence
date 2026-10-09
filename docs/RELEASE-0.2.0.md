@@ -1,5 +1,7 @@
 # Cadence 0.2.0 — local release
 
+> Historical notes for the original macOS-only release, written against the maintainer's own setup (9Router, CatGPT, launchd). Those are no longer required: 0.3.0 lets you pick your own AI agent. See the README and CHANGELOG for current behavior.
+
 ## Delivered
 
 - Native Content agent tab accepts a website or prompt, creates a brand identity when needed, and produces one post or a daily month across the brand’s active connected platforms.
@@ -31,7 +33,7 @@
 
 ## Remaining setup and distribution limits
 
-The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and TikTok image posting needs public media hosting (Pinterest uploads the bytes directly, so it does not). Reddit is now a registered platform (posting to the connected account's own profile subreddit by default) but still needs a Reddit app registration before sign-in works.
+The user's existing workspace contains only mock accounts. Real account sign-in and a live-provider publishing check remain required. OAuth platforms need their developer-app configuration; Instagram, Threads and TikTok image posting needs public media hosting (Pinterest uploads the bytes directly, so it does not). Reddit is a registered platform (posting to the connected account's own profile subreddit by default) but still needs a Reddit app registration before sign-in works.
 
 TikTok posts through the Content Posting API's photo lane. Two of its constraints shape the adapter: an unaudited client may only post at a restricted privacy level, so the adapter reads `privacy_level_options` from the account rather than assuming public; and PULL_FROM_URL requires the media host's domain to be verified in the developer portal, which is a portal step no code can cover.
 
@@ -39,6 +41,5 @@ YouTube stays unimplemented on purpose. Cadence produces still images, and `vide
 
 The current ARM64 bundle is ad-hoc signed for local use. A public customer release needs Developer ID signing, notarization, an installation strategy for the external MCP/9Router/CatGPT dependencies, and any required platform app review. There is no claim of completed public distribution or validated real-account publishing.
 
-The existing launchd background service now runs the installed app’s bundled Node/server, so scheduled work uses the same release as the native app. The prior launch-agent configuration is backed up in `~/Library/LaunchAgents`.
 
 Database backups are stored under Application Support/Cadence/backups. Previous installed app bundles and local configuration backups are retained. Existing brands, credentials and drafts are preserved.
