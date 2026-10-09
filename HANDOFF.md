@@ -53,7 +53,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - **Project:** `cadence`
 - **Branch:** `master`
 - **Last updated:** 2026-10-09 20:29:40 -03
-- **Built on commit:** 96fc014 — feat: cross-platform browser studio with cookie sign-in and setup guide (Jonathan Carbiere, 2026-10-09)
+- **Built on commit:** 75252d1 — feat: brand mark, app icon, landing site and connect-accounts guide (Jonathan Carbiere, 2026-10-09)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -71,23 +71,29 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - .env.example
 - .gitignore
 - .ignore
+- ai/
 - brand/
+- CHANGELOG.md
+- CODE_OF_CONDUCT.md
+- CONTRIBUTING.md
 - docs/
 - HANDOFF.md
+- LICENSE
 - mac/
 - package.json
 - README.md
 - scripts/
+- SECURITY.md
 - server/
 - site/
 
 ## Languages
 
 - .js — 85 file(s)
+- .md — 23 file(s)
 - .png — 17 file(s)
 - .swift — 13 file(s)
 - .svg — 10 file(s)
-- .md — 7 file(s)
 - .sh — 5 file(s)
 - .mjs — 4 file(s)
 - .json — 4 file(s)
@@ -98,49 +104,28 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- A	brand/app-icon.svg
-- A	brand/apple-touch-icon.png
-- A	brand/favicon.ico
-- A	brand/favicon.svg
-- A	brand/icon-512.png
-- A	brand/logo-dark.svg
-- A	brand/logo.svg
-- A	brand/mark.svg
-- A	brand/og.png
-- A	brand/og.svg
-- A	docs/CONNECT-ACCOUNTS.md
-- M	docs/RELEASE-0.2.0.md
-- A	docs/SAFETY.md
-- A	docs/screenshots/accounts-dark.png
-- A	docs/screenshots/accounts-light.png
-- A	docs/screenshots/inbox-dark.png
-- A	docs/screenshots/inbox-light.png
-- A	docs/screenshots/setup-dark.png
-- A	docs/screenshots/setup-light.png
-- A	docs/site-screens/1440-dark.png
-- A	docs/site-screens/1440-light.png
-- A	docs/site-screens/320-light.png
-- A	docs/site-screens/390-dark.png
-- A	docs/site-screens/390-light.png
-- A	mac/Resources/AppIcon.icns
-- M	scripts/build-macos.sh
-- A	site/404.html
-- A	site/README.md
-- A	site/app.js
-- A	site/apple-touch-icon.png
-- A	site/favicon.ico
-- A	site/favicon.svg
-- A	site/icon-512.png
-- A	site/index.html
-- A	site/mark.svg
-- A	site/netlify.toml
-- A	site/og.png
-- A	site/robots.txt
-- A	site/sitemap.xml
-- A	site/style.css
+- A	CHANGELOG.md
+- A	CODE_OF_CONDUCT.md
+- A	CONTRIBUTING.md
+- A	LICENSE
+- M	README.md
+- A	SECURITY.md
+- A	ai/brand.md
+- A	ai/content.md
+- A	ai/decisions.md
+- A	ai/deploy.md
+- A	ai/design-system.md
+- A	ai/known-issues.md
+- A	ai/maintenance.md
+- A	ai/manifest.md
+- A	ai/orchestrator.md
+- A	ai/project-state.md
+- A	ai/testing.md
+- A	ai/validation-checklist.md
 
 ## Recent history
 
+- 75252d1 feat: brand mark, app icon, landing site and connect-accounts guide _(Jonathan Carbiere, 2026-10-09)_
 - 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
 - 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
 - da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
@@ -150,6 +135,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 02a7962 feat: hold posts the Mac slept through instead of publishing them late _(Jonathan Carbiere, 2026-09-23)_
 - 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
 - 3f0e2f0 fix: register Reddit, correct OAuth credential keys, cover every adapter _(Jonathan Carbiere, 2026-09-23)_
-- 7871bb9 feat: enter keys in the app, and a signing/notarization release script _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->
