@@ -14,7 +14,6 @@ struct SettingsView: View {
     @State private var readiness: Readiness?
     @State private var credentials: [Credential] = []
     @State private var entry: [String: String] = [:]
-    @State private var restartNeeded = false
     private let levels = [("review_all", "Review everything", "Every post waits for your approval."),
                           ("auto_trusted", "Auto for trusted", "Ready posts on trusted accounts schedule themselves; the rest wait."),
                           ("hands_off", "Hands off", "Every ready post schedules itself. You get webhooks, not questions.")]
@@ -56,7 +55,7 @@ struct SettingsView: View {
             }
             section("Webhooks") {
                 TextField("https://… (called on publish, failure, approval needed)", text: $settings.webhook_url)
-                SecureField("Signing secret (optional, sent as x-cadence-signature)", text: $settings.webhook_secret)
+                SecureField("Signing secret (optional, sent as x-cadence-signature; leave empty to keep the saved one)", text: $settings.webhook_secret)
             }
             section("Local service") {
                 LabeledContent("Endpoint", value: store.base.absoluteString)
@@ -76,7 +75,7 @@ struct SettingsView: View {
     /// shows as "Saved" rather than as dots that could be copied out.
     private var credentialSection: some View {
         section("Keys and credentials") {
-            Text("Stored in the app's own .env file, readable only by your account. Cadence reads its configuration once at startup, so a new key applies after the agent restarts.")
+            Text("Stored encrypted in the app's own .env file, readable only by your account. A saved key applies right away.")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(Array(Set(credentials.map(\.group))).sorted(), id: \.self) { group in
                 DisclosureGroup(group) {
@@ -101,14 +100,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            if restartNeeded {
-                HStack {
-                    Text("A saved key applies after a restart.").font(.callout)
-                    Button("Restart the agent") {
-                        Task { await store.act { let _: MutationResult = try await store.request("/api/restart", method: "POST", body: [:]) }; restartNeeded = false }
-                    }.buttonStyle(.borderedProminent).controlSize(.small)
-                }
-            }
         }
     }
     private func binding(_ key: String) -> Binding<String> {
@@ -119,7 +110,6 @@ struct SettingsView: View {
             await store.act {
                 let result: CredentialUpdate = try await store.request("/api/credentials", method: "PUT", body: ["key": key, "value": value])
                 credentials = result.credentials
-                restartNeeded = true
             }
             entry[key] = ""
         }

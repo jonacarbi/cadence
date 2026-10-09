@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 struct Brand: Codable, Identifiable, Hashable {
     let id: String
@@ -138,6 +139,22 @@ final class Store: ObservableObject {
     var appDirectory: URL {
         if let directory = ProcessInfo.processInfo.environment["CADENCE_DIR"] { return URL(fileURLWithPath: directory) }
         return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Cadence")
+    }
+    /// Signs the default browser in: trades the owner token for a single-use 60 s ticket, so only the ticket reaches the URL.
+    func openWebDashboard() {
+        Task { @MainActor in
+            guard let token = try? String(contentsOf: appDirectory.appendingPathComponent("owner.token"), encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines) else { error = "Owner token not found"; return }
+            var request = URLRequest(url: base.appendingPathComponent("auth/ticket"))
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            struct Ticket: Decodable { let ticket: String }
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                  (response as? HTTPURLResponse)?.statusCode == 200,
+                  let ticket = try? JSONDecoder().decode(Ticket.self, from: data),
+                  var parts = URLComponents(url: base.appendingPathComponent("auth/login"), resolvingAgainstBaseURL: false) else { error = "Could not sign in to the web dashboard. Is Cadence running?"; return }
+            parts.queryItems = [URLQueryItem(name: "c", value: ticket.ticket)]
+            if let url = parts.url { NSWorkspace.shared.open(url) }
+        }
     }
     func request<T: Decodable>(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> T {
         guard let url = URL(string: path, relativeTo: base) else { throw APIError(message: "Invalid request") }

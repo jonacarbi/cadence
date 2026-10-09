@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-09 20:29:39 -03
-- **Built on commit:** da701f0 — chore: run text and design-loop critics on Sonnet 5.5 (Jonathan Carbiere, 2026-10-03)
+- **Last updated:** 2026-10-09 20:29:40 -03
+- **Built on commit:** 340d99e — feat: pluggable agents, guided account setup and posting safety rails (Jonathan Carbiere, 2026-10-09)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -81,72 +81,55 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 68 file(s)
+- .js — 84 file(s)
 - .swift — 13 file(s)
 - .sh — 5 file(s)
 - .mjs — 4 file(s)
 - .md — 4 file(s)
 - .json — 4 file(s)
+- .woff2 — 3 file(s)
+- .css — 3 file(s)
+- .txt — 2 file(s)
+- .svg — 2 file(s)
+- .html — 2 file(s)
 - .ps1 — 1 file(s)
-- .ignore — 1 file(s)
-- .html — 1 file(s)
-- .example — 1 file(s)
 
 ## Changes in this commit
 
-- M	.env.example
-- A	package.json
-- A	scripts/install-service.ps1
-- A	scripts/install-service.sh
-- M	scripts/make-tls-cert.sh
-- M	scripts/run.sh
-- M	scripts/smoke-agent.mjs
-- A	server/bin/cadence.mjs
-- A	server/bin/doctor.mjs
-- A	server/bin/service.mjs
-- M	server/package-lock.json
-- M	server/package.json
-- A	server/src/agents.js
-- M	server/src/api.js
-- M	server/src/brands.js
-- M	server/src/browser.js
-- M	server/src/config.js
-- M	server/src/credentials.js
-- M	server/src/db.js
-- M	server/src/designloop.js
-- M	server/src/images.js
-- M	server/src/index.js
-- M	server/src/llm.js
-- M	server/src/oauth.js
-- M	server/src/oga-images.js
-- A	server/src/platforms-setup.js
-- M	server/src/providers/http.js
-- M	server/src/providers/instagram.js
-- M	server/src/providers/linkedin.js
-- M	server/src/providers/registry.js
-- M	server/src/providers/threads.js
-- M	server/src/providers/x.js
-- M	server/src/readiness.js
-- M	server/src/render.js
-- A	server/src/routes-agent.js
-- M	server/src/routes-extra.js
-- A	server/src/safety.js
-- M	server/src/scheduler.js
-- A	server/src/tls.js
-- M	server/src/visuals.js
-- A	server/src/web.js
-- M	server/src/webhooks.js
-- M	server/src/workflow.js
-- M	server/tests/adapters.test.js
-- M	server/tests/api.test.js
-- A	server/tests/engine-api.test.js
-- A	server/tests/engine.test.js
-- M	server/tests/extra.test.js
-- A	server/tests/web.test.js
-- M	server/tests/workflow.test.js
+- M	mac/Sources/Cadence/CadenceApp.swift
+- M	mac/Sources/Cadence/Models.swift
+- M	mac/Sources/Cadence/Views/SettingsView.swift
+- A	server/web/css/base.css
+- A	server/web/css/tokens.css
+- A	server/web/css/views.css
+- A	server/web/favicon.svg
+- A	server/web/fonts/OFL-HankenGrotesk.txt
+- A	server/web/fonts/OFL-Newsreader.txt
+- A	server/web/fonts/hanken-grotesk-latin-wght-normal.woff2
+- A	server/web/fonts/newsreader-latin-opsz-italic.woff2
+- A	server/web/fonts/newsreader-latin-opsz-normal.woff2
+- A	server/web/index.html
+- A	server/web/js/api.js
+- A	server/web/js/app.js
+- A	server/web/js/connect.js
+- A	server/web/js/postcard.js
+- A	server/web/js/state.js
+- A	server/web/js/theme.js
+- A	server/web/js/ui.js
+- A	server/web/js/views/accounts.js
+- A	server/web/js/views/activity.js
+- A	server/web/js/views/brands.js
+- A	server/web/js/views/calendar.js
+- A	server/web/js/views/create.js
+- A	server/web/js/views/inbox.js
+- A	server/web/js/views/safety.js
+- A	server/web/js/views/settings.js
+- A	server/web/js/views/setup.js
+- A	server/web/mark.svg
 
 ## Recent history
 
+- 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
 - da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 - 6a67933 feat: serve the OAuth callback over local https for providers that require it _(Jonathan Carbiere, 2026-10-03)_
 - fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
@@ -156,6 +139,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 3f0e2f0 fix: register Reddit, correct OAuth credential keys, cover every adapter _(Jonathan Carbiere, 2026-09-23)_
 - 7871bb9 feat: enter keys in the app, and a signing/notarization release script _(Jonathan Carbiere, 2026-09-23)_
 - fb7369a feat: repurpose a post onto other connected platforms _(Jonathan Carbiere, 2026-09-23)_
-- e80a8bb feat: watched RSS/Atom feeds draft posts for review _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

@@ -11,6 +11,7 @@ struct CadenceApp: App {
         .commands {
             CommandGroup(after: .newItem) {
                 Button("Refresh Workspace") { Task { await store.refresh() } }.keyboardShortcut("r", modifiers: .command)
+                Button("Open Web Dashboard") { store.openWebDashboard() }.keyboardShortcut("o", modifiers: [.command, .shift])
             }
         }
     }

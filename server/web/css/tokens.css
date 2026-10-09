@@ -1,0 +1,35 @@
+/* Design tokens. Palette is the Cadence brand: warm paper, ink, one vermilion beat. */
+@font-face{font-family:"Newsreader";src:url(../fonts/newsreader-latin-opsz-normal.woff2) format("woff2");font-weight:200 800;font-style:normal;font-display:swap}
+@font-face{font-family:"Newsreader";src:url(../fonts/newsreader-latin-opsz-italic.woff2) format("woff2");font-weight:200 800;font-style:italic;font-display:swap}
+@font-face{font-family:"Hanken Grotesk";src:url(../fonts/hanken-grotesk-latin-wght-normal.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+
+:root{
+  color-scheme:light;
+  --paper:#F3EFE6; --ink:#17140F; --beat:#E5482B; --staff:#D9D2C3; --muted:#6B645A; --ok:#2F7D4F; --warn:#B7791F;
+  --raised:#FBF8F1; --sunk:#EAE4D6; --beat-ink:#FFFFFF; --beat-soft:#F7DDD5; --ok-soft:#DCEBDF; --warn-soft:#F3E4C4;
+  --font-display:"Newsreader",Georgia,"Times New Roman",serif;
+  --font-ui:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.125rem;
+  --text-h2:clamp(1.375rem,1.2rem + .8vw,1.75rem); --text-h1:clamp(2.25rem,1.5rem + 3.4vw,4rem);
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem; --s6:2.25rem; --s7:3.5rem;
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --gutter:clamp(1rem,.5rem + 2vw,2.5rem);
+  --shadow-1:0 1px 0 oklch(0 0 0 / .04),0 6px 16px -8px oklch(0.3 0.03 70 / .22);
+  --shadow-2:0 2px 0 oklch(0 0 0 / .04),0 18px 40px -16px oklch(0.3 0.03 70 / .35);
+  --ease:cubic-bezier(.2,0,0,1); --dur:160ms;
+}
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --paper:#121110; --ink:#EDE8DE; --beat:#FF6A4A; --staff:#2A2724; --muted:#9A9286; --ok:#58B17E; --warn:#E0A94B;
+  --raised:#1A1816; --sunk:#0D0C0B; --beat-ink:#17140F; --beat-soft:#3A201A; --ok-soft:#18281F; --warn-soft:#2E2512;
+  --shadow-1:0 1px 0 oklch(1 0 0 / .03),0 6px 16px -8px oklch(0 0 0 / .6);
+  --shadow-2:0 2px 0 oklch(1 0 0 / .03),0 18px 40px -16px oklch(0 0 0 / .8);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    color-scheme:dark;
+    --paper:#121110; --ink:#EDE8DE; --beat:#FF6A4A; --staff:#2A2724; --muted:#9A9286; --ok:#58B17E; --warn:#E0A94B;
+    --raised:#1A1816; --sunk:#0D0C0B; --beat-ink:#17140F; --beat-soft:#3A201A; --ok-soft:#18281F; --warn-soft:#2E2512;
+    --shadow-1:0 1px 0 oklch(1 0 0 / .03),0 6px 16px -8px oklch(0 0 0 / .6);
+    --shadow-2:0 2px 0 oklch(1 0 0 / .03),0 18px 40px -16px oklch(0 0 0 / .8);
+  }
+}
