@@ -1,0 +1,15 @@
+{
+  "name": "cadence",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Cadence: your brand, on beat. Run from the repo root: npm run setup, then npm start.",
+  "bin": { "cadence": "server/bin/cadence.mjs" },
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "setup": "npm install --prefix server && node server/bin/cadence.mjs browser",
+    "start": "node --no-warnings server/bin/cadence.mjs start",
+    "open": "node --no-warnings server/bin/cadence.mjs open",
+    "doctor": "node --no-warnings server/bin/cadence.mjs doctor",
+    "test": "npm test --prefix server"
+  }
+}

@@ -5,7 +5,7 @@ import { dirname, join, relative, isAbsolute } from 'node:path';
 import { OGA_MCP_ENTRY, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL, ASSETS_DIR } from './config.js';
 
 export async function generateWithOGA(prompt, { aspect='square', brandSlug='misc' }={}) {
-  if(!existsSync(OGA_MCP_ENTRY))throw new Error('Open Generative AI MCP not found. Set CADENCE_OGA_MCP_ENTRY to its src/index.js.');
+  if(!OGA_MCP_ENTRY||!existsSync(OGA_MCP_ENTRY))throw new Error('Open Generative AI MCP not found. Set CADENCE_OGA_MCP_ENTRY to its src/index.js.');
   const directory=join(ASSETS_DIR,brandSlug,'oga');mkdirSync(directory,{recursive:true,mode:0o700});
   const [width,height]=aspect==='portrait'?[819,1024]:aspect==='landscape'?[1024,538]:[1024,1024];
   const transport=new StdioClientTransport({command:process.execPath,args:[OGA_MCP_ENTRY],cwd:dirname(OGA_MCP_ENTRY),stderr:'pipe',env:{

@@ -1,6 +1,7 @@
 import { db, one, all, insert, update, hydrate, now } from './db.js';
 import { lintCaption, hasBlockers } from './lint.js';
 import { PLATFORMS } from './providers/index.js';
+import { jitterMs, duplicateTextWarnings } from './safety.js';
 
 export class WorkflowError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
@@ -30,6 +31,9 @@ function validateContent(input) {
   if (typeof input.scheduled_at !== 'string' || !/(Z|[+-]\d\d:\d\d)$/.test(input.scheduled_at) || !Number.isFinite(Date.parse(input.scheduled_at)))
     throw new WorkflowError('Schedule must be an ISO date with a timezone');
 }
+// frames/square/raw are file paths the renderer writes; a client or agent never sets them, or a draft could attach any file.
+const MEDIA_KEYS = ['frames', 'square', 'raw'];
+const textAssets = (a) => (a && typeof a === 'object' && !Array.isArray(a) ? Object.fromEntries(Object.entries(a).filter(([k]) => !MEDIA_KEYS.includes(k))) : {});
 export function createPost(input, actor = 'agent') {
   validateContent(input);
   if (!one('SELECT id FROM brands WHERE id = ?', input.brand_id)) throw new WorkflowError('Brand not found', 404);
@@ -42,7 +46,7 @@ export function createPost(input, actor = 'agent') {
     topic: String(input.topic || ''), pillar: String(input.pillar || ''),
     image_prompt: String(input.image_prompt || ''), alt_text: String(input.alt_text || ''),
     format: ['single', 'carousel', 'text'].includes(input.format) ? input.format : 'single',
-    assets_json: JSON.stringify(input.assets && typeof input.assets === 'object' ? input.assets : {}),
+    assets_json: JSON.stringify(textAssets(input.assets)),
     design_system_id: input.design_system_id || null,
     status: 'draft', drafted_by: actor,
   });
@@ -60,7 +64,7 @@ export function editPost(id, input, version) {
       scheduled_at: new Date(next.scheduled_at).toISOString(), copy_json: JSON.stringify(next.copy),
       platforms_json: JSON.stringify(next.platforms), topic: String(next.topic || ''),
       alt_text: String(next.alt_text || ''), tags: String(next.tags || ''), image_prompt: String(next.image_prompt || ''),
-      assets_json: JSON.stringify(input.assets && typeof input.assets === 'object' ? input.assets : post.assets || {}),
+      assets_json: JSON.stringify(input.assets && typeof input.assets === 'object' ? textAssets(input.assets) : post.assets || {}),
       status: 'draft', approved_by: null, version: post.version + 1, error: null,
     });
     return postById(id);
@@ -100,9 +104,14 @@ export function schedulePost(id, version, accountIds) {
     const accounts = accountIds.map(a => one('SELECT * FROM accounts WHERE id = ? AND brand_id = ?', a, post.brand_id));
     if (accounts.some(a => !a || a.paused || !post.platforms.includes(a.platform))) throw new WorkflowError('Account is missing, paused, or belongs to a different brand/platform');
     if (post.platforms.some(p => !accounts.some(a => a.platform === p))) throw new WorkflowError('Every platform needs a destination account');
-    for (const account of accounts) insert('deliveries', { post_id: id, account_id: account.id, version: post.version, status: 'queued' });
+    // Jitter delays each delivery by 0..jitter_minutes AFTER the approved time, so a batch never fires on the same second.
+    // A reschedule (missed, edited) only re-queues destinations that never got the post: a receipt from any version counts.
+    const sent = new Set(all(`SELECT account_id FROM deliveries WHERE post_id = ? AND status IN ('publishing','published','uncertain')`, id).map((d) => d.account_id));
+    const pending = accounts.filter((a) => !sent.has(a.id));
+    if (!pending.length) throw new WorkflowError('Every chosen account already has this post.', 409);
+    for (const account of pending) insert('deliveries', { post_id: id, account_id: account.id, version: post.version, status: 'queued', next_attempt_at: new Date(Date.parse(post.scheduled_at) + jitterMs()).toISOString() });
     update('posts', id, { status: 'scheduled' });
-    return postById(id);
+    return Object.assign(postById(id), { warnings: duplicateTextWarnings(post, accounts) });
   });
 }
 export function listPosts(brandId) {

@@ -1,17 +1,24 @@
 {
   "name": "cadence-server",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Cadence — autonomous social media manager (local-first, macOS)",
+  "description": "Cadence: your brand, on beat. Local-first social media manager (macOS, Linux, Windows)",
   "main": "src/index.js",
   "scripts": {
     "start": "node --no-warnings src/index.js",
-    "mcp": "node --no-warnings src/mcp.js",
-    "test": "node --no-warnings --test tests/*.test.js"
+    "mcp": "node --no-warnings bin/cadence.mjs mcp",
+    "test": "node --no-warnings --test tests/*.test.js",
+    "doctor": "node --no-warnings bin/cadence.mjs doctor"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "playwright": "1.61.1"
+  },
+  "bin": {
+    "cadence": "bin/cadence.mjs"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

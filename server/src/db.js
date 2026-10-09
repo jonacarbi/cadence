@@ -91,6 +91,10 @@ for (const table of ['campaigns', 'posts']) {
   }
 }
 
+if (!db.prepare('PRAGMA table_info(accounts)').all().some(column => column.name === 'needs_reconnect')) {
+  db.exec('ALTER TABLE accounts ADD COLUMN needs_reconnect INTEGER NOT NULL DEFAULT 0');
+}
+
 export const uuid = () => randomUUID();
 export const now = () => new Date().toISOString();
 
@@ -150,6 +154,7 @@ export function hydrate(row) {
   for (const k of Object.keys(out)) {
     if (k.endsWith("_json")) { try { out[k.slice(0, -5)] = JSON.parse(out[k]); } catch { out[k.slice(0, -5)] = null; } delete out[k]; }
     if (k === "auth_enc") delete out[k];
+    if (k === "needs_reconnect") out[k] = Boolean(out[k]);
   }
   return out;
 }

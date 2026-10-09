@@ -1,19 +1,19 @@
-import { createServer as createHttpsServer } from 'node:https';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { createApiServer, listen } from './api.js';
-import { TLS_DIR, HTTPS_PORT } from './config.js';
+import { startTls } from './tls.js';
 import { startScheduler } from './scheduler.js';
 import { startWorker } from './jobs.js';
+import { sealPlainSecrets } from './credentials.js';
+import { sealWebhookSecret } from './webhooks.js';
 import './providers/registry.js';
 import './brands.js';
 import './visuals.js';
 import './designloop.js';
+sealPlainSecrets(); sealWebhookSecret();
 const server=createApiServer();
 const address=await listen(server);
-// Same handler over TLS, only so OAuth providers that demand https can redirect back (scripts/make-tls-cert.sh).
-const tls=existsSync(join(TLS_DIR,'cert.pem'))?createHttpsServer({key:readFileSync(join(TLS_DIR,'key.pem')),cert:readFileSync(join(TLS_DIR,'cert.pem'))},server.listeners('request')[0]):null;
-if(tls) await listen(tls,HTTPS_PORT);
+// Same handler over TLS, only so OAuth providers that demand https can redirect back. The cert is created automatically (needs openssl).
+const { server: tls, note: tlsNote } = await startTls(server);
+if (tlsNote) console.log(`[tls] ${tlsNote}`);
 const stop=startScheduler();
 const stopWorker=startWorker();
 console.log(`Cadence listening on http://${address.address}:${address.port}`);

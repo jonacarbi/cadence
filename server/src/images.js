@@ -1,15 +1,14 @@
-// Image generation — OpenAI models only. Direct API (gpt-image-1, quality high) when OPENAI_API_KEY is set,
-// otherwise the CatGPT gateway (ChatGPT Plus session, same image model, at localhost:8000).
+// Image generation: openai (default when OPENAI_API_KEY is set), none (no AI photo), or the opt-in catgpt / oga-mcp presets.
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { ASSETS_DIR, OPENAI_API_KEY, OPENAI_IMAGE_MODEL, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL, IMAGE_PROVIDER } from "./config.js";
+import { ASSETS_DIR, OPENAI_API_KEY, OPENAI_IMAGE_BASE_URL, OPENAI_IMAGE_MODEL, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL, IMAGE_PROVIDER } from "./config.js";
 import { uuid } from "./db.js";
 import { generateWithOGA } from './oga-images.js';
 
 export const SIZES = { portrait: "1024x1536", square: "1024x1024", landscape: "1536x1024" };
 
 async function viaOpenAI(prompt, size) {
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
+  const res = await fetch(`${OPENAI_IMAGE_BASE_URL}/images/generations`, {
     method: "POST",
     headers: { authorization: `Bearer ${OPENAI_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify({ model: OPENAI_IMAGE_MODEL, prompt, n: 1, size, quality: "high", output_format: "png" }),
@@ -40,10 +39,11 @@ async function viaCatGPT(prompt, size) {
   return b64;
 }
 
-/** Generate one image, save to ASSETS_DIR/<brandSlug>/, return absolute path. */
+/** Generate one image, save to ASSETS_DIR/<brandSlug>/, return absolute path (null for provider "none"). */
 export async function generateImage(prompt, { aspect = "portrait", brandSlug = "misc" } = {}) {
+  if(IMAGE_PROVIDER==='none')return null;
   if(IMAGE_PROVIDER==='oga-mcp')return generateWithOGA(prompt,{aspect,brandSlug});
-  if(!['openai','catgpt'].includes(IMAGE_PROVIDER))throw new Error('Unknown image provider: use oga-mcp, openai or catgpt');
+  if(!['openai','catgpt'].includes(IMAGE_PROVIDER))throw new Error('Unknown image provider: use openai, none, catgpt or oga-mcp');
   const size = SIZES[aspect] || SIZES.portrait;
   if(IMAGE_PROVIDER==='openai'&&!OPENAI_API_KEY)throw new Error('OpenAI image API key is not configured');
   const b64 = IMAGE_PROVIDER==='openai' ? await viaOpenAI(prompt, size) : await viaCatGPT(prompt, size);
@@ -54,4 +54,4 @@ export async function generateImage(prompt, { aspect = "portrait", brandSlug = "
   return path;
 }
 
-export const imageProvider = () => IMAGE_PROVIDER==='oga-mcp'?`oga-mcp:catgpt:${CATGPT_MODEL}`:IMAGE_PROVIDER==='openai'?`openai:${OPENAI_IMAGE_MODEL}`:`catgpt:${CATGPT_MODEL}`;
+export const imageProvider = () => IMAGE_PROVIDER==='none'?'none':IMAGE_PROVIDER==='oga-mcp'?`oga-mcp:catgpt:${CATGPT_MODEL}`:IMAGE_PROVIDER==='openai'?`openai:${OPENAI_IMAGE_MODEL}`:`catgpt:${CATGPT_MODEL}`;

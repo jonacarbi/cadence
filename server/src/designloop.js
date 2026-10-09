@@ -11,8 +11,10 @@ import { generateImage } from './images.js';
 import { stylePrompt, syncDesignSystemMd } from './brands.js';
 import { resolveFonts } from './fonts.js';
 import { getBrand } from './brands.js';
+import { agentConfig, fileScope } from './agents.js';
 
-const readOnly = { agentic: true, args: ['--allowedTools', 'Read'], timeout: 20 * 60_000 };
+// Critics see only the brand folder (screenshot, design-system.md, the rounds), nothing else on disk.
+const readOnly = (brand) => ({ agentic: true, args: fileScope({ read: [brand.dir] }), timeout: 20 * 60_000 });
 const critic = (p, o) => claude(p, o).catch((e) => `VERDICT: FAIL\nCritic did not answer: ${e.message}`);
 const verdict = (text) => /VERDICT:\s*PASS/i.test(text);
 const BRIEF = 'Make a scroll-stopping Instagram post for this brand that a follower recognizes as the brand within one second.';
@@ -25,7 +27,7 @@ async function tearDown(brand, dir) {
   // The bar must only ask for what this pipeline can change, or every round fails on elements the template has no slot for.
   const text = await claude(`Read the reference screenshot at ${join(brand.dir, 'reference.png')}. Tear its visual language down into 8–15 checkable mechanisms for a 1080x1350 social frame: type scale ratios, colour usage counts, margins as % of canvas, alignment, one accent rule, contrast.
 The frame being judged contains exactly these elements and nothing else: an eyebrow line, a headline of 1–4 lines, a sub line, a CTA pill, and an optional full-width photo. The only things adjustable are the colour tokens (surface, text, accent, secondary), the two fonts, the corner radius, light/dark mode, and which of the ${LAYOUTS.join('/')} layouts is used.
-So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, readOnly);
+So write every mechanism so it can be checked against that frame and fixed by those knobs. Never ask for product cards, code tokens, navigation, screenshots, logos, meta lines or any element from the list above that the frame does not have. No adjectives. Output the bar as a markdown list only.`, readOnly(brand));
   writeFileSync(bar, text); return bar;
 }
 
@@ -58,9 +60,9 @@ async function effectiveTokens(t) {
 
 async function judge(frame, brand, bar, dir) {
   const [brief, system, craft] = await Promise.all([
-    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, readOnly),
-    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. List every violation of the system with the rule it breaks. Judge only what is visible without measuring: the fonts, the palette and its roles, the bans, one idea per frame. Every rule stated as a size, a ratio, a percentage of canvas or a contrast figure is measured by another critic against a stricter bar, so skip those here rather than estimating them, and never call a colour by name off the rendering. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, readOnly),
-    critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, readOnly),
+    critic(`Read the image ${frame}. Brief: "${BRIEF}". Does this frame achieve the brief? Ignore aesthetics.\n${KNOBS}\nJudge only what those knobs reach, and never fail the frame for an element it has no slot for. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered concrete fixes.`, readOnly(brand)),
+    critic(`Read the image ${frame} and the design system at ${join(brand.dir, 'design-system.md')}. List every violation of the system with the rule it breaks. Judge only what is visible without measuring: the fonts, the palette and its roles, the bans, one idea per frame. Every rule stated as a size, a ratio, a percentage of canvas or a contrast figure is measured by another critic against a stricter bar, so skip those here rather than estimating them, and never call a colour by name off the rendering. Reply "VERDICT: PASS" or "VERDICT: FAIL" then numbered violations.`, readOnly(brand)),
+    critic(`Read the image ${frame} and the bar at ${bar}. For each bar line answer PASS/FAIL with what you see. Then "VERDICT: PASS" only if every line passes, else "VERDICT: FAIL" and numbered fixes.`, readOnly(brand)),
   ]);
   writeFileSync(join(dir, 'critics.md'), `# Brief\n${brief}\n\n# System\n${system}\n\n# Craft\n${craft}\n`);
   return { pass: verdict(brief) && verdict(system) && verdict(craft), notes: [brief, system, craft].filter((t) => !verdict(t)).join('\n\n') };
@@ -69,6 +71,9 @@ async function judge(frame, brand, bar, dir) {
 export async function runDesignLoop(brandId, report = () => {}) {
   const brand = getBrand(brandId);
   if (!brand || !existsSync(join(brand.dir, 'reference.png'))) throw new Error('Brand has no reference screenshot yet');
+  // The critics read the rendered PNG, which needs Claude Code's Read tool; locked mode and other agents have none.
+  const cfg = agentConfig();
+  if (cfg.provider !== 'claude' || cfg.context === 'locked') { report(`skipped: the design loop needs Claude Code in full context (active: ${cfg.provider}/${cfg.context})`); return { skipped: true }; }
   const root = join(brand.dir, 'design-loop'); mkdirSync(root, { recursive: true });
   // A run that converges early leaves the later rounds of the previous run on disk, which reads as
   // this run having failed them.

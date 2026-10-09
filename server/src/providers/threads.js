@@ -1,5 +1,5 @@
 // Threads API — needs public image URLs. threads_basic, threads_content_publish.
-import { api } from "./http.js";
+import { api, refreshMetaToken } from "./http.js";
 const T = "https://graph.threads.net/v1.0";
 
 export const oauth = {
@@ -10,7 +10,8 @@ export const oauth = {
   async identity(auth) { const me = await api(`${T}/me?fields=id,username&access_token=${auth.access_token}`); return { id: me.id, label: `@${me.username}` }; },
 };
 
-export async function publish({ auth, account, text, mediaUrls, altText }) {
+export async function publish({ auth: a, account, text, mediaUrls, altText }) {
+  const auth = await refreshMetaToken(a, "threads");
   const u = account.external_id, t = auth.access_token;
   let creation;
   if (mediaUrls.length > 1) {
@@ -25,7 +26,7 @@ export async function publish({ auth, account, text, mediaUrls, altText }) {
   await new Promise((r) => setTimeout(r, 5000)); // Meta recommends waiting before publish
   const pub = await api(`${T}/${u}/threads_publish`, { method: "POST", json: { creation_id: creation, access_token: t } });
   const info = await api(`${T}/${pub.id}?fields=permalink&access_token=${t}`).catch(()=>({}));
-  return { id: pub.id, url: info.permalink };
+  return { id: pub.id, url: info.permalink, auth };
 }
 
 export async function metrics(auth, published) {

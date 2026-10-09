@@ -6,13 +6,15 @@ Local-first macOS social media agent: extract and reuse client design systems, p
 
 ## Current state (2026-09-20)
 
-Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one post per connected platform, daily monthly calendars, persistent progress/resume, saved planning batches, previews and atomic bulk approval/scheduling. Swift release builds and server tests pass. All 36 tests pass. Live terra monthly planning produced 31 posts/124 captions. Earlier direct-CatGPT rendering/mock-delivery passed; final MCP live image check is blocked by CatGPT account image quotas. No real social post was sent.
+Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one post per connected platform, daily monthly calendars, persistent progress/resume, saved planning batches, previews and atomic bulk approval/scheduling. Swift release builds and server tests pass. All 36 tests pass. A live monthly planning run produced 31 posts/124 captions. No real social post was sent.
 
-The existing launchd background service now runs the installed app’s bundled Node/server, so scheduled work uses the same release as the native app. The prior launch-agent configuration is backed up in `~/Library/LaunchAgents`.
+## Open-source release prep (2026-10-09, Agent C "Launch")
+
+Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed (see `ai/known-issues.md`, Resolved). Tests: 97 of 97. The repo has not been pushed to GitHub yet; badge and links assume github.com/jonacarbi/cadence.
 
 ## Next steps / TODO
 
-- Retry the isolated MCP image smoke test after CatGPT image quotas reset. Integration and healthy-account routing tests pass; see the release notes for the exact verification boundary.
+- Re-run the opt-in live image smoke test (`CADENCE_LIVE_SMOKE=1 node scripts/smoke-agent.mjs`) with your configured provider.
 - Connect real social accounts: the installed workspace currently has only mock accounts. Verify each live provider before treating real publishing as release-validated.
 - Configure OAuth app IDs/secrets for OAuth destinations and Supabase media hosting for Instagram/Threads/Pinterest.
 - Developer ID signing/notarization and distribution packaging remain prerequisites for a public release. Current bundle is ad-hoc signed for this Mac.
@@ -20,8 +22,7 @@ The existing launchd background service now runs the installed app’s bundled N
 
 ## Key decisions & gotchas
 
-- User explicitly chose text model **9Router `cx/gpt-5.6-terra`** and visuals **Open Generative AI MCP → CatGPT**. Application Support `.env` contains configuration; never put secret values here.
-- CatGPT's MCP gateway alias is `chatgpt`. The underlying ChatGPT image-model version is not exposed by MCP. Cadence pins `OGA_IMAGE_PROVIDERS=catgpt-gateway` in its child process; no alternate image model fallback.
+- Original maintainer setup used 9Router (text) and an Open Generative AI MCP CatGPT gateway (images); these are legacy, optional providers. The 0.3.0 text path is a user-selected agent (see server/src/agents.js). Application Support `.env` holds configuration; never put secret values here.
 - OGA MCP at `~/Projects/open-generative-ai-mcp/src/index.js` has small provider-filter/timeout/healthy-account routing additions. Cadence uses the official MCP SDK and closes children in `finally`.
 - Node 24+ (`node:sqlite`). `npm test --prefix server`; `npm start --prefix server` on 8796. Browser work is headless with cleanup; installed Chrome can satisfy rendering without a separate browser download.
 - Content agent retains the existing autonomy setting. Default is review-all. Monthly dates use IANA timezone conversion; single dates preserve exact timestamps. Planning saves validated batches of up to seven; no partial drafts are committed.
@@ -51,13 +52,19 @@ The existing launchd background service now runs the installed app’s bundled N
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-03 02:58:53 -03
-- **Built on commit:** 6a67933 — feat: serve the OAuth callback over local https for providers that require it (Jonathan Carbiere, 2026-10-03)
-- **README says:** Local-first macOS social media agent. Paste a client's website, get a saved design system, platform-specific content, a month on the calendar, and publishing through connected accounts. Cadence 0.2.0 is a local macOS release; public distribution still requires Developer ID signing and notarization.
+- **Last updated:** 2026-10-09 20:29:39 -03
+- **Built on commit:** da701f0 — chore: run text and design-loop critics on Sonnet 5.5 (Jonathan Carbiere, 2026-10-03)
+- **README says:** <p align="center">
 
 ## How to build / run / test
 
-_No standard build manifest detected. Document run/build/test steps in the section above._
+**Node.js project** (`package.json`)
+- `npm run setup` — npm install --prefix server && node server/bin/cadence.mjs browser
+- `npm run start` — node --no-warnings server/bin/cadence.mjs start
+- `npm run open` — node --no-warnings server/bin/cadence.mjs open
+- `npm run doctor` — node --no-warnings server/bin/cadence.mjs doctor
+- `npm run test` — npm test --prefix server
+
 
 ## Project layout (top level)
 
@@ -67,29 +74,80 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - docs/
 - HANDOFF.md
 - mac/
+- package.json
 - README.md
 - scripts/
 - server/
 
 ## Languages
 
-- .js — 59 file(s)
+- .js — 68 file(s)
 - .swift — 13 file(s)
-- .sh — 4 file(s)
+- .sh — 5 file(s)
+- .mjs — 4 file(s)
 - .md — 4 file(s)
-- .json — 3 file(s)
-- .mjs — 1 file(s)
+- .json — 4 file(s)
+- .ps1 — 1 file(s)
 - .ignore — 1 file(s)
 - .html — 1 file(s)
 - .example — 1 file(s)
 
 ## Changes in this commit
 
+- M	.env.example
+- A	package.json
+- A	scripts/install-service.ps1
+- A	scripts/install-service.sh
+- M	scripts/make-tls-cert.sh
+- M	scripts/run.sh
+- M	scripts/smoke-agent.mjs
+- A	server/bin/cadence.mjs
+- A	server/bin/doctor.mjs
+- A	server/bin/service.mjs
+- M	server/package-lock.json
+- M	server/package.json
+- A	server/src/agents.js
+- M	server/src/api.js
+- M	server/src/brands.js
+- M	server/src/browser.js
 - M	server/src/config.js
+- M	server/src/credentials.js
+- M	server/src/db.js
 - M	server/src/designloop.js
+- M	server/src/images.js
+- M	server/src/index.js
+- M	server/src/llm.js
+- M	server/src/oauth.js
+- M	server/src/oga-images.js
+- A	server/src/platforms-setup.js
+- M	server/src/providers/http.js
+- M	server/src/providers/instagram.js
+- M	server/src/providers/linkedin.js
+- M	server/src/providers/registry.js
+- M	server/src/providers/threads.js
+- M	server/src/providers/x.js
+- M	server/src/readiness.js
+- M	server/src/render.js
+- A	server/src/routes-agent.js
+- M	server/src/routes-extra.js
+- A	server/src/safety.js
+- M	server/src/scheduler.js
+- A	server/src/tls.js
+- M	server/src/visuals.js
+- A	server/src/web.js
+- M	server/src/webhooks.js
+- M	server/src/workflow.js
+- M	server/tests/adapters.test.js
+- M	server/tests/api.test.js
+- A	server/tests/engine-api.test.js
+- A	server/tests/engine.test.js
+- M	server/tests/extra.test.js
+- A	server/tests/web.test.js
+- M	server/tests/workflow.test.js
 
 ## Recent history
 
+- da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 - 6a67933 feat: serve the OAuth callback over local https for providers that require it _(Jonathan Carbiere, 2026-10-03)_
 - fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
 - 9033087 feat: schedule plans at the hour this client's own posts perform best _(Jonathan Carbiere, 2026-09-23)_
@@ -99,6 +157,5 @@ _No standard build manifest detected. Document run/build/test steps in the secti
 - 7871bb9 feat: enter keys in the app, and a signing/notarization release script _(Jonathan Carbiere, 2026-09-23)_
 - fb7369a feat: repurpose a post onto other connected platforms _(Jonathan Carbiere, 2026-09-23)_
 - e80a8bb feat: watched RSS/Atom feeds draft posts for review _(Jonathan Carbiere, 2026-09-23)_
-- 7e369c6 feat: a per-brand image library the owner fills themselves _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

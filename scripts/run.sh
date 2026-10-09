@@ -1,7 +1,6 @@
-#!/bin/bash
-# Headless service for launchd: publishes on schedule even when the app window is closed.
-set -euo pipefail
+#!/bin/sh
+# Headless run (macOS/Linux): publishes on schedule with no window open. Service managers: use "cadence service install".
+set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 cd "$ROOT/server"
-exec node --no-warnings src/index.js
+exec node --no-warnings bin/cadence.mjs start

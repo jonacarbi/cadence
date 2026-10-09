@@ -1,13 +1,13 @@
 // Second route table: brands-from-URL, OAuth, accounts, settings, comments, regenerate, assets, analytics, rules.
 import { randomUUID } from 'node:crypto';
-import { join, resolve, extname } from 'node:path';
+import { join, resolve, extname, sep } from 'node:path';
 import { mkdirSync, existsSync, createReadStream, realpathSync, statSync } from 'node:fs';
 import { all, one, insert, update, hydrate, run, getSetting, setSetting } from './db.js';
-import { BRANDS_DIR, ASSETS_DIR } from './config.js';
+import { BRANDS_DIR, ASSETS_DIR, PORT } from './config.js';
 import { WorkflowError, postById, approvePost, schedulePost, editPost, createPost, transaction } from './workflow.js';
 import { PLATFORMS, capabilities } from './providers/index.js';
 import { META } from './providers/registry.js';
-import { startUrl, finish, addManualAccount } from './oauth.js';
+import { startUrl, finish, addManualAccount, attemptStatus } from './oauth.js';
 import { enqueue } from './jobs.js';
 import { requeueVisual } from './visuals.js';
 import { LEVELS, setAutonomy, autonomy } from './autonomy.js';
@@ -17,10 +17,13 @@ import { getBrand, slugify } from './brands.js';
 import { loadRules, saveRules } from './lint.js';
 import { importMedia, listMedia, deleteMedia, setPostMedia } from './library.js';
 import { addSource, listSources, deleteSource, pauseSource } from './sources.js';
-import { listCredentials, setCredential, requestRestart } from './credentials.js';
+import { agentRoutes } from './routes-agent.js';
+import { listCredentials, setCredential } from './credentials.js';
+import { saveWebhookSecret } from './webhooks.js';
 
 const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.md': 'text/markdown', '.json': 'application/json' };
-const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan', 'stale_after_hours'];
+const SAFETY_DEFAULTS = { min_gap_minutes: '90', jitter_minutes: '7', warmup: 'on' };
+const SETTINGS = ['autonomy', 'cap_per_account_per_day', 'min_gap_minutes', 'jitter_minutes', 'warmup', 'webhook_url', 'webhook_secret', 'timezone', 'design_loop', 'design_loop_rounds', 'auto_plan', 'stale_after_hours'];
 
 function parseSite(url) {
   let site; try { site = new URL(url); } catch { throw new WorkflowError('A valid website URL is required'); }
@@ -90,9 +93,12 @@ Return JSON {copy:{<platform>:string}}.`);
     assets: post.assets, format: post.format, design_system_id: post.design_system_id,
     scheduled_at: body.scheduled_at || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
   });
-  // Reuse the artwork: repurposing is about reach, not a second image bill. createPost does not take
-  // a path, since every other caller renders its own.
-  return post.image_path ? update('posts', created.id, { image_path: post.image_path }) && postById(created.id) : created;
+  // Reuse the artwork: repurposing is about reach, not a second image bill. createPost drops file paths from
+  // client input, so the server-owned ones are copied here from the original.
+  if (!post.image_path) return created;
+  const { frames, square, raw } = post.assets || {};
+  update('posts', created.id, { image_path: post.image_path, assets_json: JSON.stringify({ ...created.assets, frames, square, raw }) });
+  return postById(created.id);
 }
 
 function serveAsset(url, res) {
@@ -100,18 +106,24 @@ function serveAsset(url, res) {
   const candidate = resolve(raw);
   if (!existsSync(candidate)) throw new WorkflowError('Asset not found',404);
   const abs = realpathSync(candidate);
-  if (![ASSETS_DIR, BRANDS_DIR].some((root) => abs.startsWith(realpathSync(root) + '/')) || !statSync(abs).isFile()) throw new WorkflowError('Asset not found', 404);
+  if (![ASSETS_DIR, BRANDS_DIR].some((root) => abs.startsWith(realpathSync(root) + sep)) || !statSync(abs).isFile()) throw new WorkflowError('Asset not found', 404);
   res.writeHead(200, { 'Content-Type': MIME[extname(abs).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'private, max-age=60' });
   createReadStream(abs).on('error', () => res.destroy()).pipe(res); return true;
 }
 
-/** Unauthenticated: the browser lands here after the provider redirect. */
+const esc = (t) => String(t).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+/** Unauthenticated: the browser lands here after the provider redirect. Reveals nothing but the platform and account label. */
 export async function oauthCallback(url, res) {
-  let msg;
-  try { const a = await finish(Object.fromEntries(url.searchParams)); msg = `Connected ${PLATFORMS[a.platform].name} as ${a.label}. You can close this tab.`; }
-  catch (e) { msg = `Connection failed: ${e.message}`; }
-  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(`<!doctype html><meta charset=utf-8><title>Cadence</title><body style="font:16px -apple-system,system-ui;padding:3rem;color:#111"><h1 style="font-size:1.4rem">Cadence</h1><p>${msg.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</p>`);
+  let ok = true, msg;
+  try { const a = await finish(Object.fromEntries(url.searchParams)); msg = `${PLATFORMS[a.platform].name} is connected as ${a.label}.`; }
+  catch (e) { ok = false; msg = e.message; }
+  res.writeHead(ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'" });
+  res.end(`<!doctype html><html lang=en><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Cadence</title><style>
+:root{--paper:#F3EFE6;--ink:#17140F;--beat:#E5482B;--staff:#D9D2C3;--muted:#6B645A;--ok:#2F7D4F}@media(prefers-color-scheme:dark){:root{--paper:#121110;--ink:#EDE8DE;--beat:#FF6A4A;--staff:#2A2724;--muted:#9A9286;--ok:#5BB382}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font:17px/1.5 "Hanken Grotesk",system-ui,sans-serif}
+main{max-width:30rem;padding:2rem 1.5rem;border-top:3px solid ${ok ? 'var(--ok)' : 'var(--beat)'};background-image:repeating-linear-gradient(var(--staff) 0 1px,transparent 1px 12px);background-size:100% 100%}
+h1{font:600 1.7rem/1.2 Newsreader,Georgia,serif;margin:.2rem 0 .8rem}p{margin:.4rem 0}.m{color:var(--muted);font-size:.9rem}a{color:var(--beat)}</style>
+<main><p class=m>Cadence</p><h1>${ok ? 'Connected' : 'Could not connect'}</h1><p>${esc(msg)}</p><p>${ok ? 'You can close this tab and return to Cadence.' : 'Return to Cadence, open Accounts and try again.'}</p><p class=m><a href="http://127.0.0.1:${PORT}/">Open Cadence</a></p></main>`);
   return true;
 }
 
@@ -119,6 +131,7 @@ export async function oauthCallback(url, res) {
 export async function extraRoutes({ req, res, url, path, body, actor, owner, send }) {
   const m = (re) => path.match(re);
   let x;
+  if (await agentRoutes({ req, path, body, owner, send })) return true;
   if (path === '/api/brands' && req.method === 'POST') { const r = createBrandFromUrl(body); send(r.status, r.brand); return true; }
   if ((x = m(/^\/api\/brands\/([^/]+)$/)) && req.method === 'GET') { const b = getBrand(x[1]); if (!b) throw new WorkflowError('Brand not found', 404); send(200, b); return true; }
   if ((x = m(/^\/api\/brands\/([^/]+)\/extract$/)) && req.method === 'POST') { owner(); if (!getBrand(x[1])) throw new WorkflowError('Brand not found', 404); send(202, { job: enqueue('brand-extract', x[1]) }); return true; }
@@ -130,8 +143,9 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
   if ((x = m(/^\/oauth\/([a-z]+)\/start$/)) && req.method === 'GET') {
     owner(); const brandId = url.searchParams.get('brand_id'); if (!getBrand(brandId)) throw new WorkflowError('Brand not found', 404);
     if (META[x[1]]?.auth !== 'oauth') throw new WorkflowError('Platform does not use OAuth');
-    try {send(200, { url: startUrl(x[1], brandId) });} catch(error) {throw new WorkflowError(error.message,422);} return true;
+    try {send(200, startUrl(x[1], brandId));} catch(error) {throw new WorkflowError(error.message,422);} return true;
   }
+  if (path === '/oauth/status' && req.method === 'GET') { owner(); send(200, attemptStatus(url.searchParams.get('state') || '')); return true; }
   if (path === '/api/accounts/manual' && req.method === 'POST') {
     owner(); if (META[body.platform]?.auth !== 'manual') throw new WorkflowError('Platform uses OAuth; open /oauth/<platform>/start');
     if (!getBrand(body.brand_id)) throw new WorkflowError('Brand not found', 404);
@@ -144,7 +158,11 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
     if (req.method === 'DELETE') { if(one('SELECT id FROM deliveries WHERE account_id=?',x[1]))throw new WorkflowError('This account has delivery history. Pause it to preserve publishing receipts.',409);run('DELETE FROM accounts WHERE id = ?', x[1]); send(200, { ok: true }); return true; }
     if (req.method === 'PATCH') { if (typeof body.trusted !== 'boolean') throw new WorkflowError('trusted must be true or false'); send(200, hydrate(update('accounts', x[1], { trusted: body.trusted ? 1 : 0 }))); return true; }
   }
-  if (path === '/api/settings' && req.method === 'GET') { owner();send(200, Object.fromEntries(SETTINGS.map((k) => [k, getSetting(k, k === 'autonomy' ? 'review_all' : '')]))); return true; }
+  if (path === '/api/settings' && req.method === 'GET') {
+    owner(); const out = Object.fromEntries(SETTINGS.map((k) => [k, getSetting(k, k === 'autonomy' ? 'review_all' : '') || SAFETY_DEFAULTS[k] || '']));
+    // The signing secret is write-only: say whether one is set, never what it is.
+    send(200, { ...out, webhook_secret: '', webhook_secret_set: Boolean(out.webhook_secret) }); return true;
+  }
   if (path === '/api/settings' && req.method === 'PUT') {
     owner();
     for(const [k,v] of Object.entries(body)) {
@@ -152,6 +170,9 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
       if(k==='autonomy'&&!LEVELS.includes(v))throw new WorkflowError('Invalid autonomy level');
       if(k==='cap_per_account_per_day'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>100))throw new WorkflowError('Daily cap must be 1–100 or empty');
       if(k==='stale_after_hours'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)>168))throw new WorkflowError('Hold overdue posts after 0–168 hours');
+      if(k==='min_gap_minutes'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)>1440))throw new WorkflowError('Minimum gap must be 0–1440 minutes');
+      if(k==='jitter_minutes'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)>120))throw new WorkflowError('Jitter must be 0–120 minutes');
+      if(k==='warmup'&&!['','on','off'].includes(v))throw new WorkflowError('Warm-up must be on or off');
       if(k==='design_loop_rounds'&&v!==''&&(!/^\d+$/.test(String(v))||Number(v)<1||Number(v)>6))throw new WorkflowError('Design rounds must be 1–6');
       if((k==='design_loop'||k==='auto_plan')&&!['','on','off'].includes(v))throw new WorkflowError(`${k==='auto_plan'?'Recurring planning':'Design loop'} must be on or off`);
       if(k==='timezone'&&v)try{new Intl.DateTimeFormat('en',{timeZone:v}).format();}catch{throw new WorkflowError('Unknown timezone');}
@@ -159,7 +180,8 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
     }
     for (const [k, v] of Object.entries(body)) {
       if (!SETTINGS.includes(k)) throw new WorkflowError(`Unknown setting ${k}`);
-      if (k === 'autonomy') setAutonomy(v); else if (k === 'webhook_url' && v) { try { const u = new URL(v); if (u.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(u.hostname)) throw 0; } catch { throw new WorkflowError('webhook_url must be https'); } setSetting(k, v); }
+      if (k === 'webhook_secret' && !v) continue; // GET hides it, so clients echo '' back: empty means keep.
+      if (k === 'autonomy') setAutonomy(v); else if (k === 'webhook_secret') saveWebhookSecret(String(v)); else if (k === 'webhook_url' && v) { try { const u = new URL(v); if (u.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(u.hostname)) throw 0; } catch { throw new WorkflowError('webhook_url must be https'); } setSetting(k, v); }
       else setSetting(k, String(v ?? ''));
     }
     send(200, { ok: true, autonomy: autonomy(), levels: LEVELS }); return true;
@@ -184,6 +206,7 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
         schedulePost(post.id,post.version,accounts.map(a=>a.id));
       }
       update('posts',post.id,{scheduled_at:new Date().toISOString()});
+      run("UPDATE deliveries SET next_attempt_at=NULL WHERE post_id=? AND status='queued'",post.id); // owner asked for now: drop scheduling jitter
     });
     send(200, postById(x[1])); return true;
   }
@@ -196,7 +219,6 @@ export async function extraRoutes({ req, res, url, path, body, actor, owner, sen
   }
   if (path === '/api/credentials' && req.method === 'GET') { owner(); send(200, listCredentials()); return true; }
   if (path === '/api/credentials' && req.method === 'PUT') { owner(); send(200, setCredential(body.key, body.value)); return true; }
-  if (path === '/api/restart' && req.method === 'POST') { owner(); send(200, requestRestart()); return true; }
   if (path === '/api/sources' && req.method === 'GET') { const b = url.searchParams.get('brand_id'); if (!b) throw new WorkflowError('brand_id is required'); send(200, listSources(b)); return true; }
   if (path === '/api/sources' && req.method === 'POST') { owner(); send(201, await addSource(body.brand_id, body)); return true; }
   if ((x = m(/^\/api\/sources\/([^/]+)$/))) {

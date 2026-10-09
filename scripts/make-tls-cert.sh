@@ -1,12 +1,12 @@
-#!/bin/bash
-# Self-signed cert for https://localhost:8797 (OAuth callback). Trusted in the login keychain so browsers accept it.
-set -euo pipefail
-DIR="$HOME/Library/Application Support/Cadence/tls"
-mkdir -p "$DIR" && chmod 700 "$DIR"
-openssl req -x509 -newkey rsa:2048 -nodes -days 825 -subj "/CN=localhost" \
-  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" -addext "extendedKeyUsage=serverAuth" \
-  -keyout "$DIR/key.pem" -out "$DIR/cert.pem"
-chmod 600 "$DIR/key.pem"
-security add-trusted-cert -r trustRoot -p ssl -k "$HOME/Library/Keychains/login.keychain-db" "$DIR/cert.pem"
-launchctl kickstart -k "gui/$(id -u)/com.jonacarbi.cadence"
-echo "Done: https://localhost:8797/oauth/callback"
+#!/bin/sh
+# (Re)create the self-signed cert for the https://localhost:PORT+1 sign-in callback (Instagram, Facebook, Threads, TikTok).
+# Cadence also does this on first start; run this to renew or to see how to trust it on this OS.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT/server"
+node --no-warnings --input-type=module -e "
+const { ensureCert, trustHint } = await import('./src/tls.js');
+const r = ensureCert({ force: true });
+if (!r.ok) { console.error(r.error); process.exit(1); }
+console.log('Certificate written. To make your browser trust it:\n' + trustHint());
+"

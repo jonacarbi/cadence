@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { all, one, insert, update, hydrate, encrypt, logEvent } from './db.js';
+import { all, one, insert, update, hydrate, logEvent } from './db.js';
 import { authenticate } from './auth.js';
 import { HOST, PORT, BRANDS_DIR } from './config.js';
 import { join } from 'node:path';
@@ -13,6 +13,7 @@ import { resumeJob } from './jobs.js';
 import { extraRoutes, oauthCallback } from './routes-extra.js';
 import { createAgentRequest, listRequests, requestById, continueRequest, scheduleRequest } from './content-agent.js';
 import { readiness } from './readiness.js';
+import { hostAndOriginOk, cookieActor, authRoutes, serveStatic } from './web.js';
 
 async function readBody(req) {
  let size=0; const chunks=[];
@@ -22,16 +23,18 @@ async function readBody(req) {
 function requiredText(value,name,max=1000) { if(typeof value !== 'string' || !value.trim() || value.length>max) throw new WorkflowError(`${name} is required (maximum ${max} characters)`); return value.trim(); }
 export function createApiServer() {
  return createServer(async(req,res)=> {
-  res.setHeader('Content-Type','application/json'); res.setHeader('Cache-Control','no-store'); res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('Content-Type','application/json'); res.setHeader('Cache-Control','no-store'); res.setHeader('X-Content-Type-Options','nosniff'); res.setHeader('X-Frame-Options','DENY'); res.setHeader('Referrer-Policy','no-referrer');
   const send=(status,body)=> { res.writeHead(status); res.end(JSON.stringify(body)); };
   try {
-   // Native clients and authenticated tools only. No browser-origin requests or DNS rebinding.
-   if(req.headers.origin) throw new WorkflowError('Browser-origin requests are not allowed',403);
-   if(!/^(127\.0\.0\.1|localhost)(?::\d+)?$/.test(req.headers.host||'')) throw new WorkflowError('Invalid host',403);
+   // Loopback Host on our own port (DNS rebinding) and no foreign Origin. The browser UI's own origin is allowed;
+   // it still needs the session cookie plus the CSRF header (web.js). Bearer clients never send an Origin.
+   if(!hostAndOriginOk(req)) throw new WorkflowError('Invalid host or origin',403);
    const url=new URL(req.url,`http://${HOST}`), path=url.pathname;
-   if(path==='/health' && req.method==='GET') return send(200,{status:'ok',app:'Cadence',version:'0.2.0'});
+   if(authRoutes(req,res,url)) return;
+   if(!/^\/(api|oauth|health|auth)(\/|$)/.test(path) && serveStatic(req,res,path)) return;
+   if(path==='/health' && req.method==='GET') return send(200,{status:'ok',app:'Cadence',version:'0.3.0'});
    if(path==='/oauth/callback' && req.method==='GET') return oauthCallback(url,res);
-   const actor=authenticate(req.headers.authorization); if(!actor) throw new WorkflowError('Authentication required',401);
+   const actor=authenticate(req.headers.authorization)||cookieActor(req); if(!actor) throw new WorkflowError('Authentication required',401);
    const owner=()=> { if(actor!=='owner') throw new WorkflowError('Owner access required',403); };
    const body=['POST','PATCH','PUT'].includes(req.method) ? await readBody(req) : {};
    if(!body || typeof body!=='object' || Array.isArray(body))throw new WorkflowError('Request body must be a JSON object');
@@ -76,14 +79,7 @@ export function createApiServer() {
     const id=insert('brands',{name,slug,url:site.origin,dir}); return send(201,hydrate(one('SELECT * FROM brands WHERE id = ?',id)));
    }
    if(path==='/api/accounts' && req.method==='GET') return send(200,all('SELECT * FROM accounts ORDER BY label').map(hydrate));
-   if(path==='/api/accounts' && req.method==='POST') {
-    owner(); if(!PLATFORMS[body.platform]) throw new WorkflowError('Unknown platform');
-    if(!one('SELECT id FROM brands WHERE id=?',body.brand_id)) throw new WorkflowError('Brand not found',404);
-    if(!body.auth || typeof body.auth !== 'object' || Array.isArray(body.auth)) throw new WorkflowError('Account credentials are required');
-    const id=insert('accounts',{brand_id:body.brand_id,platform:body.platform,label:requiredText(body.label,'Account label',150),external_id:String(body.external_id||''),auth_enc:encrypt(body.auth)});
-    logEvent('info','account.connected',`${PLATFORMS[body.platform].name} ${body.label}`,{id,brandId:body.brand_id});
-    return send(201,hydrate(one('SELECT * FROM accounts WHERE id=?',id)));
-   }
+   // No raw account POST: accounts only come from OAuth or /api/accounts/manual, which resolve the canonical remote id.
    const accountMatch=path.match(/^\/api\/accounts\/([^/]+)\/pause$/);
    if(accountMatch && req.method==='POST') { owner(); if(typeof body.paused!=='boolean') throw new WorkflowError('paused must be true or false'); if(!one('SELECT id FROM accounts WHERE id=?',accountMatch[1])) throw new WorkflowError('Account not found',404); return send(200,hydrate(update('accounts',accountMatch[1],{paused:body.paused?1:0,failures:0}))); }
    if(path==='/api/posts' && req.method==='GET') return send(200,listPosts(requiredText(url.searchParams.get('brand_id'),'brand_id')));

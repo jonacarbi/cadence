@@ -4,7 +4,7 @@
 // and a rejection is classified so the scheduler knows whether to retry or pause the lane.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -13,7 +13,8 @@ process.env.CADENCE_DIR = dir;
 process.env.SUPABASE_URL = 'https://storage.example';   // Read once at import: set before the registry loads.
 process.env.SUPABASE_SERVICE_KEY = 'service-key';
 
-const IMAGE = join(dir, 'art.png');
+mkdirSync(join(dir, 'assets'), { recursive: true }); // the publisher only uploads files under Cadence's media folders
+const IMAGE = join(dir, 'assets', 'art.png');
 writeFileSync(IMAGE, Buffer.from('89504e470d0a1a0a', 'hex'));
 
 const { providerFor } = await import('../src/providers/index.js');

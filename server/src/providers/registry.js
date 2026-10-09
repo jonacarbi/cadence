@@ -3,6 +3,10 @@
 import { registerProvider, PLATFORMS } from './index.js';
 import { canHost, hostPublic } from '../media.js';
 import { update, encrypt } from '../db.js';
+import { realpathSync } from 'node:fs';
+import { sep } from 'node:path';
+import { ASSETS_DIR, BRANDS_DIR } from '../config.js';
+import { refreshContext } from './http.js';
 import * as x from './x.js';
 import * as linkedin from './linkedin.js';
 import * as instagram from './instagram.js';
@@ -37,11 +41,20 @@ export const META = {
 function classify(platform, err) {
   const blob = `${err.status ?? ''} ${err.message} ${JSON.stringify(err.data ?? '')}`;
   // Hard blocks (Meta 368 action blocked, revoked tokens) pause the lane; 5xx/429/network are retryable.
-  err.actionBlocked = /368|1404|suspended|invalid_grant|revoked|checkpoint/i.test(blob) || err.status === 401;
-  err.retryable = !err.actionBlocked && (err.status === 429 || (err.status ?? 500) >= 500 || /timeout|ECONN|fetch failed/i.test(err.message));
+  err.actionBlocked = !err.needsReconnect && (/368|1404|suspended|invalid_grant|revoked|checkpoint/i.test(blob) || err.status === 401);
+  err.retryable = !err.actionBlocked && !err.needsReconnect && (err.status === 429 || (err.status ?? 500) >= 500 || /timeout|ECONN|fetch failed/i.test(err.message));
   // A 4xx answer from the platform means the request was rejected before anything was posted.
   err.definitelyNotSent = Boolean(err.definitelyNotSent) || (err.status >= 400 && err.status < 500);
   return err;
+}
+
+// Last line of defence: only images inside Cadence's own media folders ever leave the machine.
+const MEDIA_EXT = /\.(png|jpe?g|webp|gif)$/i;
+export function ownMedia(path) {
+  let abs = ''; try { abs = realpathSync(path); } catch {}
+  if (!MEDIA_EXT.test(abs) || ![ASSETS_DIR, BRANDS_DIR].some((root) => { try { return abs.startsWith(realpathSync(root) + sep); } catch { return false; } }))
+    throw Object.assign(new Error('Refusing to upload a file outside Cadence media'), { definitelyNotSent: true, retryable: false });
+  return abs;
 }
 
 function adapter(platform) {
@@ -55,14 +68,16 @@ function adapter(platform) {
     async publish({ post, account, auth, idempotencyKey }) {
       const text = post.copy?.[platform] ?? '';
       const a = post.assets || {};
-      const frames = post.format === 'carousel' && a.frames?.length ? a.frames : [m.aspect === 'square' && a.square ? a.square : post.image_path].filter(Boolean);
+      const frames = (post.format === 'carousel' && a.frames?.length ? a.frames : [m.aspect === 'square' && a.square ? a.square : post.image_path].filter(Boolean)).map(ownMedia);
       let mediaUrls = [];
       try {
         if (m.needsPublicUrl && frames.length) {
           if (!canHost()) { const e = new Error(`${PLATFORMS[platform].name} needs public media URLs — set SUPABASE_URL and SUPABASE_SERVICE_KEY`); e.definitelyNotSent = true; throw e; }
           try {mediaUrls = await Promise.all(frames.map(path=>hostPublic(path)));} catch(error) {error.definitelyNotSent=true;throw error;}
         }
-        const res = await m.mod.publish({ auth, account, text, media: frames, mediaUrls, altText: post.alt_text, link: post.link || null, idempotencyKey });
+        // A refreshed token is saved the moment it is issued (X rotates refresh tokens), even if the publish itself then fails.
+        const persist = (fresh) => update('accounts', account.id, { auth_enc: encrypt({ ...fresh, _updated: undefined }) });
+        const res = await refreshContext.run({ persist }, () => m.mod.publish({ auth, account, text, media: frames, mediaUrls, altText: post.alt_text, link: post.link || null, idempotencyKey }));
         if (res.auth?._updated) update('accounts', account.id, { auth_enc: encrypt({ ...auth, ...res.auth, _updated: undefined }) });
         return { id: res.id, url: res.url };
       } catch (err) { throw classify(platform, err); }

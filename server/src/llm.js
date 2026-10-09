@@ -1,50 +1,22 @@
-// LLM access: Claude Code CLI (`claude -p`, Pro subscription) first, 9Router chat completions as fallback.
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { CLAUDE_BIN, LLM_MODEL, NINE_ROUTER_URL, NINE_ROUTER_API_KEY, NINE_ROUTER_MODEL, TEXT_PROVIDER, APP_DIR } from "./config.js";
+// LLM access through the configured agent provider (agents.js), with an optional fallback provider.
+import { agentConfig, runAgent } from "./agents.js";
+import { AGENT_DIR } from "./config.js";
 
-const exec = promisify(execFile);
-
-/** Run a prompt through `claude -p`. Extra args let callers enable tools/skills for agentic jobs. */
-// cwd defaults to APP_DIR: an app update replaces the bundle the server was launched from, and `claude`
-// refuses to run ("current working directory was deleted") when it inherits that stale inode.
-export async function claude(prompt, { system = "", model = LLM_MODEL, args = [], cwd = APP_DIR, timeout = 600_000, agentic = false } = {}) {
-  // Plain completions run locked down (no tools, no skills). Agentic jobs (design-dna, critics) keep user skills + the tools they pass.
-  const lockdown = agentic ? ["--setting-sources", "user"] : ["--tools", "", "--setting-sources", "", "--disable-slash-commands"];
-  const argv = ["-p", prompt, "--model", model, "--output-format", "text", ...args, ...lockdown, "--strict-mcp-config", "--no-session-persistence"];
-  if (system) argv.push("--system-prompt", system);
-  try {
-    const child = exec(CLAUDE_BIN, argv, { cwd, timeout, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, CLAUDECODE: "" } });
-    child.child.stdin.end();
-    const { stdout } = await child;
-    return stdout.trim();
-  } catch(error) {
-    if(/limit|quota/i.test(error.stdout||''))throw new Error('Claude usage limit reached. Configure CADENCE_FALLBACK_MODEL for 9Router or wait for your quota to reset.');
-    const detail=(error.stderr||error.stdout||'').trim().slice(-300);
-    throw new Error(`Claude generation failed (${error.code||'timeout'})${detail?`: ${detail}`:'. Check Claude sign-in and local service logs.'}`);
-  }
+/** Run a prompt on the active provider. Extra args are Claude-only (agentic jobs: design-dna, critics enable tools/skills).
+ *  cwd defaults to AGENT_DIR (empty, inside the data folder, never next to .env): an app update replaces the bundle the server was launched from, and `claude`
+ *  refuses to run ("current working directory was deleted") when it inherits that stale inode. */
+export async function claude(prompt, { model, cwd = AGENT_DIR, ...opts } = {}) {
+  const cfg = agentConfig();
+  return runAgent(model && cfg.provider === "claude" ? { ...cfg, model } : cfg, prompt, { cwd, ...opts });
 }
 
-async function nineRouter(prompt, system) {
-  if (!NINE_ROUTER_MODEL) throw new Error("no fallback model configured (CADENCE_FALLBACK_MODEL)");
-  const res = await fetch(`${NINE_ROUTER_URL}/chat/completions`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${NINE_ROUTER_API_KEY}` },
-    body: JSON.stringify({ model: NINE_ROUTER_MODEL, stream: false, reasoning_effort: 'low', messages: [system && { role: "system", content: system }, { role: "user", content: prompt }].filter(Boolean) }),
-    signal: AbortSignal.timeout(300_000),
-  });
-  if (!res.ok) throw new Error(`9router ${res.status}`);
-  const content=(await res.json()).choices?.[0]?.message?.content;
-  if(typeof content!=='string'||!content.trim())throw new Error('9Router returned no content');
-  return content;
-}
-
-/** Plain-text completion with fallback. */
+/** Plain-text completion; falls back to CADENCE_FALLBACK_PROVIDER/MODEL (or the legacy 9Router model) on failure. */
 export async function complete(prompt, opts = {}) {
-  if(TEXT_PROVIDER==='9router')return nineRouter(prompt,opts.system);
-  try { return await claude(prompt, opts); } catch (e) {
-    if (!NINE_ROUTER_MODEL) throw e;
-    return nineRouter(prompt, opts.system);
+  const { model, args, agentic, ...rest } = opts; // agentic options never apply to a plain completion
+  try { return await claude(prompt, { ...opts }); } catch (e) {
+    const fb = agentConfig("fallback");
+    if (!fb) throw e;
+    try { return await runAgent(fb, prompt, rest); } catch (e2) { throw e.quota ? e : e2; }
   }
 }
 

@@ -1,6 +1,6 @@
 // LinkedIn — Community Management API (Posts API + Images API). Scopes: w_member_social (+ w_organization_social for pages).
 import { readFileSync } from "node:fs";
-import { api, bearer } from "./http.js";
+import { api, bearer, refreshIfNeeded, retryAfterMs } from "./http.js";
 
 const V = { "LinkedIn-Version": process.env.CADENCE_LINKEDIN_VERSION || "202609", "X-Restli-Protocol-Version": "2.0.0" };
 export const oauth = {
@@ -17,7 +17,9 @@ async function uploadImage(auth, owner, path) {
   return init.value.image;
 }
 
-export async function publish({ auth, account, text, media, altText }) {
+export async function publish({ auth: a, account, text, media, altText }) {
+  // Standard LinkedIn apps get a 60-day token and no refresh token: say so instead of failing with a bare 401.
+  const auth = await refreshIfNeeded(a, oauth.tokenUrl, { client_id: a.client_id, client_secret: a.client_secret });
   const owner = auth.organization_urn || account.external_id;
   const images = [];
   for (const m of media) images.push(await uploadImage(auth, owner, m));
@@ -28,9 +30,9 @@ export async function publish({ auth, account, text, media, altText }) {
     body: JSON.stringify({ author: owner, commentary: text, visibility: "PUBLIC", distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] }, lifecycleState: "PUBLISHED", ...(content && { content }) }),
     signal: AbortSignal.timeout(60000),
   });
-  if (!res.ok) {const error=new Error(`LinkedIn rejected publication (${res.status})`);error.status=res.status;throw error;}
+  if (!res.ok) {const error=new Error(`LinkedIn rejected publication (${res.status})`);error.status=res.status;error.retryAfterMs=retryAfterMs(res);throw error;}
   const id = res.headers.get("x-restli-id");
-  return { id, url: `https://www.linkedin.com/feed/update/${id}` };
+  return { id, url: `https://www.linkedin.com/feed/update/${id}`, auth };
 }
 
 export async function metrics(auth, published) {

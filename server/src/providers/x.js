@@ -20,7 +20,7 @@ async function uploadMedia(auth, path) {
 }
 
 export async function publish({ auth: a, text, media, altText }) {
-  const auth = await refreshIfNeeded(a, oauth.tokenUrl, { client_id: a.client_id });
+  const auth = await refreshIfNeeded(a, oauth.tokenUrl, a.client_secret ? {} : { client_id: a.client_id });
   const ids = [];
   for (const m of media) {
     const id = await uploadMedia(auth, m);

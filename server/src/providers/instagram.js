@@ -1,6 +1,6 @@
 // Instagram — Graph API via Facebook Login (instagram_basic, instagram_content_publish, pages_show_list).
 // Needs a public image URL: single image or carousel container → publish.
-import { api } from "./http.js";
+import { api, refreshMetaToken } from "./http.js";
 const G = "https://graph.facebook.com/v21.0";
 
 export const oauth = {
@@ -26,7 +26,8 @@ async function waitReady(auth, id) {
   throw new Error('Instagram media processing timed out before publication');
 }
 
-export async function publish({ auth, account, text, mediaUrls, altText }) {
+export async function publish({ auth: a, account, text, mediaUrls, altText }) {
+  const auth = await refreshMetaToken(a, "instagram");
   const ig = account.external_id, t = auth.access_token;
   let creation;
   if (mediaUrls.length > 1) {
@@ -39,7 +40,7 @@ export async function publish({ auth, account, text, mediaUrls, altText }) {
   await waitReady(auth, creation);
   const pub = await api(`${G}/${ig}/media_publish`, { method: "POST", json: { creation_id: creation, access_token: t } });
   const info = await api(`${G}/${pub.id}?fields=permalink&access_token=${t}`).catch(()=>({}));
-  return { id: pub.id, url: info.permalink };
+  return { id: pub.id, url: info.permalink, auth };
 }
 
 export async function metrics(auth, published) {

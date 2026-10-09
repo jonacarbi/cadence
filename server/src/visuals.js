@@ -2,7 +2,7 @@
 // design system. Resumable: a re-run skips paid generation when the raw image already exists.
 import { one, all, update, hydrate, logEvent } from './db.js';
 import { registerJob, enqueue } from './jobs.js';
-import { generateImage } from './images.js';
+import { generateImage, imageProvider } from './images.js';
 import { renderFrame, renderCarousel, LAYOUTS } from './render.js';
 import { lintPost } from './lint.js';
 import { getBrand, stylePrompt } from './brands.js';
@@ -40,7 +40,7 @@ export async function producePost(postId, report = () => {}) {
   const a = post.assets || {};
   const aspect = post.format === 'carousel' ? 'square' : wantsPortrait(post.platforms) ? 'portrait' : 'square';
   let raw = a.raw;
-  if (!raw) {
+  if (!raw && imageProvider() !== 'none') {
     report(0.1, `Generating image: ${post.topic}`);
     const style = stylePrompt(brand).slice(0, 1200);
     raw = await generateImage(`${post.image_prompt}\n\nStyle notes: ${style}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect, brandSlug: brand.slug });
@@ -48,7 +48,7 @@ export async function producePost(postId, report = () => {}) {
   }
   report(0.6, 'Composing in the design system');
   const base = { brand, image: raw, headline: a.headline || post.topic, sub: a.sub, eyebrow: a.eyebrow, cta: a.cta };
-  const layout = LAYOUTS.includes(a.layout) ? a.layout : LAYOUTS.includes(brand.tokens?.preferred_layout) ? brand.tokens.preferred_layout : 'editorial';
+  const layout = !raw ? 'type' : LAYOUTS.includes(a.layout) ? a.layout : LAYOUTS.includes(brand.tokens?.preferred_layout) ? brand.tokens.preferred_layout : 'editorial';
   let frames, square = null;
   if (post.format === 'carousel' && a.slides?.length) {
     frames = await renderCarousel({ brand, slides: a.slides.map((s, i) => ({ ...s, eyebrow: i === 0 ? a.eyebrow : '', cta: a.cta })), image: raw });

@@ -174,7 +174,8 @@ export async function renderCarousel({ brand, slides, image }) {
   const out = [];
   for (let i = 0; i < slides.length; i++) {
     const s = slides[i];
-    out.push(await renderFrame({ brand, aspect: "square", layout: i === 0 ? "fullbleed" : "slide", image: i === 0 ? image : s.image || image, headline: s.headline, sub: s.sub, eyebrow: s.eyebrow, cta: i === slides.length - 1 ? s.cta : "", counter: `${i + 1}/${slides.length}` }));
+    // Every slide uses the generated image, never a slide field: drafts set those, and a path there would embed any local file.
+    out.push(await renderFrame({ brand, aspect: "square", layout: i === 0 ? "fullbleed" : "slide", image, headline: s.headline, sub: s.sub, eyebrow: s.eyebrow, cta: i === slides.length - 1 ? s.cta : "", counter: `${i + 1}/${slides.length}` }));
   }
   return out;
 }

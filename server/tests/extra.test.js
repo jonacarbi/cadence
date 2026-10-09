@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 const dir = mkdtempSync(join(tmpdir(), 'cadence-extra-')); process.env.CADENCE_DIR = dir;
+process.env.CADENCE_IMAGE_PROVIDER = 'catgpt'; // the opt-in gateway preset is what this readiness test exercises
 const { createApiServer, listen } = await import('../src/api.js');
 const { ownerToken, agentToken } = await import('../src/auth.js');
 const { db, insert, encrypt, all } = await import('../src/db.js');
@@ -207,7 +208,8 @@ test('repurposing reuses the artwork and leaves the original untouched', async (
 });
 
 test('credentials are written to the env file, never read back, and never forge a second variable', async () => {
-  const { listCredentials, setCredential, requestRestart } = await import('../src/credentials.js');
+  const { listCredentials, setCredential } = await import('../src/credentials.js');
+  const config = await import('../src/config.js');
   const { readFileSync, statSync } = await import('node:fs');
   const envPath = join(dir, '.env');
 
@@ -220,24 +222,46 @@ test('credentials are written to the env file, never read back, and never forge 
   assert.equal((await req('/api/credentials', { method: 'PUT', body: { key: 'OPENAI_API_KEY', value: 'sk-a\nADMIN=1' } })).status, 400); // A newline would forge a variable.
 
   const saved = await (await req('/api/credentials', { method: 'PUT', body: { key: 'OPENAI_API_KEY', value: 'sk-test-value' } })).json();
-  assert.equal(saved.restart_required, true); // Config constants are read once at import.
+  assert.equal(saved.restart_required, false);
+  assert.equal(config.OPENAI_API_KEY, 'sk-test-value'); // Live binding: image code sees the new key without a restart.
   assert.equal(saved.credentials.find((f) => f.key === 'OPENAI_API_KEY').set, true);
-  assert.equal((statSync(envPath).mode & 0o777), 0o600); // Nobody else on the machine may read it.
-  assert.match(readFileSync(envPath, 'utf8'), /^OPENAI_API_KEY=sk-test-value$/m);
+  if (process.platform !== 'win32') assert.equal((statSync(envPath).mode & 0o777), 0o600); // Nobody else on the machine may read it.
+  const sealed = readFileSync(envPath, 'utf8').match(/^OPENAI_API_KEY=(.*)$/m)[1]; // Sealed at rest: a copied .env carries no usable key.
+  assert.ok(sealed.startsWith(config.SEALED) && !sealed.includes('sk-test'));
+  assert.equal(config.openEnvValue(sealed), 'sk-test-value');
   assert.equal(JSON.stringify(await (await req('/api/credentials')).json()).includes('sk-test-value'), false);
 
   setCredential('OPENAI_API_KEY', ''); // Clearing removes the line rather than writing an empty one.
   assert.equal(readFileSync(envPath, 'utf8').includes('OPENAI_API_KEY'), false);
   assert.equal(listCredentials().find((f) => f.key === 'OPENAI_API_KEY').set, false);
 
-  const job = insert('jobs', { type: 'campaign-plan', ref_id: 'x', status: 'running' });
-  assert.equal((await req('/api/restart', { method: 'POST' })).status, 409); // A restart would interrupt it.
-  const { update: patch } = await import('../src/db.js');
-  patch('jobs', job, { status: 'complete' });
-  let exited = false;
-  assert.equal(requestRestart({ exit: () => { exited = true; } }).ok, true);
-  await new Promise((r) => setTimeout(r, 300));
-  assert.equal(exited, true); // launchd KeepAlive brings the agent straight back.
+  // A plain (non-secret) value with " #" is quoted on write so the reader does not trim it as a comment.
+  setCredential('SUPABASE_URL', 'https://x.example #def');
+  const line = readFileSync(envPath, 'utf8').split('\n').find((l) => l.startsWith('SUPABASE_URL='));
+  assert.equal(config.parseEnvValue(line.slice('SUPABASE_URL='.length)), 'https://x.example #def');
+  assert.equal(config.parseEnvValue('8796   # web app port'), '8796'); // .env.example style inline comment
+  setCredential('SUPABASE_URL', '');
+
+  // Older installs and hand edits stored secrets in plain text; the next start seals them in place.
+  const { writeFileSync } = await import('node:fs');
+  const { sealPlainSecrets } = await import('../src/credentials.js');
+  // An environment override still wins in memory, but the file copy gets sealed too; a second .env is covered as well.
+  const second = `${envPath}.repo`;
+  writeFileSync(envPath, 'CATGPT_GATEWAY_TOKEN=plain-token\nSUPABASE_URL=https://keep.example\n');
+  writeFileSync(second, "OPENAI_API_KEY='repo-key'\n");
+  process.env.CATGPT_GATEWAY_TOKEN = 'override';
+  sealPlainSecrets([envPath, second]);
+  const text = readFileSync(envPath, 'utf8');
+  assert.ok(!text.includes('plain-token') && text.includes('SUPABASE_URL=https://keep.example'));
+  assert.equal(config.openEnvValue(text.match(/CATGPT_GATEWAY_TOKEN=(\S+)/)[1]), 'plain-token');
+  assert.equal(config.openEnvValue(readFileSync(second, 'utf8').trim().slice('OPENAI_API_KEY='.length)), 'repo-key');
+  assert.equal(process.env.CATGPT_GATEWAY_TOKEN, 'override');
+  // The smoke test opens the real folder's .env from an isolated run: the value follows its own folder's key.
+  const sealedTok = text.match(/CATGPT_GATEWAY_TOKEN=(\S+)/)[1], { mkdtempSync } = await import('node:fs'), { tmpdir } = await import('node:os');
+  assert.equal(config.openEnvValue(sealedTok, config.APP_DIR), 'plain-token');
+  assert.equal(config.openEnvValue(sealedTok, mkdtempSync(join(tmpdir(), 'cadence-other-'))), '', 'another key cannot open it');
+  setCredential('CATGPT_GATEWAY_TOKEN', '');
+  assert.equal((await req('/api/restart', { method: 'POST' })).status, 404); // Settings apply live; nothing to restart.
 });
 
 test('a post the Mac slept through is held for review, not published late', async () => {
@@ -258,8 +282,12 @@ test('a post the Mac slept through is held for review, not published late', asyn
   assert.equal(one('SELECT status FROM posts WHERE id = ?', stale).status, 'missed');
   assert.equal(one('SELECT status FROM posts WHERE id = ?', fresh).status, 'scheduled'); // An hour late still goes out.
   // Rescheduling is the recovery: a new time drops approval, so the owner re-reads it before it goes out.
-  const moved = await req(`/api/posts/${stale}`, { method: 'PATCH', body: { version: 1, scheduled_at: future() } });
-  assert.equal((await moved.json()).status, 'draft');
+  const moved = await (await req(`/api/posts/${stale}`, { method: 'PATCH', body: { version: 1, scheduled_at: future() } })).json();
+  assert.equal(moved.status, 'draft');
+  const again = await (await req(`/api/posts/${stale}/approve-and-schedule`, { method: 'POST', body: { version: moved.version } })).json();
+  assert.equal(again.status, 'scheduled');
+  const live = all('SELECT * FROM deliveries WHERE post_id = ? AND version = ?', stale, moved.version);
+  assert.equal(live.length, 1); assert.equal(live[0].status, 'queued'); // a new delivery for the new version; the missed one stays as history
   setSetting('stale_after_hours', '0');
   const off = await make(30);
   assert.deepEqual(holdStale(), []); // Owners who would rather be late than silent can turn it off.
@@ -291,4 +319,49 @@ test('planning picks the hour this brand actually performs in, once there is eno
   assert.equal(r.status, 200);
   assert.equal((await r.json()).basis, 'analytics');
   assert.equal((await req('/api/analytics/best-hour')).status, 400);
+});
+
+test('a reschedule re-queues only the accounts that never got the post', async () => {
+  const { run, one } = await import('../src/db.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://half.example' } })).json();
+  const a1 = insert('accounts', { brand_id: brand.id, platform: 'mock', label: 'One', auth_enc: encrypt({}) });
+  const a2 = insert('accounts', { brand_id: brand.id, platform: 'mock', label: 'Two', auth_enc: encrypt({}) });
+  const post = await (await req('/api/posts', { token: agentToken, method: 'POST', body: { brand_id: brand.id, platforms: ['mock'], copy: { mock: 'Half sent' }, scheduled_at: future() } })).json();
+  await req(`/api/posts/${post.id}/approve-and-schedule`, { method: 'POST', body: { version: 1 } });
+  run(`UPDATE deliveries SET status = 'published' WHERE post_id = ? AND account_id = ?`, post.id, a1);
+  run(`UPDATE deliveries SET status = 'missed' WHERE post_id = ? AND account_id = ?`, post.id, a2);
+  run(`UPDATE posts SET status = 'missed' WHERE id = ?`, post.id);
+  const moved = await (await req(`/api/posts/${post.id}`, { method: 'PATCH', body: { version: 1, scheduled_at: future() } })).json();
+  await req(`/api/posts/${post.id}/approve-and-schedule`, { method: 'POST', body: { version: moved.version } });
+  const queued = all(`SELECT account_id FROM deliveries WHERE post_id = ? AND status = 'queued'`, post.id);
+  assert.deepEqual(queued.map((d) => d.account_id), [a2]); // the account that already has it is not posted to twice
+  run(`UPDATE deliveries SET status = 'published' WHERE post_id = ?`, post.id);
+  run(`UPDATE posts SET status = 'missed' WHERE id = ?`, post.id);
+  const again = await (await req(`/api/posts/${post.id}`, { method: 'PATCH', body: { version: moved.version, scheduled_at: future() } })).json();
+  assert.equal((await req(`/api/posts/${post.id}/approve-and-schedule`, { method: 'POST', body: { version: again.version } })).status, 409);
+  assert.ok(one('SELECT id FROM posts WHERE id = ?', post.id));
+});
+
+test('drafts cannot point the publisher at arbitrary files', async () => {
+  const { writeFileSync, mkdirSync } = await import('node:fs');
+  const { ownMedia } = await import('../src/providers/registry.js');
+  const { ASSETS_DIR, APP_DIR } = await import('../src/config.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://leak.example' } })).json();
+  const key = join(APP_DIR, 'secret.key');
+  const assets = { headline: 'Hi', frames: [key], square: key, raw: key };
+  const post = await (await req('/api/posts', { token: agentToken, method: 'POST', body: { brand_id: brand.id, platforms: ['mock'], copy: { mock: 'x' }, scheduled_at: future(), format: 'carousel', assets } })).json();
+  assert.deepEqual(post.assets, { headline: 'Hi' });
+  const edited = await (await req(`/api/posts/${post.id}`, { token: agentToken, method: 'PATCH', body: { version: 1, assets } })).json();
+  assert.deepEqual(edited.assets, { headline: 'Hi' });
+  for (const bad of [key, join(ASSETS_DIR, 'nope.png'), join(APP_DIR, 'x.png')]) assert.throws(() => ownMedia(bad), (e) => e.definitelyNotSent && !e.retryable);
+  mkdirSync(join(ASSETS_DIR, 't'), { recursive: true }); writeFileSync(join(ASSETS_DIR, 't', 'ok.png'), '');
+  writeFileSync(join(ASSETS_DIR, 't', 'key.txt'), '');
+  assert.ok(ownMedia(join(ASSETS_DIR, 't', 'ok.png')));
+  assert.throws(() => ownMedia(join(ASSETS_DIR, 't', 'key.txt')), /outside Cadence media/);
+});
+
+test('a carousel slide cannot embed a local file through its own image path', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/render.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /\bs\.image/); // every slide uses the post's generated image
 });

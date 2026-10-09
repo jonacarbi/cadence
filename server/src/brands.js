@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { BRANDS_DIR, SKILLS_DIR } from "./config.js";
 import { insert, update, one, all, hydrate, logEvent, getSetting } from "./db.js";
 import { claude, completeJson } from "./llm.js";
+import { agentConfig, fileScope } from "./agents.js";
 import { importDesignSystem, activateDesignSystem } from "./design-systems.js";
 import { registerJob } from "./jobs.js";
 import { publicURL, fetchPublic, routePublic } from "./network.js";
@@ -223,11 +224,20 @@ export function syncDesignSystemMd(id) {
 export async function codifyBrand(id) {
   const b = one("SELECT * FROM brands WHERE id = ?", id);
   const skillSlug = `${b.slug}-style`;
-  const prompt = `/design-dna Codify the visual style of ${b.url} into a reusable skill named "${skillSlug}".
+  const dna = join(SKILLS_DIR, "design-dna");
+  const prompt = `Follow the design-dna skill in ${dna}/ (start with its SKILL.md). Codify the visual style of ${b.url} into a reusable skill named "${skillSlug}".
 Reference image: ${join(b.dir, "reference.png")} (full page: ${join(b.dir, "reference-full.png")}).
 Measured tokens: ${join(b.dir, "tokens.json")}. Design system draft: ${join(b.dir, "design-system.md")}.
-Add to dna.json meta: {"source":"${b.url}"}. The skill is for 1080x1350 and 1080x1080 social posts that must look like they came from this site. Write to ~/.claude/skills/${skillSlug}/ and finish with the check script passing.`;
-  await claude(prompt, { cwd: b.dir, agentic: true, args: ["--allowedTools", "Read,Write,Edit,Bash,Glob,Grep", "--permission-mode", "acceptEdits"], timeout: 30 * 60_000 });
+Add to dna.json meta: {"source":"${b.url}"}. The skill is for 1080x1350 and 1080x1080 social posts that must look like they came from this site. Write to ${join(SKILLS_DIR, skillSlug)}/. You have no shell: do not run scripts; just write PROMPT.md and dna.json.`;
+  // The prompt carries website-derived text, so the agent gets file tools only (no shell, no web): it reads the brand and
+  // design-dna folders and writes only the new skill folder. Only Claude Code enforces that scope; other providers keep
+  // the measured design-system.md instead.
+  const cfg = agentConfig();
+  if (!existsSync(join(dna, "SKILL.md"))) { update("brands", id, { status: "ready-no-skill" }); logEvent("info", "brand.codify", `skipped: no design-dna skill in ${SKILLS_DIR}`, { id }); return; }
+  if (cfg.provider !== "claude" || cfg.context === "locked") { update("brands", id, { status: "ready-no-skill" }); logEvent("info", "brand.codify", `skipped: design-dna needs Claude Code in full context (active: ${cfg.provider}/${cfg.context})`, { id }); return; }
+  const skillDir = join(SKILLS_DIR, skillSlug);
+  mkdirSync(skillDir, { recursive: true });
+  await claude(prompt, { cwd: b.dir, agentic: true, args: fileScope({ read: [b.dir, dna], write: [skillDir] }), timeout: 30 * 60_000 });
   const ok = existsSync(join(SKILLS_DIR, skillSlug, "PROMPT.md"));
   update("brands", id, { status: ok ? "ready" : "ready-no-skill", skill_slug: ok ? skillSlug : null });
   syncDesignSystemMd(id);

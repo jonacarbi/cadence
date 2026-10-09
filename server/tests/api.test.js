@@ -22,6 +22,6 @@ test('agent can draft but cannot approve or store credentials',async()=> {
  const response=await request('/api/posts',{token:agentToken,method:'POST',body:{brand_id:brand.id,platforms:['mastodon'],copy:{mastodon:'Hello from a draft'},scheduled_at:new Date(Date.now()+3600000).toISOString()}});
  assert.equal(response.status,201); const post=await response.json(); assert.equal(post.status,'draft');
  assert.equal((await request(`/api/posts/${post.id}/approve`,{token:agentToken,method:'POST',body:{version:1,actor:'owner'}})).status,403);
- assert.equal((await request('/api/accounts',{token:agentToken,method:'POST',body:{}})).status,403);
+ assert.equal((await request('/api/accounts',{method:'POST',body:{platform:'mock',external_id:'x'}})).status,404); // raw inserts are gone
  assert.equal((await request(`/api/posts/${post.id}/approve`,{method:'POST',body:{version:1}})).status,200);
 });
