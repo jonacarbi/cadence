@@ -7,3 +7,10 @@ build/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# OS / tooling
+.DS_Store
+.netlify/
+site/.netlify/
+.claude/
+*.tsbuildinfo

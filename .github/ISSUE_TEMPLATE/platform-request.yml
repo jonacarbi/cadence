@@ -1,0 +1,18 @@
+name: Platform request
+description: Ask for a new publishing platform
+labels: [platform]
+body:
+  - type: input
+    id: platform
+    attributes: { label: Platform }
+    validations: { required: true }
+  - type: input
+    id: api
+    attributes: { label: Link to the official posting API docs }
+    validations: { required: true }
+  - type: textarea
+    id: auth
+    attributes: { label: How authentication works, description: "OAuth, token, webhook, app review required?" }
+  - type: markdown
+    attributes:
+      value: Cadence only publishes through official APIs. Platforms without a public posting API cannot be added.

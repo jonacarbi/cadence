@@ -1,0 +1,25 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: What you expected and what you saw }
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes: { label: Steps to reproduce }
+    validations: { required: true }
+  - type: dropdown
+    id: os
+    attributes: { label: Operating system, options: [macOS, Linux, Windows] }
+    validations: { required: true }
+  - type: input
+    id: versions
+    attributes: { label: Node version and Cadence commit, placeholder: "node 24.x, abc1234" }
+  - type: dropdown
+    id: agent
+    attributes: { label: AI agent in use, options: [Claude Code, Codex, Gemini, opencode, OpenAI-compatible, Not applicable] }
+  - type: textarea
+    id: logs
+    attributes: { label: Logs, description: "Remove tokens, keys and account names first.", render: shell }

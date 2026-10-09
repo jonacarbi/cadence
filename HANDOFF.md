@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-09 20:29:40 -03
-- **Built on commit:** 75252d1 — feat: brand mark, app icon, landing site and connect-accounts guide (Jonathan Carbiere, 2026-10-09)
+- **Last updated:** 2026-10-09 20:29:41 -03
+- **Built on commit:** 8fd01b3 — docs: open-source docs, security policy and ai/ docs layer (Jonathan Carbiere, 2026-10-09)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -68,7 +68,10 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Project layout (top level)
 
+- .editorconfig
 - .env.example
+- .gitattributes
+- .github/
 - .gitignore
 - .ignore
 - ai/
@@ -90,41 +93,34 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 ## Languages
 
 - .js — 85 file(s)
-- .md — 23 file(s)
+- .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 13 file(s)
 - .svg — 10 file(s)
+- .yml — 6 file(s)
 - .sh — 5 file(s)
 - .mjs — 4 file(s)
 - .json — 4 file(s)
 - .html — 4 file(s)
 - .css — 4 file(s)
 - .woff2 — 3 file(s)
-- .txt — 3 file(s)
 
 ## Changes in this commit
 
-- A	CHANGELOG.md
-- A	CODE_OF_CONDUCT.md
-- A	CONTRIBUTING.md
-- A	LICENSE
-- M	README.md
-- A	SECURITY.md
-- A	ai/brand.md
-- A	ai/content.md
-- A	ai/decisions.md
-- A	ai/deploy.md
-- A	ai/design-system.md
-- A	ai/known-issues.md
-- A	ai/maintenance.md
-- A	ai/manifest.md
-- A	ai/orchestrator.md
-- A	ai/project-state.md
-- A	ai/testing.md
-- A	ai/validation-checklist.md
+- A	.editorconfig
+- A	.gitattributes
+- A	.github/ISSUE_TEMPLATE/bug.yml
+- A	.github/ISSUE_TEMPLATE/config.yml
+- A	.github/ISSUE_TEMPLATE/feature.yml
+- A	.github/ISSUE_TEMPLATE/platform-request.yml
+- A	.github/PULL_REQUEST_TEMPLATE.md
+- A	.github/dependabot.yml
+- A	.github/workflows/ci.yml
+- M	.gitignore
 
 ## Recent history
 
+- 8fd01b3 docs: open-source docs, security policy and ai/ docs layer _(Jonathan Carbiere, 2026-10-09)_
 - 75252d1 feat: brand mark, app icon, landing site and connect-accounts guide _(Jonathan Carbiere, 2026-10-09)_
 - 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
 - 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
@@ -134,6 +130,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 9033087 feat: schedule plans at the hour this client's own posts perform best _(Jonathan Carbiere, 2026-09-23)_
 - 02a7962 feat: hold posts the Mac slept through instead of publishing them late _(Jonathan Carbiere, 2026-09-23)_
 - 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
-- 3f0e2f0 fix: register Reddit, correct OAuth credential keys, cover every adapter _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->
