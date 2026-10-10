@@ -10,7 +10,7 @@ Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one p
 
 ## Open-source release prep (2026-10-09, Agent C "Launch")
 
-Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker is KI-010) (see `ai/known-issues.md`, Resolved). Tests: 99 of 99. The repo has not been pushed to GitHub yet; badge and links assume github.com/jonacarbi/cadence.
+Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker is KI-010) (see `ai/known-issues.md`, Resolved). Tests: 99 of 99. Published at https://github.com/jonacarbi/cadence (2026-10-10); CI green on Linux, macOS and Windows.
 
 ## Next steps / TODO
 
@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 01:11:03 -03
-- **Built on commit:** fdf1d74 — fix: re-lint edited captions, retry failed Instagram processing, keep cleared credentials cleared (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 01:12:24 -03
+- **Built on commit:** e43629a — test: accept Windows path separators in the OGA image path check (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,10 +107,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	server/tests/oga-images.test.js
+- M	HANDOFF.md
 
 ## Recent history
 
+- e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
 - fdf1d74 fix: re-lint edited captions, retry failed Instagram processing, keep cleared credentials cleared _(Jonathan Carbiere, 2026-10-10)_
 - 9228823 chore: CI on Linux, macOS and Windows, issue forms and repo hygiene _(Jonathan Carbiere, 2026-10-09)_
 - 8fd01b3 docs: open-source docs, security policy and ai/ docs layer _(Jonathan Carbiere, 2026-10-09)_
@@ -120,6 +121,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 - 6a67933 feat: serve the OAuth callback over local https for providers that require it _(Jonathan Carbiere, 2026-10-03)_
 - fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
-- 9033087 feat: schedule plans at the hour this client's own posts perform best _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->
