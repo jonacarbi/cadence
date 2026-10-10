@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 13:42:17 -03
-- **Built on commit:** 0c381f2 — test: boot the real CLI on every CI platform (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 13:42:57 -03
+- **Built on commit:** c82bf00 — docs: note the cross-platform CLI smoke test in the handoff (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -92,7 +92,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 87 file(s)
+- .js — 88 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 13 file(s)
@@ -107,10 +107,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	HANDOFF.md
+- A	server/tests/agents-spawn.test.js
 
 ## Recent history
 
+- c82bf00 docs: note the cross-platform CLI smoke test in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - 0c381f2 test: boot the real CLI on every CI platform _(Jonathan Carbiere, 2026-10-10)_
 - 6969142 fix: keep browser sign-ins across restarts _(Jonathan Carbiere, 2026-10-10)_
 - 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
@@ -120,6 +121,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 9228823 chore: CI on Linux, macOS and Windows, issue forms and repo hygiene _(Jonathan Carbiere, 2026-10-09)_
 - 8fd01b3 docs: open-source docs, security policy and ai/ docs layer _(Jonathan Carbiere, 2026-10-09)_
 - 75252d1 feat: brand mark, app icon, landing site and connect-accounts guide _(Jonathan Carbiere, 2026-10-09)_
-- 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
 
 <!-- HANDOFF:AUTO:END -->
