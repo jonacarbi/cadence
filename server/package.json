@@ -12,7 +12,7 @@
     "doctor": "node --no-warnings bin/cadence.mjs doctor"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "playwright": "1.61.1"
   },
   "bin": {
