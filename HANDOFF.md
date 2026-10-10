@@ -10,7 +10,7 @@ Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one p
 
 ## Open-source release prep (2026-10-09, Agent C "Launch")
 
-Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker KI-010 followed) (see `ai/known-issues.md`, Resolved). Sessions persist across restarts (KI-008). `tests/cli.test.js` boots the real `cadence start` on Linux, macOS and Windows in CI and signs a browser session in; `tests/agents-spawn.test.js` proves Claude and Codex flags pass byte for byte through an npm-style `.cmd` shim on Windows. Still unverified: live OAuth on each platform, Gemini and opencode flags against real installs, Codex permission profiles enforced on Windows. Tests: 110 of 110. Published at https://github.com/jonacarbi/cadence (2026-10-10); CI green on Linux, macOS and Windows.
+Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker KI-010 followed) (see `ai/known-issues.md`, Resolved). Sessions persist across restarts (KI-008). `tests/cli.test.js` boots the real `cadence start` on Linux, macOS and Windows in CI and signs a browser session in; `tests/agents-spawn.test.js` proves Claude and Codex flags pass byte for byte through an npm-style `.cmd` shim on Windows. Live on macOS (2026-10-10): Codex through `runAgent` answered OK; opencode accepted Cadence's flags, but OpenCode's free `opencode/*` models refuse any run with tool restrictions (README notes it) and the owner's nvidia models were retired or timed out. Still unverified: live OAuth on each platform, Gemini CLI against a real install, a full opencode answer on a configured paid provider, Codex permission profiles enforced on Windows. Tests: 110 of 110. Published at https://github.com/jonacarbi/cadence (2026-10-10); CI green on Linux, macOS and Windows.
 
 ## Next steps / TODO
 
@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 13:44:27 -03
-- **Built on commit:** 32365ca — test: check agent CLI flags survive Windows .cmd shims (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 13:53:08 -03
+- **Built on commit:** fe76fd9 — docs: record the verified Windows spawn path and what remains unverified (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -108,9 +108,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 ## Changes in this commit
 
 - M	HANDOFF.md
+- M	README.md
 
 ## Recent history
 
+- fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
 - 32365ca test: check agent CLI flags survive Windows .cmd shims _(Jonathan Carbiere, 2026-10-10)_
 - c82bf00 docs: note the cross-platform CLI smoke test in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - 0c381f2 test: boot the real CLI on every CI platform _(Jonathan Carbiere, 2026-10-10)_
@@ -120,6 +122,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
 - fdf1d74 fix: re-lint edited captions, retry failed Instagram processing, keep cleared credentials cleared _(Jonathan Carbiere, 2026-10-10)_
 - 9228823 chore: CI on Linux, macOS and Windows, issue forms and repo hygiene _(Jonathan Carbiere, 2026-10-09)_
-- 8fd01b3 docs: open-source docs, security policy and ai/ docs layer _(Jonathan Carbiere, 2026-10-09)_
 
 <!-- HANDOFF:AUTO:END -->

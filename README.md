@@ -89,7 +89,7 @@ Open **Settings, AI agent** (or step 1 of the setup guide), pick one and press *
 | Claude Code | CLI | Uses your plan or API key, with your skills and memory |
 | Codex | CLI | |
 | Gemini | CLI | |
-| opencode | CLI | |
+| opencode | CLI | Pick a model from a provider you configured. OpenCode's free `opencode/*` models refuse runs that restrict tools, and Cadence always denies edit, shell and web |
 | OpenAI-compatible | HTTP | OpenAI, OpenRouter, Ollama, LM Studio and others: base URL, key, model |
 
 CLI agents are detected on your PATH (override with `CADENCE_CLAUDE_BIN`, `CADENCE_CODEX_BIN`, `CADENCE_GEMINI_BIN`, `CADENCE_OPENCODE_BIN`). Choose **full** context to let the agent use its own skills and memory, or **locked** to give it only what Cadence sends.
