@@ -1,18 +1,18 @@
 // Browser access: static UI (server/web), cookie sessions, and the checks that make cookies safe.
-// Sessions are random ids in memory (not HMAC-derived): logout really revokes, nothing to forge offline,
-// and a restart simply asks the user to run `npm run open` again. Cost: one re-login per restart.
+// Sessions are random ids (not HMAC-derived): logout really revokes, nothing to forge offline. Only their
+// SHA-256 is stored (sessions table), so they survive restarts and a copied database holds no usable cookie.
 // The browser never sees the owner token: `cadence open` trades it (Bearer, POST /auth/ticket) for a single-use
 // 60-second ticket, so the URL that lands in argv, `ps` and browser history is worthless once used.
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual, createHash } from 'node:crypto';
 import { createReadStream, realpathSync, statSync } from 'node:fs';
 import { extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ownerToken } from './auth.js';
+import { one, run } from './db.js';
 
 export const WEB_ROOT = realpathSync(fileURLToPath(new URL('../web', import.meta.url)));
 export const SESSION_COOKIE = 'cadence_session';
 const SESSION_TTL_MS = 7 * 24 * 3600 * 1000, MAX_SESSIONS = 20;
-const sessions = new Map(); // id -> expiry (ms)
 const tickets = new Map(); // single-use login ticket -> expiry (ms)
 const TICKET_TTL_MS = 60_000;
 
@@ -22,14 +22,15 @@ export const UI_CSP = "default-src 'self'; img-src 'self' data: blob:; style-src
 const same = (a, b) => { const x = Buffer.from(a), y = Buffer.from(b); return x.length === y.length && timingSafeEqual(x, y); };
 const cookieOf = (req) => (req.headers.cookie || '').split(';').map((c) => c.trim().split(/=(.*)/s)).find(([k]) => k === SESSION_COOKIE)?.[1] || '';
 
+const hash = (id) => createHash('sha256').update(id).digest('hex');
 export function createSession() {
   const now = Date.now();
-  for (const [id, exp] of sessions) if (exp < now) sessions.delete(id);
-  while (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value);
-  const id = randomBytes(32).toString('hex'); sessions.set(id, now + SESSION_TTL_MS); return id;
+  run('DELETE FROM sessions WHERE expires_at < ?', now);
+  run('DELETE FROM sessions WHERE id NOT IN (SELECT id FROM sessions ORDER BY expires_at DESC LIMIT ?)', MAX_SESSIONS - 1);
+  const id = randomBytes(32).toString('hex'); run('INSERT INTO sessions (id, expires_at) VALUES (?, ?)', hash(id), now + SESSION_TTL_MS); return id;
 }
-export const dropSession = (req) => sessions.delete(cookieOf(req));
-const hasSession = (req) => { const id = cookieOf(req), exp = sessions.get(id); if (!exp) return false; if (exp < Date.now()) { sessions.delete(id); return false; } return true; };
+export const dropSession = (req) => run('DELETE FROM sessions WHERE id = ?', hash(cookieOf(req)));
+const hasSession = (req) => { const id = cookieOf(req); return !!id && !!one('SELECT 1 FROM sessions WHERE id = ? AND expires_at >= ?', hash(id), Date.now()); };
 
 /** The one origin this request may legitimately come from: same scheme, same loopback host:port it was sent to. */
 export const ownOrigin = (req) => `${req.socket.encrypted ? 'https' : 'http'}://${req.headers.host}`;

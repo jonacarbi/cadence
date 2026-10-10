@@ -7,7 +7,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 ### Added
 - Bring your own agent: Claude Code, Codex, Gemini, opencode or any OpenAI-compatible endpoint, switchable in Settings.
 - Cross-platform install for macOS, Linux and Windows, with a CLI (`start`, `open`, `doctor`, `service install|uninstall|status`, `mcp`, `token`) and npm scripts `setup`, `start`, `open`, `doctor`, `test`.
-- Browser interface served by the local server, signed in through `npm run open`.
+- Browser interface served by the local server, signed in through `npm run open`. Sign-ins survive restarts; only a hash of each session is stored.
 - Automatic self-signed certificate for the https sign-in callback (Instagram, Facebook, Threads, TikTok), with per-OS trust steps in `docs/CONNECT-ACCOUNTS.md`.
 - Guided account connection with per-platform setup steps and exact redirect URIs.
 - Destination picker for Facebook Pages, Instagram accounts and Pinterest boards: connect once, then choose where the account posts from its card.

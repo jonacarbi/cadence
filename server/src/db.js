@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS analytics (
   post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE, platform TEXT NOT NULL,
   fetched_at TEXT NOT NULL DEFAULT (datetime('now')), metrics_json TEXT NOT NULL, PRIMARY KEY (post_id, platform));
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS agent_requests (
   id TEXT PRIMARY KEY, brand_id TEXT REFERENCES brands(id), campaign_id TEXT REFERENCES campaigns(id),
   input_json TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', message TEXT NOT NULL DEFAULT '',

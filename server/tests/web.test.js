@@ -65,6 +65,16 @@ test('logout revokes the session; forged cookies fail', async () => {
   assert.equal((await raw('/api/brands', { headers: { Cookie: cookie } })).status, 401);
   assert.equal((await raw('/api/brands', { headers: { Cookie: 'cadence_session=' + 'a'.repeat(64) } })).status, 401);
 });
+test('a session survives a server restart and the database only holds its hash', async () => {
+  const cookie = jar(await login()), id = cookie.split('=')[1];
+  const again = createApiServer(); const a2 = await listen(again, 0);
+  try {
+    const r = await fetch(`http://127.0.0.1:${a2.port}/auth/session`, { headers: { Cookie: cookie } });
+    assert.equal(r.status, 200);
+  } finally { await new Promise((r) => again.close(r)); }
+  const rows = db.prepare('SELECT id FROM sessions').all().map((x) => x.id);
+  assert.ok(rows.length > 0 && !rows.includes(id));
+});
 test('static UI is served with a strict CSP and path traversal is refused', async () => {
   const r = await raw('/');
   assert.equal(r.status, 200); assert.match(r.headers['content-security-policy'], /default-src 'self'/); assert.equal(r.headers['x-frame-options'], 'DENY');

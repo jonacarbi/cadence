@@ -9,7 +9,7 @@
 | KI-005 | High | Resolved | Login link now carries a single-use 60 s ticket from `POST /auth/ticket`; the owner token never enters a URL |
 | KI-006 | Medium | Resolved | UI says "run `cadence open`" but `cadence` is not on PATH after clone; correct form is `npm run open` |
 | KI-007 | Medium | Resolved | `connect.js` now shows `callback_note` and the `tls` warning (B fixed it during round 2) |
-| KI-008 | Medium | Open | Sessions are in memory: every restart or reboot signs the browser out |
+| KI-008 | Medium | Resolved | Sessions were in memory, so every restart signed the browser out. Fixed: sessions live in the `sessions` table as SHA-256 hashes (7-day expiry, 20 max), so they survive restarts and a copied database holds no usable cookie |
 | KI-009 | Medium | Open | Session cookie is host scoped, so other local servers on 127.0.0.1 receive it (logout is now POST + CSRF; Windows opener uses rundll32; schtasks "Access denied" gives an Administrator hint) |
 | KI-010 | Medium | Resolved | Facebook, Instagram and Pinterest OAuth connect the first Page, linked Instagram account or board returned. Fixed: the account card has Change Page / Change account / Change board, which lists every destination of the same sign-in (`GET /api/accounts/:id/destinations`, no tokens returned) and switches the row in place (`PUT /api/accounts/:id/destination`) |
 
