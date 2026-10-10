@@ -65,6 +65,8 @@ export function editPost(id, input, version) {
       platforms_json: JSON.stringify(next.platforms), topic: String(next.topic || ''),
       alt_text: String(next.alt_text || ''), tags: String(next.tags || ''), image_prompt: String(next.image_prompt || ''),
       assets_json: JSON.stringify(input.assets && typeof input.assets === 'object' ? textAssets(input.assets) : post.assets || {}),
+      // Re-lint the edited copy, or a fixed caption keeps its old blocking issues and approval never unlocks.
+      lint_json: JSON.stringify(next.platforms.flatMap((p) => lintCaption(next.copy?.[p] ?? '', p))),
       status: 'draft', approved_by: null, version: post.version + 1, error: null,
     });
     return postById(id);

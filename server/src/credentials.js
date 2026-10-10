@@ -53,7 +53,8 @@ export function writeEnvValue(key, value) {
   // Quote anything the reader would otherwise trim as a comment or unwrap as quotes.
   const needsQuote = /\s#|^["']/.test(clean), q = clean.includes("'") ? '"' : "'";
   if (field.secret === false && needsQuote && clean.includes(q)) throw new WorkflowError('That credential mixes quotes and " #" in a way the settings file cannot store');
-  if (clean) lines.push(`${key}=${field.secret === false ? (needsQuote ? q + clean + q : clean) : sealEnvValue(clean)}`);
+  // A cleared key stays as `KEY=`: the first definition wins, so this keeps an older repo-root .env value from returning on restart.
+  lines.push(`${key}=${!clean ? '' : field.secret === false ? (needsQuote ? q + clean + q : clean) : sealEnvValue(clean)}`);
   // Temp file + rename: a crash mid-write must not truncate every saved credential. The new file is 0600 from birth.
   const tmp = `${ENV_PATH}.${process.pid}.tmp`;
   writeFileSync(tmp, `${lines.filter((l, i) => l.trim() || i < lines.length - 1).join('\n').trimEnd()}\n`, { mode: 0o600 });

@@ -16,14 +16,15 @@ export const oauth = {
   },
 };
 
+// Both failures below happen before media_publish, so nothing went out and a retry is safe.
 async function waitReady(auth, id) {
   for (let i = 0; i < 20; i++) {
     const s = await api(`${G}/${id}?fields=status_code&access_token=${auth.access_token}`);
     if (s.status_code === "FINISHED") return;
-    if (s.status_code === "ERROR") throw new Error("instagram container error");
+    if (s.status_code === "ERROR") throw Object.assign(new Error("Instagram could not process the media"), { definitelyNotSent: true, retryable: true });
     await new Promise((r) => setTimeout(r, 3000));
   }
-  throw new Error('Instagram media processing timed out before publication');
+  throw Object.assign(new Error('Instagram media processing timed out before publication'), { definitelyNotSent: true, retryable: true });
 }
 
 export async function publish({ auth: a, account, text, mediaUrls, altText }) {

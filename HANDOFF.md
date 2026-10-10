@@ -10,7 +10,7 @@ Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one p
 
 ## Open-source release prep (2026-10-09, Agent C "Launch")
 
-Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed (see `ai/known-issues.md`, Resolved). Tests: 97 of 97. The repo has not been pushed to GitHub yet; badge and links assume github.com/jonacarbi/cadence.
+Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker is KI-010) (see `ai/known-issues.md`, Resolved). Tests: 99 of 99. The repo has not been pushed to GitHub yet; badge and links assume github.com/jonacarbi/cadence.
 
 ## Next steps / TODO
 
@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-09 20:29:41 -03
-- **Built on commit:** 8fd01b3 — docs: open-source docs, security policy and ai/ docs layer (Jonathan Carbiere, 2026-10-09)
+- **Last updated:** 2026-10-10 01:09:14 -03
+- **Built on commit:** 9228823 — chore: CI on Linux, macOS and Windows, issue forms and repo hygiene (Jonathan Carbiere, 2026-10-09)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,19 +107,18 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- A	.editorconfig
-- A	.gitattributes
-- A	.github/ISSUE_TEMPLATE/bug.yml
-- A	.github/ISSUE_TEMPLATE/config.yml
-- A	.github/ISSUE_TEMPLATE/feature.yml
-- A	.github/ISSUE_TEMPLATE/platform-request.yml
-- A	.github/PULL_REQUEST_TEMPLATE.md
-- A	.github/dependabot.yml
-- A	.github/workflows/ci.yml
-- M	.gitignore
+- M	CHANGELOG.md
+- M	HANDOFF.md
+- M	ai/known-issues.md
+- M	server/src/credentials.js
+- M	server/src/providers/instagram.js
+- M	server/src/workflow.js
+- M	server/tests/adapters.test.js
+- M	server/tests/extra.test.js
 
 ## Recent history
 
+- 9228823 chore: CI on Linux, macOS and Windows, issue forms and repo hygiene _(Jonathan Carbiere, 2026-10-09)_
 - 8fd01b3 docs: open-source docs, security policy and ai/ docs layer _(Jonathan Carbiere, 2026-10-09)_
 - 75252d1 feat: brand mark, app icon, landing site and connect-accounts guide _(Jonathan Carbiere, 2026-10-09)_
 - 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
@@ -129,6 +128,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
 - 9033087 feat: schedule plans at the hour this client's own posts perform best _(Jonathan Carbiere, 2026-09-23)_
 - 02a7962 feat: hold posts the Mac slept through instead of publishing them late _(Jonathan Carbiere, 2026-09-23)_
-- 168a62b fix: name a wedged ChatGPT session for what it is _(Jonathan Carbiere, 2026-09-23)_
 
 <!-- HANDOFF:AUTO:END -->

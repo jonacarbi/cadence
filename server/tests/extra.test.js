@@ -231,8 +231,8 @@ test('credentials are written to the env file, never read back, and never forge 
   assert.equal(config.openEnvValue(sealed), 'sk-test-value');
   assert.equal(JSON.stringify(await (await req('/api/credentials')).json()).includes('sk-test-value'), false);
 
-  setCredential('OPENAI_API_KEY', ''); // Clearing removes the line rather than writing an empty one.
-  assert.equal(readFileSync(envPath, 'utf8').includes('OPENAI_API_KEY'), false);
+  setCredential('OPENAI_API_KEY', ''); // Clearing writes an empty override so an older repo-root .env value cannot return on restart.
+  assert.match(readFileSync(envPath, 'utf8'), /^OPENAI_API_KEY=$/m);
   assert.equal(listCredentials().find((f) => f.key === 'OPENAI_API_KEY').set, false);
 
   // A plain (non-secret) value with " #" is quoted on write so the reader does not trim it as a comment.
@@ -364,4 +364,13 @@ test('a carousel slide cannot embed a local file through its own image path', as
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/render.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /\bs\.image/); // every slide uses the post's generated image
+});
+
+test('editing a caption re-lints it, so a fixed post can be approved', async () => {
+  const { run } = await import('../src/db.js');
+  const brand = await (await req('/api/brands', { method: 'POST', body: { url: 'https://relint.example' } })).json();
+  const post = await (await req('/api/posts', { token: agentToken, method: 'POST', body: { brand_id: brand.id, platforms: ['mock'], copy: { mock: 'Fine text' }, scheduled_at: future() } })).json();
+  run(`UPDATE posts SET lint_json = ? WHERE id = ?`, JSON.stringify([{ severity: 'block', platform: 'mock', message: 'old problem' }]), post.id);
+  const edited = await (await req(`/api/posts/${post.id}`, { method: 'PATCH', body: { version: 1, copy: { mock: 'Fixed text' } } })).json();
+  assert.equal(edited.lint.some((i) => i.severity === 'block'), false);
 });

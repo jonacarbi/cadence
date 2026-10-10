@@ -144,3 +144,10 @@ test('a rejection is classified so the scheduler knows whether to retry or pause
   fail(400, { error: { code: 368, message: 'action blocked' } });
   await assert.rejects(publish('facebook', { access_token: 't' }), (e) => e.actionBlocked === true); // Meta's 368: retrying makes it worse.
 });
+
+test('Instagram media that fails processing is marked unsent and retryable, never uncertain', async (t) => {
+  const calls = route(t, [supabase, ['/media_publish', () => Response.json({ id: 'should-not-happen' })], ['status_code', () => Response.json({ status_code: 'ERROR' })], ['/media', () => Response.json({ id: 'container-1' })]]);
+  await assert.rejects(providerFor('instagram').publish({ post: post('instagram', 'A caption', { image_path: IMAGE }), account: { id: 'a', external_id: 'ig-1' }, auth: { access_token: 't' } }),
+    (e) => e.definitelyNotSent === true && e.retryable === true);
+  assert.equal(calls.some((c) => c.url.includes('/media_publish')), false);
+});

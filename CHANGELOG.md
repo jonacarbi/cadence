@@ -16,6 +16,9 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Changed
 
+- Editing a caption re-checks it, so fixing a blocking issue unlocks approval.
+- Instagram media that fails processing is retried instead of being marked uncertain.
+- Clearing a credential stays cleared after a restart.
 - Drafts can no longer name the files the publisher uploads: generated media paths are server-owned, and every upload must be an image inside Cadence's media folders.
 - Rescheduling a partly published post only re-queues the accounts that never got it.
 - Carousel slides always use the post's generated image; a draft cannot point a slide at a local file.
