@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 13:34:22 -03
-- **Built on commit:** 744ac22 — feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 13:40:50 -03
+- **Built on commit:** 6969142 — fix: keep browser sign-ins across restarts (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -92,7 +92,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 86 file(s)
+- .js — 87 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 13 file(s)
@@ -107,15 +107,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	CHANGELOG.md
-- M	HANDOFF.md
-- M	ai/known-issues.md
-- M	server/src/db.js
-- M	server/src/web.js
-- M	server/tests/web.test.js
+- A	server/tests/cli.test.js
 
 ## Recent history
 
+- 6969142 fix: keep browser sign-ins across restarts _(Jonathan Carbiere, 2026-10-10)_
 - 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
 - 596dc07 docs: record the GitHub release in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
@@ -125,6 +121,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 75252d1 feat: brand mark, app icon, landing site and connect-accounts guide _(Jonathan Carbiere, 2026-10-09)_
 - 96fc014 feat: cross-platform browser studio with cookie sign-in and setup guide _(Jonathan Carbiere, 2026-10-09)_
 - 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
-- da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 
 <!-- HANDOFF:AUTO:END -->
