@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="brand/logo.svg" alt="Cadence" height="64">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="brand/logo-dark.svg"><img src="brand/logo.svg" alt="Cadence" height="64"></picture>
 </p>
 
 <p align="center"><strong>Your brand, on beat.</strong><br>A local-first social media agent that runs on your own AI agent.</p>
 
 <p align="center">
   <a href="https://github.com/jonacarbi/cadence/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/jonacarbi/cadence/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17140F"></a>
-  <img alt="Node 24" src="https://img.shields.io/badge/node-24-E5482B">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0C1233"></a>
+  <img alt="Node 24" src="https://img.shields.io/badge/node-24-3434E8">
   <img alt="macOS, Linux, Windows" src="https://img.shields.io/badge/os-macOS%20%7C%20Linux%20%7C%20Windows-6B645A">
 </p>
 

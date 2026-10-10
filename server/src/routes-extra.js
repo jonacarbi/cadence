@@ -119,10 +119,10 @@ export async function oauthCallback(url, res) {
   catch (e) { ok = false; msg = e.message; }
   res.writeHead(ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'" });
   res.end(`<!doctype html><html lang=en><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Cadence</title><style>
-:root{--paper:#F3EFE6;--ink:#17140F;--beat:#E5482B;--staff:#D9D2C3;--muted:#6B645A;--ok:#2F7D4F}@media(prefers-color-scheme:dark){:root{--paper:#121110;--ink:#EDE8DE;--beat:#FF6A4A;--staff:#2A2724;--muted:#9A9286;--ok:#5BB382}}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font:17px/1.5 "Hanken Grotesk",system-ui,sans-serif}
-main{max-width:30rem;padding:2rem 1.5rem;border-top:3px solid ${ok ? 'var(--ok)' : 'var(--beat)'};background-image:repeating-linear-gradient(var(--staff) 0 1px,transparent 1px 12px);background-size:100% 100%}
-h1{font:600 1.7rem/1.2 Newsreader,Georgia,serif;margin:.2rem 0 .8rem}p{margin:.4rem 0}.m{color:var(--muted);font-size:.9rem}a{color:var(--beat)}</style>
+:root{--paper:#EEF1F8;--ink:#0C1233;--beat:#3434E8;--bad:#B4232F;--staff:#D3D9E8;--muted:#4A5173;--ok:#0F7A4A}@media(prefers-color-scheme:dark){:root{--paper:#080B1E;--ink:#E8EBF7;--beat:#9499FF;--bad:#FF7A85;--staff:#222A55;--muted:#A0A7CA;--ok:#4CD38E}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:30rem;padding:2rem 1.5rem;border-top:3px solid ${ok ? 'var(--ok)' : 'var(--bad)'};background-image:repeating-linear-gradient(var(--staff) 0 1px,transparent 1px 12px);background-size:100% 100%}
+h1{font:600 1.7rem/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.02em;margin:.2rem 0 .8rem}p{margin:.4rem 0}.m{color:var(--muted);font-size:.9rem}a{color:var(--beat)}</style>
 <main><p class=m>Cadence</p><h1>${ok ? 'Connected' : 'Could not connect'}</h1><p>${esc(msg)}</p><p>${ok ? 'You can close this tab and return to Cadence.' : 'Return to Cadence, open Accounts and try again.'}</p><p class=m><a href="http://127.0.0.1:${PORT}/">Open Cadence</a></p></main>`);
   return true;
 }

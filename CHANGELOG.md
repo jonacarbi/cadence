@@ -17,6 +17,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Changed
 
+- New visual identity: indigo and lime palette, Funnel Display and Onest type, recolored mark and app icon. The landing page is rebuilt around an interactive sample run.
 - Editing a caption re-checks it, so fixing a blocking issue unlocks approval.
 - Instagram media that fails processing is retried instead of being marked uncertain.
 - Clearing a credential stays cleared after a restart.

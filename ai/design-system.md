@@ -4,16 +4,18 @@ Source: `site/style.css`. The Mac app and web UI use the same tokens (Agent B).
 
 | Token | Light | Dark |
 |---|---|---|
-| paper | #F3EFE6 | #121110 |
-| ink | #17140F | #EDE8DE |
-| beat | #E5482B | #FF6A4A |
-| staff | #D9D2C3 | #2A2724 |
-| muted | #6B645A | #9A9286 |
-| ok | #2F7D4F | not set |
-| warn | #B7791F | not set |
+| paper | #EEF1F8 | #080B1E |
+| raised | #FFFFFF | #10163A |
+| ink | #0C1233 | #E8EBF7 |
+| signal (site) / beat (app) | #3434E8 | #9499FF |
+| beat (site, lime highlight) | #C6F432 | #CFFA45 |
+| line / staff | #D3D9E8 | #222A55 |
+| muted | #4A5173 | #A0A7CA |
+| ok | #0F7A4A | #4CD38E |
+| warn | #8A5A00 | #F2C14E |
 
-Type: Newsreader (display, serif) and Hanken Grotesk (UI, tabular-nums). Weights 400, 500, italic 400.
+Type: Funnel Display (display, 400-700) and Onest (UI, 400-600); system mono for code and labels. The app self-hosts both in `server/web/fonts`; the site loads them from Google Fonts.
 
-Rules: one accent (beat). Radius 6px everywhere. Rules and measure lines use staff. Motion is one beat pulse on the hero dot; disabled under `prefers-reduced-motion`. Dark follows the system, with a manual toggle stored in localStorage.
+Rules: indigo ink with one electric indigo signal. Lime is reserved for "the beat": the h1 highlight, the active step dot, the "you" tag and the mark's dot; never for text on light. Dark follows the system, with a manual toggle stored in localStorage. Motion: highlight sweep and the hero stepper (auto-advance stops on interaction, off under `prefers-reduced-motion`).
 
-Layout: max width 1280px, fluid gutter `clamp(16px,4vw,48px)`. Two-column breakpoint at 760px.
+Layout: max width 1280px, fluid gutter `clamp(16px,4vw,48px)`. Two-column breakpoint at 860px.

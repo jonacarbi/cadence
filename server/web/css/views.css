@@ -8,7 +8,7 @@
 
 /* Signed-out gate + noscript */
 .gate{max-width:34rem;margin:12vh auto;padding:var(--s6) var(--gutter);display:grid;gap:var(--s4)}
-.gate h1 em{font-style:italic;color:var(--beat)}
+.gate h1 em{font-style:normal;color:var(--beat)}
 .gate-steps{margin:0;padding-left:1.25rem;display:grid;gap:var(--s2)}
 .noscript{max-width:34rem;margin:20vh auto;padding:var(--s5);text-align:center}
 

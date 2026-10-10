@@ -39,3 +39,32 @@ document.getElementById('theme')?.addEventListener('click', () => {
   root.dataset.theme = dark ? 'light' : 'dark';
   try { localStorage.setItem('theme', root.dataset.theme); } catch {}
 });
+
+// Sample run in the hero: five panes, auto-advancing until the visitor takes over.
+const cal = document.getElementById('cal');
+if (cal) {
+  const plan = { 2: 1, 4: 2, 7: 3, 9: 1, 11: 2, 14: 3, 16: 1, 18: 2, 21: 3, 23: 1, 25: 2, 28: 3 };
+  cal.append(...Array.from({ length: 35 }, (_, d) => {
+    const i = document.createElement('i');
+    if (plan[d]) i.dataset.p = plan[d];
+    return i;
+  }));
+}
+const stepBtns = [...document.querySelectorAll('[data-step]')];
+const panes = [...document.querySelectorAll('[data-pane]')];
+let step = 0, timer, held = false;
+const go = n => {
+  step = n;
+  stepBtns.forEach((b, i) => b.setAttribute('aria-pressed', i === n));
+  panes.forEach((p, i) => p.classList.toggle('is-on', i === n));
+};
+const stop = () => clearInterval(timer);
+stepBtns.forEach((b, i) => b.addEventListener('click', () => { held = true; stop(); go(i); }));
+if (panes.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const start = () => { stop(); if (!held) timer = setInterval(() => go((step + 1) % panes.length), 3400); };
+  const win = document.querySelector('.win');
+  win.addEventListener('pointerenter', stop);
+  win.addEventListener('pointerleave', start);
+  win.addEventListener('focusin', stop);
+  start();
+}

@@ -82,7 +82,7 @@ test('static UI is served with a strict CSP and path traversal is refused', asyn
   for (const p of ['/../src/config.js', '/%2e%2e/src/config.js', '/..%2fsrc/config.js', '/%2e%2e%2f%2e%2e%2fpackage.json', '/js/..%5c..%5csrc/config.js', '/.hidden', '/fonts/', '/%00', '/js/%00.js'])
     assert.notEqual((await raw(p)).status, 200, p);
   assert.equal((await raw('/', { method: 'POST' })).status, 401);
-  const font = await raw('/fonts/hanken-grotesk-latin-wght-normal.woff2', { method: 'HEAD' });
+  const font = await raw('/fonts/onest-latin-wght-normal.woff2', { method: 'HEAD' });
   assert.match(font.headers['cache-control'], /immutable/);
 });
 test('bearer clients behave as before', async () => {
