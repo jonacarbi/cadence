@@ -31,7 +31,7 @@ const {generateWithOGA}=await import('../src/oga-images.js');
 test.after(()=>rmSync(dir,{recursive:true,force:true}));
 test('image generation invokes MCP with CatGPT pinned and closes the process',async()=>{
  const path=await generateWithOGA('Coffee still life',{brandSlug:'coffee',aspect:'portrait'});
- assert.ok(existsSync(path));assert.match(path,/coffee\/oga\/test.png$/);
+ assert.ok(existsSync(path));assert.match(path,/coffee[\\/]oga[\\/]test\.png$/);
  const pid=Number(readFileSync(join(dir,'app/assets/coffee/oga/pid'),'utf8'));
  assert.throws(()=>process.kill(pid,0),{code:'ESRCH'});
 });
