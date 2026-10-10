@@ -6,6 +6,7 @@ import { PLATFORMS } from "./providers/index.js";
 import { META } from "./providers/registry.js";
 import { insert, update, encrypt, decrypt, logEvent, hydrate, one, all } from "./db.js";
 import { fetchPublic } from './network.js';
+import { WorkflowError } from "./workflow.js";
 
 const pending = new Map(); // state → {platform, verifier, brandId, createdAt}
 
@@ -69,7 +70,7 @@ async function exchange(query) {
   let auth = { access_token: tok.access_token, refresh_token: tok.refresh_token, expires_at: tok.expires_in ? Date.now() + tok.expires_in * 1000 : null, client_id, client_secret };
   if (["instagram", "facebook"].includes(p.platform)) auth = await longLivedMeta(auth);
   if (p.platform === "threads") auth = await longLivedThreads(auth);
-  const who = await def.identity(auth);
+  const who = def.destinations ? (await def.destinations(auth))[0] : await def.identity(auth);
   if (who.extraAuth) auth = { ...auth, ...who.extraAuth };
   // Reconnecting the same account refreshes it in place (history and schedule stay attached) and clears the "reconnect" flag.
   const known = one("SELECT id FROM accounts WHERE brand_id IS ? AND platform = ? AND external_id = ?", p.brandId, p.platform, String(who.id));
@@ -77,6 +78,35 @@ async function exchange(query) {
   if (known) update("accounts", id, { label: who.label, auth_enc: encrypt(auth), failures: 0, last_error: null, paused: 0, needs_reconnect: 0 });
   logEvent("info", "account.connected", `${PLATFORMS[p.platform].name} ${who.label}`, { id, brandId: p.brandId });
   return { id, platform: p.platform, label: who.label };
+}
+
+const destKey = (d) => String(d.key ?? d.id);
+async function destinationsFor(accountId) {
+  const account = one("SELECT * FROM accounts WHERE id = ?", accountId);
+  if (!account) throw new WorkflowError("Account not found", 404);
+  const def = META[account.platform]?.mod.oauth;
+  if (!def?.destinations) throw new WorkflowError("This platform has a single destination per account");
+  const auth = decrypt(account.auth_enc);
+  return { account, auth, list: await def.destinations(auth) };
+}
+
+/** Pages, Instagram accounts or boards this sign-in can post to. Never returns their tokens. */
+export async function listDestinations(accountId) {
+  const { account, auth, list } = await destinationsFor(accountId);
+  const current = (d) => String(d.id) === String(account.external_id) && (d.extraAuth?.board_id ?? null) === (auth.board_id ?? null);
+  return list.map((d) => ({ key: destKey(d), label: d.label, current: current(d) }));
+}
+
+/** Point an account at another destination from the same sign-in; history and schedule stay attached to the row. */
+export async function setDestination(accountId, key) {
+  const { account, auth, list } = await destinationsFor(accountId);
+  const d = list.find((x) => destKey(x) === String(key));
+  if (!d) throw new WorkflowError("That destination is not available to this sign-in");
+  if (one("SELECT id FROM accounts WHERE brand_id IS ? AND platform = ? AND external_id = ? AND id != ?", account.brand_id, account.platform, String(d.id), account.id))
+    throw new WorkflowError("This brand already has that destination connected", 409);
+  update("accounts", account.id, { external_id: String(d.id), label: d.label, auth_enc: encrypt({ ...auth, ...d.extraAuth }) });
+  logEvent("info", "account.destination", `${PLATFORMS[account.platform].name} ${d.label}`, { id: account.id });
+  return { id: account.id, platform: account.platform, label: d.label };
 }
 
 /** Threads hands out a 1-hour token; swap it for the 60-day one (renewable while still valid). */

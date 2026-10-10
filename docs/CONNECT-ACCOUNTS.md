@@ -50,7 +50,7 @@ Instagram, Threads, Reddit and TikTok fetch images from a public URL. Configure 
 
 ## Per platform notes
 
-**Meta (Facebook, Instagram, Threads).** Create an app at developers.facebook.com. In development mode only people with a role on the app can authorize it, which is enough to post to your own accounts. Posting for other people requires app review and business verification. Instagram publishing requires a Business or Creator account connected to a Facebook Page.
+**Meta (Facebook, Instagram, Threads).** Create an app at developers.facebook.com. In development mode only people with a role on the app can authorize it, which is enough to post to your own accounts. Posting for other people requires app review and business verification. Instagram publishing requires a Business or Creator account connected to a Facebook Page. Sign-in connects the first Page (or linked Instagram account) Meta returns; use Change Page or Change account on the account card to pick another one.
 
 **X.** Create a project and app in the X developer portal and enable OAuth 2.0 with write access. Whether posting is available depends on your API tier at the time. Check current pricing before you rely on it.
 
@@ -58,7 +58,7 @@ Instagram, Threads, Reddit and TikTok fetch images from a public URL. Configure 
 
 **TikTok.** Register an app and add the Content Posting API. Until your app passes TikTok's audit, posts are limited to private or restricted visibility. Verify the domain that serves your media in the developer portal.
 
-**Pinterest.** Create an app and request access. New apps start with trial access.
+**Pinterest.** Create an app and request access. New apps start with trial access. Sign-in connects your first board; Change board on the account card switches it.
 
 **Reddit.** Create a "web app" at reddit.com/prefs/apps and set the redirect URI. By default posts go to the connected account's own profile.
 

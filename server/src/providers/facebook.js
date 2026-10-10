@@ -8,11 +8,11 @@ export const oauth = {
   tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
   scope: "pages_show_list,pages_manage_posts,pages_read_engagement,business_management",
   pkce: false,
-  async identity(auth) {
+  // Every Page the person manages; the connect flow takes the first, the account card can switch.
+  async destinations(auth) {
     const pages = await api(`${G}/me/accounts?fields=id,name,access_token&access_token=${auth.access_token}`);
-    const p = pages.data[0];
-    if (!p) throw new Error("No Facebook Page found");
-    return { id: p.id, label: p.name, extraAuth: { page_token: p.access_token } };
+    if (!pages.data?.length) throw new Error("No Facebook Page found");
+    return pages.data.map((p) => ({ id: p.id, label: p.name, extraAuth: { page_token: p.access_token } }));
   },
 };
 

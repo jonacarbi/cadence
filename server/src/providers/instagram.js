@@ -8,11 +8,11 @@ export const oauth = {
   tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
   scope: "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,business_management",
   pkce: false,
-  async identity(auth) {
+  async destinations(auth) {
     const pages = await api(`${G}/me/accounts?fields=instagram_business_account{id,username}&access_token=${auth.access_token}`);
-    const p = pages.data.find((x) => x.instagram_business_account);
-    if (!p) throw new Error("No Instagram business account linked to a Facebook Page you manage");
-    return { id: p.instagram_business_account.id, label: `@${p.instagram_business_account.username}` };
+    const ig = (pages.data || []).map((x) => x.instagram_business_account).filter(Boolean);
+    if (!ig.length) throw new Error("No Instagram business account linked to a Facebook Page you manage");
+    return ig.map((a) => ({ id: a.id, label: `@${a.username}` }));
   },
 };
 

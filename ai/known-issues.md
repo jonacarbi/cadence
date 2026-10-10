@@ -11,7 +11,7 @@
 | KI-007 | Medium | Resolved | `connect.js` now shows `callback_note` and the `tls` warning (B fixed it during round 2) |
 | KI-008 | Medium | Open | Sessions are in memory: every restart or reboot signs the browser out |
 | KI-009 | Medium | Open | Session cookie is host scoped, so other local servers on 127.0.0.1 receive it (logout is now POST + CSRF; Windows opener uses rundll32; schtasks "Access denied" gives an Administrator hint) |
-| KI-010 | Medium | Open | Facebook, Instagram and Pinterest OAuth connect the first Page, linked Instagram account or board returned; there is no picker yet. Connect from the right Page/board or reorder on the platform side |
+| KI-010 | Medium | Resolved | Facebook, Instagram and Pinterest OAuth connect the first Page, linked Instagram account or board returned. Fixed: the account card has Change Page / Change account / Change board, which lists every destination of the same sign-in (`GET /api/accounts/:id/destinations`, no tokens returned) and switches the row in place (`PUT /api/accounts/:id/destination`) |
 
 ## KI-001
 Observed: grep for 9Router and CatGPT. Impact: confuses public users. Action: Agent A to move to an optional legacy preset.
@@ -35,6 +35,6 @@ Codex judge round 5 (2026-10-09, FAIL, 2 items) fixed the same day: `frames`, `s
 
 Codex judge round 6 (2026-10-09, FAIL, 2 items) fixed the same day: the carousel renderer uses the post's generated image for every slide and ignores any `slides[].image` path from a draft. An action block or tripped breaker now pauses every account row with the same platform and `external_id`, so the same remote account connected under another brand stops too.
 
-Codex judge round 7 (2026-10-10, PASS WITH FIXES, 4 MEDIUM): editing a post re-lints its captions so a fixed caption unlocks approval; Instagram media that fails processing before `media_publish` is marked definitely-not-sent and retryable; clearing a credential writes `KEY=` so an older repo-root `.env` value cannot return on restart. The destination picker is open as KI-010.
+Codex judge round 7 (2026-10-10, PASS WITH FIXES, 4 MEDIUM): editing a post re-lints its captions so a fixed caption unlocks approval; Instagram media that fails processing before `media_publish` is marked definitely-not-sent and retryable; clearing a credential writes `KEY=` so an older repo-root `.env` value cannot return on restart. The destination picker (KI-010) was added afterwards.
 
 KI-001, KI-003, KI-005, KI-006 (2026-10-09). Round-2 engine fixes the same day: agents run in an empty `agent-work` dir with Cadence secrets stripped from their env; Windows `findBin` skips the extensionless npm shim; data-folder `.env` wins over a repo `.env`; services persist `CADENCE_DIR` and `PORT`; `.env` writes are atomic; expired TLS certs regenerate.

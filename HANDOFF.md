@@ -10,7 +10,7 @@ Cadence 0.2.0 adds the Content agent tab: website/prompt brand onboarding, one p
 
 ## Open-source release prep (2026-10-09, Agent C "Launch")
 
-Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker is KI-010) (see `ai/known-issues.md`, Resolved). Tests: 99 of 99. Published at https://github.com/jonacarbi/cadence (2026-10-10); CI green on Linux, macOS and Windows.
+Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ landing page deployed at https://cadence-social-agent.netlify.app (Netlify project cadence-social-agent), LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CHANGELOG (0.3.0 Unreleased), .github (CI, issue forms, PR template, dependabot), docs/CONNECT-ACCOUNTS.md, docs/SAFETY.md, README rewrite, ai/ docs layer. Round 2: README, docs/, site (redeployed) and ai/ were re-verified against server/bin, safety.js, platforms-setup.js and the web UI, and the install path (`npm run setup`, `npm start`, `npm run open`, `npm run doctor`) was run from a fresh clone. Open security findings from the browser-auth red-team are in `ai/known-issues.md` (KI-005 to KI-009). Codex judge rounds 1 (11 items), 2 (8 items), 3 (8 items), 4 (3 items), 5 (2 items) and 6 (2 items) returned FAIL; all items were fixed. Round 7 returned PASS WITH FIXES (4 medium; 3 fixed, the destination picker KI-010 followed) (see `ai/known-issues.md`, Resolved). Tests: 102 of 102. Published at https://github.com/jonacarbi/cadence (2026-10-10); CI green on Linux, macOS and Windows.
 
 ## Next steps / TODO
 
@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 01:12:24 -03
-- **Built on commit:** e43629a — test: accept Windows path separators in the OGA image path check (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 12:00:34 -03
+- **Built on commit:** 596dc07 — docs: record the GitHub release in the handoff (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -92,7 +92,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 85 file(s)
+- .js — 86 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 13 file(s)
@@ -107,10 +107,21 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
+- M	CHANGELOG.md
 - M	HANDOFF.md
+- M	ai/known-issues.md
+- M	docs/CONNECT-ACCOUNTS.md
+- M	server/src/api.js
+- M	server/src/oauth.js
+- M	server/src/providers/facebook.js
+- M	server/src/providers/instagram.js
+- M	server/src/providers/pinterest.js
+- A	server/tests/destinations.test.js
+- M	server/web/js/views/accounts.js
 
 ## Recent history
 
+- 596dc07 docs: record the GitHub release in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
 - fdf1d74 fix: re-lint edited captions, retry failed Instagram processing, keep cleared credentials cleared _(Jonathan Carbiere, 2026-10-10)_
 - 9228823 chore: CI on Linux, macOS and Windows, issue forms and repo hygiene _(Jonathan Carbiere, 2026-10-09)_
@@ -120,6 +131,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 340d99e feat: pluggable agents, guided account setup and posting safety rails _(Jonathan Carbiere, 2026-10-09)_
 - da701f0 chore: run text and design-loop critics on Sonnet 5.5 _(Jonathan Carbiere, 2026-10-03)_
 - 6a67933 feat: serve the OAuth callback over local https for providers that require it _(Jonathan Carbiere, 2026-10-03)_
-- fff3654 fix: detach the login-shell PATH probe so it can't steal the parent terminal _(Jonathan Carbiere, 2026-10-03)_
 
 <!-- HANDOFF:AUTO:END -->

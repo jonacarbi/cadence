@@ -4,6 +4,8 @@ import { get, send, maybe } from '../api.js';
 import { state, loadAccounts } from '../state.js';
 import { platformCard } from '../connect.js';
 
+const PICKS = { facebook: 'Change Page', instagram: 'Change account', pinterest: 'Change board' };
+
 export default async function render(main, ctx) {
   const list = h('div', { class: 'grid' }), add = h('div', { class: 'stack' });
   const draw = async () => {
@@ -12,11 +14,16 @@ export default async function render(main, ctx) {
       await loadAccounts(); const mine = state.accounts.filter((a) => a.brand_id === state.brandId);
       const row = (a) => {
         const pause = btn(a.paused ? 'Resume' : 'Pause', () => busy(pause, async () => { await send('POST', `/api/accounts/${a.id}/pause`, { paused: !a.paused }); toast(a.paused ? 'Resumed' : 'Paused'); draw(); }), { cls: 'sm' });
+        const pick = PICKS[a.platform] && btn(PICKS[a.platform], (e) => busy(e.currentTarget, async () => {
+          const opts = await get(`/api/accounts/${a.id}/destinations`);
+          const sel = h('select', { 'aria-label': PICKS[a.platform], onchange: () => busy(sel, async () => { await send('PUT', `/api/accounts/${a.id}/destination`, { key: sel.value }); toast('Destination changed'); draw(); }) }, opts.map((o) => h('option', { value: o.key, selected: o.current }, o.label)));
+          pick.replaceWith(sel);
+        }), { cls: 'sm ghost', title: 'Post to another Page, account or board from the same sign-in' });
         const trust = btn(a.trusted ? 'Untrust' : 'Trust', () => busy(trust, async () => { await send('PATCH', `/api/accounts/${a.id}`, { trusted: !a.trusted }); draw(); }), { cls: 'sm ghost', title: 'Trusted accounts can auto-schedule when autonomy allows it' });
         return h('article', { class: 'card stack' }, h('div', { class: 'row' }, h('h3', null, a.label), h('span', { class: 'small muted' }, cap(a.platform))),
           h('div', { class: 'row' }, a.needs_reconnect ? badge('Needs reconnect', 'beat') : a.paused ? badge('Paused', 'warn') : badge('Connected', 'ok'), !!a.trusted && badge('Trusted')),
           a.last_error && h('p', { class: 'small err-text' }, a.last_error),
-          h('div', { class: 'row' }, a.needs_reconnect && btn('Reconnect', (e) => busy(e.currentTarget, async () => { const { url } = await get(`/oauth/${a.platform}/start?brand_id=${encodeURIComponent(a.brand_id)}`); if (!/^https:\/\//.test(url)) throw new Error('Save the app credentials below first.'); window.open(url, '_blank', 'noopener,noreferrer'); toast('Approve in the new tab, then reload.'); }), { cls: 'sm primary' }), pause, trust));
+          h('div', { class: 'row' }, a.needs_reconnect && btn('Reconnect', (e) => busy(e.currentTarget, async () => { const { url } = await get(`/oauth/${a.platform}/start?brand_id=${encodeURIComponent(a.brand_id)}`); if (!/^https:\/\//.test(url)) throw new Error('Save the app credentials below first.'); window.open(url, '_blank', 'noopener,noreferrer'); toast('Approve in the new tab, then reload.'); }), { cls: 'sm primary' }), pause, trust, pick));
       };
       clear(list).append(...(mine.length ? mine.map(row) : [empty('No accounts connected', 'Connect a platform below. Posts can only go out once a brand has an account to publish to.')]));
     } catch (e) { clear(list).append(errorBox(e, draw)); }

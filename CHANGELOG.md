@@ -10,6 +10,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 - Browser interface served by the local server, signed in through `npm run open`.
 - Automatic self-signed certificate for the https sign-in callback (Instagram, Facebook, Threads, TikTok), with per-OS trust steps in `docs/CONNECT-ACCOUNTS.md`.
 - Guided account connection with per-platform setup steps and exact redirect URIs.
+- Destination picker for Facebook Pages, Instagram accounts and Pinterest boards: connect once, then choose where the account posts from its card.
 - Safety settings: jitter, minimum gap between posts and account warm-up. A rate-limit (429) pauses the whole remote account, and caps follow the remote account even when it is connected under several brands.
 - `cadence browser` (run by `npm run setup`) reuses Chrome, Edge or Chromium, or downloads Playwright's Chromium.
 - Open-source project files, CI on Linux, macOS and Windows, brand assets and a landing page.

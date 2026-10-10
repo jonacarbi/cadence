@@ -10,6 +10,7 @@ import { capabilities, PLATFORMS } from './providers/index.js';
 import { discoverDesignSystems, listDesignSystems, importDesignSystem, activateDesignSystem } from './design-systems.js';
 import { createCampaign, listCampaigns } from './campaigns.js';
 import { resumeJob } from './jobs.js';
+import { listDestinations, setDestination } from './oauth.js';
 import { extraRoutes, oauthCallback } from './routes-extra.js';
 import { createAgentRequest, listRequests, requestById, continueRequest, scheduleRequest } from './content-agent.js';
 import { readiness } from './readiness.js';
@@ -80,6 +81,9 @@ export function createApiServer() {
    }
    if(path==='/api/accounts' && req.method==='GET') return send(200,all('SELECT * FROM accounts ORDER BY label').map(hydrate));
    // No raw account POST: accounts only come from OAuth or /api/accounts/manual, which resolve the canonical remote id.
+   const destMatch=path.match(/^\/api\/accounts\/([^/]+)\/destinations?$/);
+   if(destMatch && req.method==='GET') { owner(); return send(200,await listDestinations(destMatch[1])); }
+   if(destMatch && req.method==='PUT') { owner(); if(typeof body.key!=='string'||!body.key) throw new WorkflowError('key is required'); return send(200,await setDestination(destMatch[1],body.key)); }
    const accountMatch=path.match(/^\/api\/accounts\/([^/]+)\/pause$/);
    if(accountMatch && req.method==='POST') { owner(); if(typeof body.paused!=='boolean') throw new WorkflowError('paused must be true or false'); if(!one('SELECT id FROM accounts WHERE id=?',accountMatch[1])) throw new WorkflowError('Account not found',404); return send(200,hydrate(update('accounts',accountMatch[1],{paused:body.paused?1:0,failures:0}))); }
    if(path==='/api/posts' && req.method==='GET') return send(200,listPosts(requiredText(url.searchParams.get('brand_id'),'brand_id')));

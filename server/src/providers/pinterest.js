@@ -8,10 +8,12 @@ export const oauth = {
   tokenUrl: "https://api.pinterest.com/v5/oauth/token",
   scope: "boards:read,pins:read,pins:write,user_accounts:read",
   pkce: false,
-  async identity(auth) {
+  // One entry per board: the account stays the same user, only the board pins land on changes.
+  async destinations(auth) {
     const me = await api(`${P}/user_account`, { headers: bearer(auth.access_token) });
-    const boards = await api(`${P}/boards?page_size=1`, { headers: bearer(auth.access_token) });
-    return { id: me.username, label: me.username, extraAuth: { board_id: boards.items?.[0]?.id } };
+    const boards = (await api(`${P}/boards?page_size=100`, { headers: bearer(auth.access_token) })).items || [];
+    if (!boards.length) return [{ id: me.username, label: me.username, extraAuth: { board_id: undefined } }];
+    return boards.map((b) => ({ id: me.username, key: b.id, label: `${me.username} · ${b.name}`, extraAuth: { board_id: b.id } }));
   },
 };
 
