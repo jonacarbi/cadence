@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 19:26:40 -03
-- **Built on commit:** 52af0e3 — docs: note opencode free-tier refusal and live agent checks (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-10 21:42:24 -03
+- **Built on commit:** c978c06 — feat: new visual identity and rebuilt landing page (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,48 +107,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	CHANGELOG.md
-- M	README.md
-- M	ai/decisions.md
-- M	ai/design-system.md
-- M	brand/app-icon.svg
-- M	brand/apple-touch-icon.png
-- M	brand/favicon.ico
-- M	brand/favicon.svg
-- M	brand/icon-512.png
-- M	brand/logo-dark.svg
-- M	brand/logo.svg
-- M	brand/mark.svg
-- M	brand/og.png
-- M	brand/og.svg
-- M	mac/Resources/AppIcon.icns
-- M	server/src/routes-extra.js
-- M	server/tests/web.test.js
-- M	server/web/css/base.css
-- M	server/web/css/tokens.css
-- M	server/web/css/views.css
-- M	server/web/favicon.svg
-- R093	server/web/fonts/OFL-HankenGrotesk.txt	server/web/fonts/OFL-FunnelDisplay.txt
-- R094	server/web/fonts/OFL-Newsreader.txt	server/web/fonts/OFL-Onest.txt
-- A	server/web/fonts/funnel-display-latin-wght-normal.woff2
-- D	server/web/fonts/hanken-grotesk-latin-wght-normal.woff2
-- D	server/web/fonts/newsreader-latin-opsz-italic.woff2
-- D	server/web/fonts/newsreader-latin-opsz-normal.woff2
-- A	server/web/fonts/onest-latin-wght-normal.woff2
-- M	server/web/index.html
-- M	server/web/mark.svg
-- M	site/app.js
-- M	site/apple-touch-icon.png
-- M	site/favicon.ico
-- M	site/favicon.svg
-- M	site/icon-512.png
 - M	site/index.html
-- M	site/mark.svg
-- M	site/og.png
-- M	site/style.css
 
 ## Recent history
 
+- c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
 - fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
 - 32365ca test: check agent CLI flags survive Windows .cmd shims _(Jonathan Carbiere, 2026-10-10)_
@@ -158,6 +121,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
 - 596dc07 docs: record the GitHub release in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
-- fdf1d74 fix: re-lint edited captions, retry failed Instagram processing, keep cleared credentials cleared _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
