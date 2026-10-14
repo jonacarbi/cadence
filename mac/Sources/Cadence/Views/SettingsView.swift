@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 struct Readiness: Decodable {
     struct Check: Decodable, Identifiable { let id: String; let title: String; let ready: Bool; let message: String }
@@ -80,7 +81,6 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(Array(Set(credentials.map(\.group))).sorted(), id: \.self) { group in
                 DisclosureGroup(group) {
-                    // Retry on expand: a failed first load (service still starting) must not hide the links for good.
                     ForEach(credentials.filter { $0.group == group }) { field in
                         VStack(alignment: .leading, spacing: 4) {
                             if let setup = portalSetup(field) {
@@ -104,14 +104,21 @@ struct SettingsView: View {
                             }
                         }.padding(.vertical, 4)
                     }
+                    // Retry on expand: a failed first load (service still starting) must not hide the links for good.
                     .task { if setups.isEmpty { await loadSetups() } }
                 }
+                // macOS builds a collapsed group's content once; rebuild it when the portal links arrive.
+                .id("\(group)-\(setups.count)")
             }
         }
     }
     private func loadSetups() async {
-        let rows: [PlatformSetup] = (try? await store.request("/api/platforms/setup")) ?? []
-        setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
+        do {
+            let rows: [PlatformSetup] = try await store.request("/api/platforms/setup")
+            setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
+        } catch {
+            Logger(subsystem: "com.jonacarbi.cadence", category: "settings").error("platform setups failed: \(String(describing: error), privacy: .public)")
+        }
     }
     /// Social sign-in keys come in ID + secret pairs; the developer-page links sit above the ID.
     private func portalSetup(_ field: Credential) -> PlatformSetup? {
