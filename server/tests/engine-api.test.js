@@ -36,6 +36,7 @@ test('platform setup lists 12 rows; saving app credentials flips ready, never ec
   assert.equal(rows.length, 12);
   const x = rows.find((r) => r.id === 'x');
   assert.equal(x.redirect_uri, redirectFor('x')); assert.equal(x.ready, false);
+  for (const r of rows) { assert.match(r.create_app_url, /^https:\/\//, r.id); if (r.auth === 'oauth') assert.ok(r.keys_where, r.id); }
   assert.equal(rows.find((r) => r.id === 'instagram').redirect_uri.startsWith('https://localhost:'), true);
   const put = await call('/api/platforms/x/app', { method: 'PUT', body: { client_id: 'abc', client_secret: 'topsecret' } });
   assert.equal(put.status, 200); assert.ok(!(await put.text()).includes('topsecret'));

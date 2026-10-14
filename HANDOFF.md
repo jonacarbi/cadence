@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-14 17:09:31 -03
-- **Built on commit:** 0370f7a — chore: credit volnix.io in site footer (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-14 17:19:11 -03
+- **Built on commit:** cd1b1ea — fix: mark already-connected platforms in the connect tiles (Jonathan Carbiere, 2026-10-14)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -95,7 +95,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - .js — 88 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
-- .swift — 13 file(s)
+- .swift — 14 file(s)
 - .svg — 10 file(s)
 - .yml — 6 file(s)
 - .sh — 5 file(s)
@@ -108,10 +108,14 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 ## Changes in this commit
 
 - M	mac/Sources/Cadence/Views/AccountsView.swift
+- A	mac/Sources/Cadence/Views/PlatformSetupSheet.swift
+- M	server/src/platforms-setup.js
+- M	server/tests/engine-api.test.js
 - M	server/web/js/connect.js
 
 ## Recent history
 
+- cd1b1ea fix: mark already-connected platforms in the connect tiles _(Jonathan Carbiere, 2026-10-14)_
 - 0370f7a chore: credit volnix.io in site footer _(Jonathan Carbiere, 2026-10-10)_
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
@@ -121,6 +125,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 0c381f2 test: boot the real CLI on every CI platform _(Jonathan Carbiere, 2026-10-10)_
 - 6969142 fix: keep browser sign-ins across restarts _(Jonathan Carbiere, 2026-10-10)_
 - 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
-- 596dc07 docs: record the GitHub release in the handoff _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->

@@ -57,13 +57,21 @@ async function signIn(p, brandId, button, done) {
   throw new Error('Still waiting. If you approved it, reload this page to see the account.');
 }
 
+// Straight to the platform's create-app page, plus the list of apps the owner already made.
+function portalLinks(p) {
+  const a = (href, label, cls) => h('a', { class: `btn sm ${cls}`, href, target: '_blank', rel: 'noopener noreferrer' }, icon('link'), label);
+  return h('div', { class: 'row' }, p.create_app_url && a(p.create_app_url, p.auth === 'oauth' ? `Create your ${p.name} app` : `Open ${p.name} setup page`, 'ink'),
+    p.developer_portal_url && p.developer_portal_url !== p.create_app_url && a(p.developer_portal_url, p.auth === 'oauth' ? 'My apps' : 'Settings page', 'ghost'));
+}
+
 function oauthBody(p, brandId, done, saved) {
   const parts = [steps(p.steps)];
   parts.push(h('div', { class: 'redirect' }, h('span', { class: 'label' }, 'Redirect URI to paste into the developer portal'),
     h('div', { class: 'row' }, h('code', { class: 'grow' }, p.redirect_uri || '(set by the server)'), btn('Copy', () => copy(p.redirect_uri, 'Redirect URI copied'), { cls: 'sm', ico: 'copy', 'aria-label': `Copy ${p.name} redirect URI` }))));
   if (p.tls && !p.tls.ready) parts.push(notice('warn', `${p.name} needs an https callback, and the local certificate could not be made${p.tls.openssl ? '' : ' because openssl was not found. Install openssl and restart Cadence'}.`));
   if (p.callback_note) parts.push(h('p', { class: 'small muted' }, p.callback_note));
-  if (p.developer_portal_url) parts.push(h('a', { class: 'btn sm', href: p.developer_portal_url, target: '_blank', rel: 'noopener noreferrer' }, icon('link'), `Open ${p.name} developer portal`));
+  parts.push(portalLinks(p));
+  if (p.keys_where) parts.push(h('p', { class: 'small' }, h('strong', null, 'Where the keys are: '), p.keys_where));
   if (p.scopes?.length) parts.push(h('p', { class: 'small muted' }, 'Permissions requested: ', p.scopes.join(', ')));
   parts.push(h('details', { class: 'app-creds', open: !p.ready }, h('summary', null, p.ready ? 'Replace app credentials' : 'Paste your app credentials'), appForm(p, saved)));
   const go = btn(`Sign in with ${p.name}`, () => busy(go, () => signIn(p, brandId, go, done)), { cls: 'primary', disabled: !p.ready });
@@ -74,7 +82,7 @@ function oauthBody(p, brandId, done, saved) {
 export function platformCard(p, brandId, done) {
   // Saving app credentials flips this card to ready in place, using the row the server returns.
   const saved = (row) => { if (!row?.id) return; const next = platformCard(row, brandId, done); next.open = true; card.replaceWith(next); };
-  const body = p.auth === 'manual' ? [steps(p.steps), manualForm(p, brandId, done)] : oauthBody(p, brandId, done, saved);
+  const body = p.auth === 'manual' ? [steps(p.steps), portalLinks(p), manualForm(p, brandId, done)] : oauthBody(p, brandId, done, saved);
   const lim = p.limits ? `Safe default: ${p.limits.daily_cap_default} posts a day, ${p.limits.min_gap_minutes_default} min apart.` : '';
   const card = h('details', { class: 'card platform', id: `pf-${p.id}` },
     h('summary', null, h('span', { class: 'p-name' }, p.name), state.accounts.some((a) => a.brand_id === brandId && a.platform === p.id) ? badge('Connected', 'ok') : badge(p.auth === 'oauth' ? 'Sign in' : 'Keys', ''), p.auth === 'oauth' && badge(p.ready ? 'Keys saved' : 'Needs app', p.ready ? '' : 'warn')),

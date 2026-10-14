@@ -5,6 +5,8 @@ struct AccountsView: View {
     @EnvironmentObject private var store: Store
     @State private var capabilities: [Capability] = []
     @State private var connecting: Capability?
+    @State private var setups: [String: PlatformSetup] = [:]
+    @State private var guiding: PlatformSetup?
     @State private var sources: [Source] = []
     @State private var feedURL = ""
     private var accounts: [Account] { store.accounts.filter { $0.brand_id == store.selectedBrand } }
@@ -34,9 +36,14 @@ struct AccountsView: View {
             }
             feeds
         }
-        .task { capabilities = (try? await store.request("/api/capabilities")) ?? [] }
+        .task {
+            capabilities = (try? await store.request("/api/capabilities")) ?? []
+            let rows: [PlatformSetup] = (try? await store.request("/api/platforms/setup")) ?? []
+            setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
+        }
         .task(id: store.selectedBrand) { await loadSources() }
-        .sheet(item: $connecting) { cap in ManualAccountForm(capability: cap).environmentObject(store) }
+        .sheet(item: $connecting) { cap in ManualAccountForm(capability: cap, setup: setups[cap.id]).environmentObject(store) }
+        .sheet(item: $guiding) { row in PlatformSetupSheet(setup: row).environmentObject(store) }
     }
     /// Watched feeds: new entries arrive as drafts in Approvals, so the owner still decides what ships.
     private var feeds: some View {
@@ -102,6 +109,7 @@ struct AccountsView: View {
     private func connect(_ cap: Capability) {
         guard let brand = store.selectedBrand else { return }
         if cap.auth == "manual" { connecting = cap; return }
+        if let row = setups[cap.id] { guiding = row; return }
         Task {
             await store.act {
                 let r: [String: String] = try await store.request("/oauth/\(cap.id)/start?brand_id=\(brand)")
@@ -116,12 +124,17 @@ struct ManualAccountForm: View {
     @EnvironmentObject private var store: Store
     @Environment(\.dismiss) private var dismiss
     let capability: Capability
+    var setup: PlatformSetup? = nil
     @State private var values: [String: String] = [:]
     @State private var saving = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Connect \(capability.name)").font(.title2.weight(.semibold))
             Text("Credentials are encrypted on this Mac and verified before the account is saved.").foregroundStyle(.secondary)
+            if let setup {
+                ForEach(setup.steps, id: \.self) { Text($0).font(.callout).fixedSize(horizontal: false, vertical: true) }
+                PortalLinks(setup: setup)
+            }
             ForEach(capability.fields, id: \.self) { field in
                 if field.contains("password") || field.contains("token") || field.contains("secret") {
                     SecureField(field.replacingOccurrences(of: "_", with: " ").capitalized, text: binding(field))
