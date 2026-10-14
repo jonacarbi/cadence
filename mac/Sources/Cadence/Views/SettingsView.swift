@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var readiness: Readiness?
     @State private var credentials: [Credential] = []
     @State private var entry: [String: String] = [:]
+    @State private var setups: [String: PlatformSetup] = [:]
     private let levels = [("review_all", "Review everything", "Every post waits for your approval."),
                           ("auto_trusted", "Auto for trusted", "Ready posts on trusted accounts schedule themselves; the rest wait."),
                           ("hands_off", "Hands off", "Every ready post schedules itself. You get webhooks, not questions.")]
@@ -69,7 +70,9 @@ struct SettingsView: View {
                 Button("Save settings") { save() }.buttonStyle(.borderedProminent)
             }
         }.textFieldStyle(.roundedBorder)
-        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness"); credentials = (try? await store.request("/api/credentials")) ?? [] }
+        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness"); credentials = (try? await store.request("/api/credentials")) ?? []
+            let rows: [PlatformSetup] = (try? await store.request("/api/platforms/setup")) ?? []
+            setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) }) }
     }
     /// Keys for the services Cadence talks to. Saved values are never sent back, so a filled field
     /// shows as "Saved" rather than as dots that could be copied out.
@@ -81,6 +84,10 @@ struct SettingsView: View {
                 DisclosureGroup(group) {
                     ForEach(credentials.filter { $0.group == group }) { field in
                         VStack(alignment: .leading, spacing: 4) {
+                            if let setup = portalSetup(field) {
+                                PortalLinks(setup: setup).controlSize(.small).padding(.top, 6)
+                                if let w = setup.keys_where, !w.isEmpty { Text("Where the keys are: \(w)").font(.caption) }
+                            }
                             HStack {
                                 Text(field.title).font(.subheadline.weight(.medium))
                                 if field.set { Label("Saved", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green) }
@@ -101,6 +108,11 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+    /// Social sign-in keys come in ID + secret pairs; the developer-page links sit above the ID.
+    private func portalSetup(_ field: Credential) -> PlatformSetup? {
+        guard field.key.hasPrefix("CADENCE_"), field.key.hasSuffix("_CLIENT_ID") else { return nil }
+        return setups[field.key.dropFirst(8).dropLast(10).lowercased()]
     }
     private func binding(_ key: String) -> Binding<String> {
         Binding(get: { entry[key] ?? "" }, set: { entry[key] = $0 })

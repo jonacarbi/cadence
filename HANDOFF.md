@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-14 17:19:11 -03
-- **Built on commit:** cd1b1ea — fix: mark already-connected platforms in the connect tiles (Jonathan Carbiere, 2026-10-14)
+- **Last updated:** 2026-10-14 17:44:19 -03
+- **Built on commit:** 2637fb9 — feat: link each platform's create-app page and key location in connect flow (Jonathan Carbiere, 2026-10-14)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,14 +107,11 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	mac/Sources/Cadence/Views/AccountsView.swift
-- A	mac/Sources/Cadence/Views/PlatformSetupSheet.swift
-- M	server/src/platforms-setup.js
-- M	server/tests/engine-api.test.js
-- M	server/web/js/connect.js
+- M	mac/Sources/Cadence/Views/SettingsView.swift
 
 ## Recent history
 
+- 2637fb9 feat: link each platform's create-app page and key location in connect flow _(Jonathan Carbiere, 2026-10-14)_
 - cd1b1ea fix: mark already-connected platforms in the connect tiles _(Jonathan Carbiere, 2026-10-14)_
 - 0370f7a chore: credit volnix.io in site footer _(Jonathan Carbiere, 2026-10-10)_
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
@@ -124,6 +121,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - c82bf00 docs: note the cross-platform CLI smoke test in the handoff _(Jonathan Carbiere, 2026-10-10)_
 - 0c381f2 test: boot the real CLI on every CI platform _(Jonathan Carbiere, 2026-10-10)_
 - 6969142 fix: keep browser sign-ins across restarts _(Jonathan Carbiere, 2026-10-10)_
-- 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
