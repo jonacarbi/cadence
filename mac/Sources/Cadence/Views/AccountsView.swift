@@ -22,7 +22,11 @@ struct AccountsView: View {
                         Button { connect(cap) } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(cap.name).font(.subheadline.weight(.semibold))
-                                Text(cap.auth == "oauth" ? "Sign in" : "Credentials").font(.caption).foregroundStyle(.secondary)
+                                if accounts.contains(where: { $0.platform == cap.id }) {
+                                    Text("Connected · add another").font(.caption).foregroundStyle(.green)
+                                } else {
+                                    Text(cap.auth == "oauth" ? "Sign in" : "Credentials").font(.caption).foregroundStyle(.secondary)
+                                }
                             }.frame(maxWidth: .infinity, alignment: .leading).padding(12).background(.background, in: RoundedRectangle(cornerRadius: 10))
                         }.buttonStyle(.plain).disabled(!cap.available || store.selectedBrand == nil).opacity(cap.available ? 1 : 0.4)
                     }

@@ -2,6 +2,7 @@
 // Manual platforms: an inline form. OAuth platforms: numbered guide, copyable redirect URI, app credentials, then sign-in.
 import { h, btn, busy, field, badge, icon, copy, toast, notice } from './ui.js';
 import { get, send } from './api.js';
+import { state } from './state.js';
 
 const POLL_MS = 3000, POLL_MAX = 100; // ~5 minutes
 
@@ -76,7 +77,7 @@ export function platformCard(p, brandId, done) {
   const body = p.auth === 'manual' ? [steps(p.steps), manualForm(p, brandId, done)] : oauthBody(p, brandId, done, saved);
   const lim = p.limits ? `Safe default: ${p.limits.daily_cap_default} posts a day, ${p.limits.min_gap_minutes_default} min apart.` : '';
   const card = h('details', { class: 'card platform', id: `pf-${p.id}` },
-    h('summary', null, h('span', { class: 'p-name' }, p.name), badge(p.auth === 'oauth' ? 'Sign in' : 'Keys', ''), p.auth === 'oauth' && badge(p.ready ? 'App ready' : 'Needs app', p.ready ? 'ok' : 'warn')),
+    h('summary', null, h('span', { class: 'p-name' }, p.name), state.accounts.some((a) => a.brand_id === brandId && a.platform === p.id) ? badge('Connected', 'ok') : badge(p.auth === 'oauth' ? 'Sign in' : 'Keys', ''), p.auth === 'oauth' && badge(p.ready ? 'Keys saved' : 'Needs app', p.ready ? '' : 'warn')),
     h('div', { class: 'stack platform-body' }, lim && h('p', { class: 'small muted' }, lim), p.needs_public_media && h('p', { class: 'small muted' }, 'Needs public image hosting (Supabase) to publish images.'), body));
   return card;
 }

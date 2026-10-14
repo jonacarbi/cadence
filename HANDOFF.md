@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-10 21:42:24 -03
-- **Built on commit:** c978c06 — feat: new visual identity and rebuilt landing page (Jonathan Carbiere, 2026-10-10)
+- **Last updated:** 2026-10-14 17:09:31 -03
+- **Built on commit:** 0370f7a — chore: credit volnix.io in site footer (Jonathan Carbiere, 2026-10-10)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,10 +107,12 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	site/index.html
+- M	mac/Sources/Cadence/Views/AccountsView.swift
+- M	server/web/js/connect.js
 
 ## Recent history
 
+- 0370f7a chore: credit volnix.io in site footer _(Jonathan Carbiere, 2026-10-10)_
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
 - fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
@@ -120,6 +122,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 6969142 fix: keep browser sign-ins across restarts _(Jonathan Carbiere, 2026-10-10)_
 - 744ac22 feat: destination picker for Facebook Pages, Instagram accounts and Pinterest boards _(Jonathan Carbiere, 2026-10-10)_
 - 596dc07 docs: record the GitHub release in the handoff _(Jonathan Carbiere, 2026-10-10)_
-- e43629a test: accept Windows path separators in the OGA image path check _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
