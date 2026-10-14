@@ -70,9 +70,7 @@ struct SettingsView: View {
                 Button("Save settings") { save() }.buttonStyle(.borderedProminent)
             }
         }.textFieldStyle(.roundedBorder)
-        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness"); credentials = (try? await store.request("/api/credentials")) ?? []
-            let rows: [PlatformSetup] = (try? await store.request("/api/platforms/setup")) ?? []
-            setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) }) }
+        .task { if let s: Settings = try? await store.request("/api/settings") { settings = s }; readiness = try? await store.request("/api/readiness"); credentials = (try? await store.request("/api/credentials")) ?? []; await loadSetups() }
     }
     /// Keys for the services Cadence talks to. Saved values are never sent back, so a filled field
     /// shows as "Saved" rather than as dots that could be copied out.
@@ -82,6 +80,7 @@ struct SettingsView: View {
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(Array(Set(credentials.map(\.group))).sorted(), id: \.self) { group in
                 DisclosureGroup(group) {
+                    // Retry on expand: a failed first load (service still starting) must not hide the links for good.
                     ForEach(credentials.filter { $0.group == group }) { field in
                         VStack(alignment: .leading, spacing: 4) {
                             if let setup = portalSetup(field) {
@@ -105,9 +104,14 @@ struct SettingsView: View {
                             }
                         }.padding(.vertical, 4)
                     }
+                    .task { if setups.isEmpty { await loadSetups() } }
                 }
             }
         }
+    }
+    private func loadSetups() async {
+        let rows: [PlatformSetup] = (try? await store.request("/api/platforms/setup")) ?? []
+        setups = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
     }
     /// Social sign-in keys come in ID + secret pairs; the developer-page links sit above the ID.
     private func portalSetup(_ field: Credential) -> PlatformSetup? {
