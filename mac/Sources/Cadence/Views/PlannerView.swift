@@ -3,6 +3,7 @@ import SwiftUI
 struct AgentJob: Codable, Identifiable {
     let id: String
     let type: String
+    let ref_id: String?
     let status: String
     let progress: Double
     let message: String

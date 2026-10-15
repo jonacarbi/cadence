@@ -10,6 +10,7 @@ struct PostDetail: View {
     @State private var feedback = ""
     @State private var comments: [Comment] = []
     @State private var preview: NSImage?
+    @State private var renderJob: AgentJob?
     @State private var rescheduling = false
     @State private var newDate = Date()
     @State private var picking = false
@@ -28,7 +29,7 @@ struct PostDetail: View {
                 actions
             }.padding(24)
         }.frame(width: 1040, height: 720)
-        .task(id: current.image_path) { await loadPreview(); await loadComments() }
+        .task(id: "\(current.image_path ?? "")|\(acting)") { await loadPreview(); await loadComments(); await watchRender() }
         .sheet(isPresented: $editing) { ComposerView(post: current).environmentObject(store) }
         .sheet(isPresented: $picking) { MediaLibrary(post: current).environmentObject(store) }
     }
@@ -38,8 +39,11 @@ struct PostDetail: View {
                 Image(nsImage: preview).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 10)).shadow(radius: 12, y: 6)
             } else if current.format == "text" {
                 ContentUnavailableView("Text-only post", systemImage: "text.alignleft")
+            } else if let renderJob {
+                ProgressView(renderJob.message.isEmpty ? "Rendering visual…" : renderJob.message).frame(maxHeight: .infinity)
             } else {
-                ProgressView("Rendering visual…").frame(maxHeight: .infinity)
+                // No job is running, so a spinner here would never stop: say what happened instead.
+                ContentUnavailableView("No visual yet", systemImage: "photo", description: Text(current.error ?? "Use New visual to render one, or Use my image."))
             }
             if let a = current.assets {
                 VStack(alignment: .leading, spacing: 4) {
@@ -130,6 +134,18 @@ struct PostDetail: View {
     private func loadPreview() async {
         guard let path = current.image_path else { preview = nil; return }
         preview = (try? await store.data(store.assetURL(path))).flatMap(NSImage.init(data:))
+    }
+    /// Polls this post's visual job; when it finishes, a refresh brings the new image_path and restarts the task.
+    private func watchRender() async {
+        guard current.image_path == nil, current.format != "text" else { renderJob = nil; return }
+        while !Task.isCancelled {
+            let jobs: [AgentJob] = (try? await store.request("/api/jobs")) ?? []
+            let active = jobs.first { $0.ref_id == current.id && $0.type == "post-visual" && ["queued", "running"].contains($0.status) }
+            if active == nil, renderJob != nil { renderJob = nil; await store.refresh(); return }
+            renderJob = active
+            if active == nil { return }
+            try? await Task.sleep(for: .seconds(3))
+        }
     }
     private func loadComments() async { comments = (try? await store.request("/api/posts/\(current.id)/comments")) ?? [] }
     private func perform(_ action: @escaping @MainActor () async -> Void) { acting = true; Task { await action(); acting = false } }

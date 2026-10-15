@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-14 18:13:45 -03
-- **Built on commit:** 2cdccfc — fix: retry loading developer-page links in Settings social sign-in (Jonathan Carbiere, 2026-10-14)
+- **Last updated:** 2026-10-14 22:10:45 -03
+- **Built on commit:** e2f0b5d — fix: rebuild Social sign-in group when developer-page links load (Jonathan Carbiere, 2026-10-14)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,10 +107,12 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	mac/Sources/Cadence/Views/SettingsView.swift
+- M	mac/Sources/Cadence/Views/PlannerView.swift
+- M	mac/Sources/Cadence/Views/PostDetail.swift
 
 ## Recent history
 
+- e2f0b5d fix: rebuild Social sign-in group when developer-page links load _(Jonathan Carbiere, 2026-10-14)_
 - 2cdccfc fix: retry loading developer-page links in Settings social sign-in _(Jonathan Carbiere, 2026-10-14)_
 - b619308 feat: developer-page links in Settings social sign-in keys _(Jonathan Carbiere, 2026-10-14)_
 - 2637fb9 feat: link each platform's create-app page and key location in connect flow _(Jonathan Carbiere, 2026-10-14)_
@@ -120,6 +122,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
 - fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
 - 32365ca test: check agent CLI flags survive Windows .cmd shims _(Jonathan Carbiere, 2026-10-10)_
-- c82bf00 docs: note the cross-platform CLI smoke test in the handoff _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
