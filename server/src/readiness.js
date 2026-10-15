@@ -21,6 +21,7 @@ async function catgptQuota(fetchImpl) {
 
 function imageCheck(quota) {
   if (IMAGE_PROVIDER === 'none') return { ready: true, message: 'No AI photos: posts use the branded layout only. Set OPENAI_API_KEY (or CADENCE_IMAGE_PROVIDER=openai) to add generated images.' };
+  if (IMAGE_PROVIDER === 'codex') { const bin = binPath('codex'); return { ready: Boolean(bin), message: bin ? `Codex CLI (${bin}) image generation on your ChatGPT sign-in.` : 'Codex CLI was not found on PATH. Install it and run codex login.' }; }
   if (IMAGE_PROVIDER === 'openai') return { ready: Boolean(OPENAI_API_KEY), message: OPENAI_API_KEY ? 'OpenAI-compatible image API key configured.' : 'Set OPENAI_API_KEY in Cadence\u2019s .env file.' };
   const via = IMAGE_PROVIDER === 'oga-mcp' ? `Open Generative AI MCP \u2192 CatGPT (${CATGPT_MODEL})` : `CatGPT gateway (${CATGPT_MODEL})`;
   if (IMAGE_PROVIDER === 'oga-mcp' && !(OGA_MCP_ENTRY && existsSync(OGA_MCP_ENTRY))) return { ready: false, message: 'Open Generative AI MCP: set CADENCE_OGA_MCP_ENTRY to its src/index.js.' };
@@ -43,7 +44,7 @@ export function textCheck(env=process.env){
 export async function readiness({ fetchImpl = fetch } = {}) {
   const accounts=all('SELECT platform,paused FROM accounts');
   const hosted=Object.keys(META).filter(p=>META[p].needsPublicUrl).map(p=>PLATFORMS[p].name);
-  const quota=['openai','none'].includes(IMAGE_PROVIDER)?null:await catgptQuota(fetchImpl);
+  const quota=['openai','none','codex'].includes(IMAGE_PROVIDER)?null:await catgptQuota(fetchImpl);
   const text=textCheck();
   return {checks:[
     {id:'text',title:'Text generation',...text},

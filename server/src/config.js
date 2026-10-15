@@ -67,7 +67,7 @@ export const TEMPLATES_DIR = join(REPO_DIR, "server/templates");
 export const CLAUDE_BIN = process.env.CADENCE_CLAUDE_BIN || findBin("claude") || [join(HOME, ".local", "bin", "claude"), "/opt/homebrew/bin/claude", "/usr/local/bin/claude"].find(existsSync) || "claude";
 
 // Images: openai (API key; any OpenAI-compatible /images/generations via OPENAI_IMAGE_BASE_URL) or none (branded layout, no AI photo).
-// Opt-in presets for a local ChatGPT-session gateway: catgpt, oga-mcp (Open Generative AI MCP, needs CADENCE_OGA_MCP_ENTRY).
+// codex = Codex CLI's image tool on the user's ChatGPT sign-in. Opt-in presets for a local ChatGPT-session gateway: catgpt, oga-mcp (Open Generative AI MCP, needs CADENCE_OGA_MCP_ENTRY).
 // `let` exports are live bindings: reloadEnvSettings() after a Settings save updates every importer, no restart needed.
 export let OPENAI_API_KEY, OPENAI_IMAGE_BASE_URL, OPENAI_IMAGE_MODEL, CATGPT_URL, CATGPT_TOKEN, CATGPT_MODEL, IMAGE_PROVIDER, OGA_MCP_ENTRY;
 // Public media hosting (Instagram/Threads/Pinterest need a public URL).

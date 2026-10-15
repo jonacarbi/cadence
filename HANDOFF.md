@@ -52,8 +52,8 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 - **Project:** `cadence`
 - **Branch:** `master`
-- **Last updated:** 2026-10-14 22:10:45 -03
-- **Built on commit:** e2f0b5d — fix: rebuild Social sign-in group when developer-page links load (Jonathan Carbiere, 2026-10-14)
+- **Last updated:** 2026-10-15 00:11:10 -03
+- **Built on commit:** c8f7f3f — fix: show real visual state instead of an endless rendering spinner (Jonathan Carbiere, 2026-10-14)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -92,7 +92,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 88 file(s)
+- .js — 89 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 14 file(s)
@@ -107,11 +107,14 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	mac/Sources/Cadence/Views/PlannerView.swift
-- M	mac/Sources/Cadence/Views/PostDetail.swift
+- M	server/src/config.js
+- M	server/src/images.js
+- M	server/src/readiness.js
+- A	server/tests/codex-images.test.js
 
 ## Recent history
 
+- c8f7f3f fix: show real visual state instead of an endless rendering spinner _(Jonathan Carbiere, 2026-10-14)_
 - e2f0b5d fix: rebuild Social sign-in group when developer-page links load _(Jonathan Carbiere, 2026-10-14)_
 - 2cdccfc fix: retry loading developer-page links in Settings social sign-in _(Jonathan Carbiere, 2026-10-14)_
 - b619308 feat: developer-page links in Settings social sign-in keys _(Jonathan Carbiere, 2026-10-14)_
@@ -121,6 +124,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
 - fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
-- 32365ca test: check agent CLI flags survive Windows .cmd shims _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
