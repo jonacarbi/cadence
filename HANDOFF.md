@@ -53,7 +53,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - **Project:** `cadence`
 - **Branch:** `master`
 - **Last updated:** 2026-10-15 00:11:10 -03
-- **Built on commit:** c8f7f3f — fix: show real visual state instead of an endless rendering spinner (Jonathan Carbiere, 2026-10-14)
+- **Built on commit:** edd338e — feat: add Codex CLI image provider (Jonathan Carbiere, 2026-10-15)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -92,7 +92,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Languages
 
-- .js — 89 file(s)
+- .js — 90 file(s)
 - .md — 24 file(s)
 - .png — 17 file(s)
 - .swift — 14 file(s)
@@ -107,13 +107,12 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	server/src/config.js
-- M	server/src/images.js
-- M	server/src/readiness.js
-- A	server/tests/codex-images.test.js
+- M	server/src/visuals.js
+- A	server/tests/visuals.test.js
 
 ## Recent history
 
+- edd338e feat: add Codex CLI image provider _(Jonathan Carbiere, 2026-10-15)_
 - c8f7f3f fix: show real visual state instead of an endless rendering spinner _(Jonathan Carbiere, 2026-10-14)_
 - e2f0b5d fix: rebuild Social sign-in group when developer-page links load _(Jonathan Carbiere, 2026-10-14)_
 - 2cdccfc fix: retry loading developer-page links in Settings social sign-in _(Jonathan Carbiere, 2026-10-14)_
@@ -123,6 +122,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - 0370f7a chore: credit volnix.io in site footer _(Jonathan Carbiere, 2026-10-10)_
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
 - 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
-- fe76fd9 docs: record the verified Windows spawn path and what remains unverified _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->

@@ -13,6 +13,14 @@ import { editPost, WorkflowError } from './workflow.js';
 
 const wantsPortrait = (platforms) => platforms.some((p) => META[p]?.aspect === 'portrait');
 
+// Hand-made drafts often have no image brief; an image model given only style notes asks "what subject?" and burns quota.
+export function imageSubject(post) {
+  if (post.image_prompt?.trim()) return post.image_prompt.trim();
+  const caption = Object.values(post.copy || {}).find((c) => typeof c === 'string' && c.trim())?.trim().slice(0, 400);
+  if (!post.topic?.trim() && !caption) throw new WorkflowError('Add an image prompt, topic or caption before generating a visual', 400);
+  return `A real-world scene that illustrates a social post${post.topic?.trim() ? ` about "${post.topic.trim()}"` : ''}.${caption ? ` Post text: "${caption}"` : ''}`;
+}
+
 export async function producePost(postId, report = () => {}) {
   const post = hydrate(one('SELECT * FROM posts WHERE id = ?', postId));
   if (!post) throw new Error('Post not found');
@@ -43,7 +51,7 @@ export async function producePost(postId, report = () => {}) {
   if (!raw && imageProvider() !== 'none') {
     report(0.1, `Generating image: ${post.topic}`);
     const style = stylePrompt(brand).slice(0, 1200);
-    raw = await generateImage(`${post.image_prompt}\n\nStyle notes: ${style}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect, brandSlug: brand.slug });
+    raw = await generateImage(`${imageSubject(post)}\n\nStyle notes: ${style}\n\nUltra high quality, editorial photography, natural light. No text, no lettering, no logos, no watermarks.`, { aspect, brandSlug: brand.slug });
     save({ assets_json: JSON.stringify({ ...a, raw, aspect }) });
   }
   report(0.6, 'Composing in the design system');
