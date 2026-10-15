@@ -25,7 +25,7 @@ export function postCard(initial, { onChange, compact = false } = {}) {
   let post = initial;
   const root = h('article', { class: `post status-${post.status}`, 'aria-label': `${post.topic || 'Post'} for ${post.platforms.join(', ')}` });
   const apply = (p) => { post = { ...post, ...p }; draw(); onChange?.(post); };
-  const refetch = async () => { const all = await get(`/api/posts?brand_id=${post.brand_id}`); const fresh = all.find((p) => p.id === post.id); if (fresh) apply(fresh); return fresh; };
+  const fetchSelf = async () => (await get(`/api/posts?brand_id=${post.brand_id}`)).find((p) => p.id === post.id);
 
   function copyEditors() {
     const ta = {};
@@ -48,7 +48,7 @@ export function postCard(initial, { onChange, compact = false } = {}) {
 
   async function watchVisual(btnEl) {
     btnEl.textContent = 'Rendering...'; const was = post.image_path;
-    for (let i = 0; i < POLL_MAX; i++) { await new Promise((r) => setTimeout(r, POLL_MS)); if (!root.isConnected) return; const f = await refetch(); if (f && f.image_path !== was) return toast('New visual ready'); }
+    for (let i = 0; i < POLL_MAX; i++) { await new Promise((r) => setTimeout(r, POLL_MS)); if (!root.isConnected) return; const f = await fetchSelf(); if (f && f.image_path && f.image_path !== was) { apply(f); return toast('New visual ready'); } }
     toast('The visual is still rendering. Check back in a minute.');
   }
 

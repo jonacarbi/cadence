@@ -48,7 +48,7 @@
 .post{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:var(--s5);padding:var(--s5);background:var(--raised);border:1px solid var(--staff);border-radius:var(--r-lg);box-shadow:var(--shadow-1);position:relative}
 .post::before{content:"";position:absolute;left:0;top:var(--s5);bottom:var(--s5);width:3px;border-radius:0 3px 3px 0;background:var(--staff)}
 .post.status-draft::before{background:var(--warn)} .post.status-scheduled::before,.post.status-published::before,.post.status-approved::before{background:var(--ok)} .post.status-failed::before,.post.status-rejected::before{background:var(--beat)}
-.post-vis img,.noimg{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--r-md);outline:1px solid var(--img-edge);outline-offset:-1px;background:var(--sunk)}
+.post-vis img,.noimg{width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:var(--r-md);outline:1px solid var(--img-edge);outline-offset:-1px;background:var(--sunk)}
 .noimg{display:grid;place-items:center;color:var(--muted);font-size:var(--text-sm)}
 .post-main h3{font-size:var(--text-h2)}
 .post-main textarea{min-height:5rem}

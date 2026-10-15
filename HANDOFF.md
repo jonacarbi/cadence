@@ -53,7 +53,7 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - **Project:** `cadence`
 - **Branch:** `master`
 - **Last updated:** 2026-10-15 00:11:10 -03
-- **Built on commit:** edd338e — feat: add Codex CLI image provider (Jonathan Carbiere, 2026-10-15)
+- **Built on commit:** cd7966e — fix: derive image subject from topic and caption when no image prompt (Jonathan Carbiere, 2026-10-15)
 - **README says:** <p align="center">
 
 ## How to build / run / test
@@ -107,11 +107,12 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 
 ## Changes in this commit
 
-- M	server/src/visuals.js
-- A	server/tests/visuals.test.js
+- M	server/web/css/views.css
+- M	server/web/js/postcard.js
 
 ## Recent history
 
+- cd7966e fix: derive image subject from topic and caption when no image prompt _(Jonathan Carbiere, 2026-10-15)_
 - edd338e feat: add Codex CLI image provider _(Jonathan Carbiere, 2026-10-15)_
 - c8f7f3f fix: show real visual state instead of an endless rendering spinner _(Jonathan Carbiere, 2026-10-14)_
 - e2f0b5d fix: rebuild Social sign-in group when developer-page links load _(Jonathan Carbiere, 2026-10-14)_
@@ -121,6 +122,5 @@ Added: brand/ assets, AppIcon.icns (wired into scripts/build-macos.sh), site/ la
 - cd1b1ea fix: mark already-connected platforms in the connect tiles _(Jonathan Carbiere, 2026-10-14)_
 - 0370f7a chore: credit volnix.io in site footer _(Jonathan Carbiere, 2026-10-10)_
 - c978c06 feat: new visual identity and rebuilt landing page _(Jonathan Carbiere, 2026-10-10)_
-- 52af0e3 docs: note opencode free-tier refusal and live agent checks _(Jonathan Carbiere, 2026-10-10)_
 
 <!-- HANDOFF:AUTO:END -->
